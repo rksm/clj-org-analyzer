@@ -3,11 +3,36 @@
             [clojure.pprint :refer [cl-format pprint]]
             [clojure.string :as s]
             [clojure.zip :as zip]
-            [organum.core :as org]
-            [java-time :s time])
+            [java-time :as time :refer [adjust
+                                        as
+                                        day-of-week
+                                        days
+                                        duration
+                                        format
+                                        formatter
+                                        instant
+                                        interval
+                                        iterate
+                                        local-date
+                                        local-date-time
+                                        minus
+                                        plus
+                                        offset-date-time
+                                        truncate-to
+                                        weeks]
+             :rename {as time-as
+                      format time-format
+                      formatter time-formatter
+                      iterate time-iterate
+                      minus time-
+                      plust time+
+                      truncate-to time-precision}]
+            [organum.core :as org])
   (:import [java.time LocalDate LocalDateTime Duration]
            java.time.format.DateTimeFormatter
            java.util.Locale))
+
+;; http://dm3.github.io/clojure.java-time/java-time.html
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -30,13 +55,13 @@
 
 (def clock-re #"(?i)^\s*CLOCK:\s*((?:\[|<)[0-9a-z :-]+(?:\]|>))(?:--((?:\[|<)[0-9a-z :-]+(?:\]|>)))?(?:\s*=>\s*([0-9:]+))?\s*$")
 
+
 (def date-time-patterns [{:parse #(LocalDateTime/parse %1 (DateTimeFormatter/ofPattern %2 %3))
                           :pattern "y-M-d[ ][cccc][ccc][ ]H:m"}
-                         {:parse #(->> (DateTimeFormatter/ofPattern %2 %3) (LocalDate/parse %1) (.atTime 0 0))
+                         {:parse #(. (LocalDate/parse %1 (DateTimeFormatter/ofPattern %2 %3)) (atTime 0 0))
                           :pattern "y-M-d[ ][cccc][ccc]"}])
 
 (def locales [Locale/ENGLISH Locale/GERMAN])
-
 
 (defn parse-timestamp
   "`string` like \"[2019-06-19 Wed 14:11]\". Returns LocalDateTime."
@@ -54,7 +79,7 @@
   (as-> duration-string it
     (s/replace it #":" "H")
     (str "PT" it "M")
-    (java.time.Duration/parse it)))
+    (duration it)))
 
 (defn parse-clock [clock-string]
   (let [[_ start end duration] (re-find clock-re clock-string)]
@@ -88,23 +113,45 @@
 (defn print-timestamp [date-time]
   (. date-time
      (format
-      (DateTimeFormatter/ofPattern "yyyy-MM-dd ccc HH:mm" Locale/ENGLISH))))
+      (time-formatter "yyyy-MM-dd ccc HH:mm" Locale/ENGLISH))))
+
+(comment
+  (print-timestamp (local-date-time)))
 
 (defn print-duration [duration]
-  (let [mins (-> duration .getSeconds (/ 60))
+  (let [mins (-> duration (time-as :seconds) (quot 60))
         h (quot mins 60)
         m (- mins (* 60 h))]
     (cl-format nil "~d:~2,'0d" h m)))
 
+(comment
+  (print-duration (duration (beginning-of-week (local-date-time)) (local-date-time))))
+
+(defn now []
+  (local-date-time))
+
 (defn days-ago [days]
-  (-> (java.time.LocalDateTime/now) (.minusDays days)))
+  (-> (local-date-time)
+      (time- (days days))
+      (time-precision :days)))
+
+(defn beginning-of-week [date]
+  (-> date
+      (adjust (day-of-week :monday))
+      (time-precision :days)))
+
+(defn week-seq-from [date-time]
+  (let [bow (beginning-of-week date-time)
+        first-days-of-weeks (conj (time-iterate time- bow (weeks 1)) date-time)]
+    first-days-of-weeks))
+
 
 (def secs-in-one-min 60)
 (def secs-in-one-hour (* secs-in-one-min 60))
 (def secs-in-one-day (* secs-in-one-hour 24))
 
 (defn pretty-print-duration [duration]
-  (let [secs-left (-> duration .getSeconds)
+  (let [secs-left (time-as duration :seconds)
         days (quot secs-left secs-in-one-day)
         days-printed (if (zero? days) "" (cl-format nil "~d day~:*~P" days))
         secs-left (- secs-left (* secs-in-one-day days))
@@ -115,13 +162,80 @@
         mins-printed (if (and (zero? mins) (not (zero? (+ hours days)))) "" (cl-format nil "~d minute~:*~P" mins))]
     (s/join " " (keep not-empty [days-printed hours-printed mins-printed]))))
 
+
+
 (comment
-  (pretty-print-duration (Duration/ofDays 1)) ;; => "1 day"(pretty-print-duration (Duration/ofDays 5))
-  (pretty-print-duration (Duration/ofHours 1)) ;; => "1 hour" (pretty-print-duration (Duration/ofHours 15))
-  (pretty-print-duration (Duration/ofHours 28)) ;; => "1 day 4 hours" (pretty-print-duration (Duration/ofMinutes 1))
-  (pretty-print-duration (Duration/ofMinutes 10)) ;; => "10 minutes" (pretty-print-duration (Duration/ofMinutes 65))
-  (pretty-print-duration (Duration/ofMinutes (+ (* 24 60) 3))) ;; => "1 day 3 minutes"
-  (pretty-print-duration (Duration/ofMinutes (+ (* 24 60) 65)))) ;; => "1 day 1 hour 5 minutes"
+  (print-duration (sum-clock-duration (take 5 clocks)))
+
+  (doseq [week-ago (range 5000)]
+    (let [[end start] (->> (local-date-time)
+                           week-seq-from
+                           (drop week-ago)
+                           (take 2))
+          clocks (clocks-between start end clocks)]
+      ;; (cl-format true "Clocks from ~a to ~a (~a)~%~{~a~^~%~}~%"
+      ;;            (time-format "yyyy-MM-dd eee hh:mm" start)
+      ;;            (time-format "yyyy-MM-dd eee hh:mm" end)
+      ;;            (print-duration (sum-clock-duration clocks))
+      ;;            clocks)
+      (when (not-empty clocks)
+          (cl-format true "Clocks from ~a to ~a (~a)~%"
+                     (time-format "yyyy-MM-dd eee hh:mm" start)
+                     (time-format "yyyy-MM-dd eee hh:mm" end)
+                     (print-duration (sum-clock-duration clocks))))))
+
+
+  (require 'java-time.repl)
+  (java-time.repl/show-units)
+  (java-time.repl/show-adjusters)
+
+  (time-as (parse-duration "5:33") :hours)
+
+  (time-iterate (interval (time- (instant) (days 3)) (instant)))
+  (instant (days-ago 3))
+  (java.time.temporal.TemporalAdjusters/dayOfWeekInMonth )
+  (adjust (local-date) :day-of-week-in-month 1 :monday)
+  (adjust (local-date) time- (weeks 1))
+  (adjust (local-date) time- :day-of-week)
+  (time-as (local-date) :day-of-week)
+  (time-as (time- (local-date) (days (time-as (local-date) :day-of-week))) :day-of-week)
+  (pprint (take 5 (time-iterate adjust (local-date) :next-working-day)))
+
+  (-> (local-date) beginning-of-week)
+  (def bow (-> (offset-date-time) beginning-of-week))
+
+
+  (let [weeks (week-seq-from (local-date-time))]
+    (pprint
+     (take 3
+           (map (juxt
+                 (comp (partial time-format "yyyy-MM-dd eee") first vector)
+                 (comp (partial time-format "yyyy-MM-dd eee") second vector)
+                 (comp print-duration duration))
+                (drop 1 weeks) weeks))))
+
+  (let [weeks (time-iterate time- bow (weeks 1))]
+    (pprint
+     (take 50
+           (map (juxt
+                 (comp (partial time-format "yyyy-MM-dd eee") first vector)
+                 (comp (partial time-format "yyyy-MM-dd eee") second vector)
+                 (comp print-duration duration))
+                (drop 1 weeks) weeks))))
+
+  (map #(duration % (weeks 1)) (take 20 (time-iterate time- bow (weeks 1))))
+
+  (adjust (local-date) java.time.DayOfWeek/MONDAY)
+  (adjust (local-date-time) (day-of-week :monday))
+
+
+
+  (.toInstant (days-ago 3) (java.time.ZoneOffset/systemDefault))
+
+  ;; (pretty-print-duration (Duration/ofMinutes (+ (* 24 60) 65)))
+  )
+
+
 
 (defn print-clock [{:keys [start end duration] :as clock}]
   (cl-format nil "CLOCK: [~a]~:[~;--~:*[~a]~]~:[~; =>  ~:*~a~]"
@@ -156,6 +270,16 @@
        (filter #(.isBefore start-day (:start %)))
        (sort-by :start)))
 
+
+
+(defn clocks-between [from-date to-date clocks]
+  (->> clocks
+       (filter #(let [{:keys [start]} %]
+                  (and (time/after? start from-date)
+                       (not= from-date start)
+                       (time/before? start to-date))))
+       (sort-by :start)))
+
 (defn sum-clock-duration [clocks]
   (->> (filter :duration clocks)
        (reduce (fn [^Duration sum ^Clock clock] (.plus sum (:duration clock)))
@@ -172,6 +296,9 @@
 ;; (.before (java.util.Calendar/getInstance (Locale/GERMAN)) (days-ago 20))
 
 (comment
+
+  (= (.atStartOfDay (local-date))
+     (.atTime (local-date) 0 0))
 
   (def clocks (find-clocks (parse-and-zip "/home/robert/org/lively.org")))
   (def clocks (find-clocks (parse-and-zip "/home/robert/org/codium.org")))
@@ -193,6 +320,9 @@
 
   (def org-files (let [dir (io/file "/home/robert/org/")]
                    (->> dir file-seq (filter #(and (= dir (.getParentFile %)) (s/ends-with? (.getName %) ".org"))))))
+
+  (def clocks (mapcat (comp find-clocks parse-and-zip) org-files))
+  (count clocks)
 
   (doseq [file org-files
           :let [clocks (-> file parse-and-zip find-clocks)]]
