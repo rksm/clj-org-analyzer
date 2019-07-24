@@ -1,0 +1,8 @@
+^{:watch-dirs ["src"]
+  :css-dirs ["resources/public/css"]
+  :hot-reload-cljs true
+  :open-url false
+  :reload-clj-files #{:clj :cljc}
+  :cljs-devtools true
+  :ansi-color-output true}
+{:main org-analyzer.browser}
