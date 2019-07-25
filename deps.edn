@@ -1,11 +1,14 @@
 {:deps {org.clojure/clojurescript {:mvn/version "1.10.520"}
         org.clojars.gmorpheme/organum {:mvn/version "0.1.1"}
-        clojure.java-time {:mvn/version "0.3.2"}}
+        clojure.java-time {:mvn/version "0.3.2"}
+        reagent {:mvn/version "0.8.1"}
+        ring {:mvn/version "1.7.1"}
+        compojure {:mvn/version "1.6.1"}}
 
  :paths ["src" "test"]
 
  :aliases { ;; for starting nrepl clj & cljs servers for live development
-           :fig {:extra-paths [ "resources" "target"]
+           :fig {:extra-paths ["resources" "target"]
                  :extra-deps {com.bhauman/figwheel-main {:mvn/version "RELEASE"}}
                  :main-opts ["-m" "suitable.nrepl"]}}}
 
