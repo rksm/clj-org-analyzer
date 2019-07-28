@@ -22,7 +22,7 @@
   (GET "/" [] (response/resource-response "public/index.html"))
   (GET "/index.html" [] (response/redirect "/"))
   (GET "/bar" [] (/ 1 0))
-  (GET "/baz" [] (/ 1 0))
+  (GET "/baz" [] (pr-str {:hello "world"}))
   (route/resources "/" {:root "public"})
   (route/not-found "NOTFOUND "))
 
