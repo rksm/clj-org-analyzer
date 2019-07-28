@@ -9,6 +9,5 @@
 
  :aliases { ;; for starting nrepl clj & cljs servers for live development
            :fig {:extra-paths ["resources" "target"]
-                 :extra-deps {com.bhauman/figwheel-main {:mvn/version "RELEASE"}}
-                 :main-opts ["-m" "suitable.nrepl"]}}}
-
+                 :extra-deps {com.bhauman/figwheel-main {:mvn/version "RELEASE"}}}
+           :dirac {:extra-deps {binaryage/dirac {:mvn/version "RELEASE"}}}}}

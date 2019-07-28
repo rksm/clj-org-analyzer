@@ -1,6 +1,9 @@
 (ns org-analyzer.browser
   (:require [reagent.core :as r]
-            [reagent.ratom :refer [atom] :rename {atom ratom}]))
+            [reagent.ratom :refer [atom] :rename {atom ratom}]
+            dirac.runtime))
+
+(dirac.runtime/install!)
 
 (enable-console-print!)
 

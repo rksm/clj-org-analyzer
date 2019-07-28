@@ -7,16 +7,16 @@
             nrepl.core
             nrepl.server
             refactor-nrepl.middleware
-            [suitable.middleware :refer [wrap-complete]]))
+            [suitable.middleware :refer [wrap-complete]]
+            dirac.nrepl
+            dirac.agent))
+
+
+
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defonce clj-nrepl-server (atom nil))
-
-[cider.nrepl/cider-middleware
-cider.piggieback/wrap-cljs-repl
-refactor-nrepl.middleware/wrap-refactor
-suitable.middleware/wrap-complete]
 
 (defn start-clj-nrepl-server []
   (let [middlewares (map resolve cider.nrepl/cider-middleware)
@@ -32,12 +32,27 @@ suitable.middleware/wrap-complete]
 (defonce cljs-send-msg (atom nil))
 (defonce cljs-client (atom nil))
 (defonce cljs-client-session (atom nil))
+(defonce cljs-dirac-agent (atom nil))
+
+
+(defn start-dirac []
+  (reset! cljs-dirac-agent (dirac.agent/boot-now!
+                            ;;  OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL
+                            {:log-level                 "WARN"
+                             :max-boot-trials           10
+                             :initial-boot-delay        1000
+                             :delay-between-boot-trials 500
+                             :nrepl-server              {:host "localhost"
+                                                         :port 7889}
+                             :nrepl-tunnel              {:host "localhost"
+                                                         :port 8231}})))
 
 (defn start-cljs-nrepl-server []
   (let [middlewares (conj
                      (map resolve cider.nrepl/cider-middleware)
                      #'cider.piggieback/wrap-cljs-repl
-                     #'wrap-complete)
+                     #'wrap-complete
+                     #'dirac.nrepl/middleware)
         handler (apply nrepl.server/default-handler middlewares)]
     (reset! cljs-nrepl-server (nrepl.server/start-server :handler handler :port 7889)))
   (cl-format true "cljs nrepl server started~%"))
@@ -69,13 +84,13 @@ suitable.middleware/wrap-complete]
   (start-cljs-nrepl-client))
 
 (defn -main [& args]
-  (println "foooo?")
   (start-clj-nrepl-server)
   (start-cljs-nrepl-server)
+  (start-dirac))
 
   ;; (start-cljs-nrepl-client)
   ;; (cljs-send-eval "(require 'figwheel.main) (figwheel.main/start :fig)")
-  )
+
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -83,5 +98,4 @@ suitable.middleware/wrap-complete]
   (restart-cljs-server)
 
   ;; to start a figwheel repl when build is already running
-  (send-eval "(require 'figwheel.main.api) (figwheel.main.api/cljs-repl \"fig\")")
-  )
+  (send-eval "(require 'figwheel.main.api) (figwheel.main.api/cljs-repl \"fig\")"))
