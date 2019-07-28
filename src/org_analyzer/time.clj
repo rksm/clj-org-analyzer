@@ -46,30 +46,6 @@ Example:
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(defn compute-clock-duration [clock]
-  (let [{:keys [start end]} clock]
-    (duration start end) ))
-
-(defn sum-clock-duration [clocks]
-  (->> (filter :duration clocks)
-       (reduce (fn [^Duration sum ^Clock clock] (.plus sum (:duration clock)))
-               (duration 0))))
-
-(defn clocks-since [start-day clocks]
-  (->> clocks
-       (filter #(before? start-day (:start %)))
-       (sort-by :start)))
-
-(defn clocks-between [from-date to-date clocks]
-  (->> clocks
-       (filter #(let [{:keys [start]} %]
-                  (and (time/after? start from-date)
-                       (not= from-date start)
-                       (time/before? start to-date))))
-       (sort-by :start)))
-
-;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 (defn max-week-of-year [the-year]
   "Returns the max week number of `the-year`. Note: There might be a partial
   week after that!"
@@ -79,7 +55,7 @@ Example:
        (.rangeRefinedBy java.time.temporal.IsoFields/WEEK_OF_WEEK_BASED_YEAR)
        .getMaximum))
 
-(defn week-dates-between [start end]
+(defn week-dates-between [start end & {:keys [with-time] :or {with-time false}}]
   "Including start (as first) and end (as last) dates, returns a lazy seq for
   each week inbetween. Example:
   (map (partial time/format \"MM-dd eee\") (week-dates-between (local-date 2018 12 15) (local-date 2019 1 15)))
@@ -92,15 +68,23 @@ Example:
    ;;     \"01-15 Tue\") "
   (let [iter-start (-> start
                        (adjust (day-of-week :monday))
-                       (plus (weeks 1))
-                       (local-date-time 0 0))
+                       (plus (weeks 1)))
         iter-end (-> end
                      (adjust (day-of-week :monday))
-                     (plus (days 1))
-                     (local-date-time 0 0))]
+                     (plus (days 1)))
+        iter-start (if with-time (local-date-time iter-start 0 0) iter-start)
+        iter-end (if with-time (local-date-time iter-end 0 0) iter-end)]
     (->> (lazy-cat
           (cons start (take-while #(before? % iter-end) (time/iterate plus iter-start (weeks 1))))
           [end]))))
+
+(defn days-between [start end]
+  (lazy-cat
+   (take-while #(time/before? % end)
+               (time/iterate (comp #(local-date-time % 0 0) plus)
+                             start (days 1)))
+   [end]))
+
 
 (defn weeks-of-year [year]
   "Returns a non-lazy collection of week start dates of the given year."
@@ -124,3 +108,39 @@ Example:
         (if (before? new-week-start (plus last-day (days 1)))
           (recur new-week-start new-week-end (conj result {:days days-of-week :week week-no}))
           result)))))
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+(defn compute-clock-duration [clock]
+  (let [{:keys [start end]} clock]
+    (when end (duration start end))))
+
+(defn sum-clock-duration [clocks]
+  (->> (filter :duration clocks)
+       (reduce (fn [^Duration sum ^Clock clock] (.plus sum (:duration clock)))
+               (duration 0))))
+
+(defn clocks-since [start-day clocks]
+  (->> clocks
+       (filter #(before? start-day (:start %)))
+       (sort-by :start)))
+
+(defn clocks-between [from-date to-date clocks]
+  (->> clocks
+       (filter #(let [{:keys [start]} %]
+                  (and (time/after? start from-date)
+                       (not= from-date start)
+                       (time/before? start to-date))))
+       (sort-by :start)))
+
+(defn clock->each-day-clocks [{:keys [start end] :as clock}]
+  "Given a single clock, splits it into multiple clocks, all with the same
+  section but with :start :end times adapted so that each clock fits into a
+  single day."
+  (if (= (local-date start) (local-date end))
+    [clock] ; start / end on same day
+    (let [days (days-between start end)
+          paired (map vector days (drop 1 days))]
+      (map (fn [[start end]] (assoc clock :start start :end end)) paired))))
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

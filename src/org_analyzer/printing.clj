@@ -2,16 +2,10 @@
   (:require [clojure.pprint :refer [cl-format]]
             [clojure.string :as s]
             [java-time :as time :refer [local-date-time]]
-            org-analyzer.processing)
+            org-analyzer.processing
+            [org-analyzer.time :refer [compute-clock-duration]])
   (:import java.util.Locale
            org_analyzer.processing.Clock))
-
-;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-;; Clock
-(defmethod print-method Clock [{:keys [clock-string sections]} writer]
-  (cl-format writer "~a for \"~a\""
-             clock-string
-             (->> sections ((juxt first last)) (map :name) (apply format "(%s > %s)"))))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; various parts of org content
@@ -37,7 +31,7 @@
   (cl-format nil "CLOCK: [~a]~:[~;--~:*[~a]~]~:[~; =>  ~:*~a~]"
              (print-timestamp start)
              (some-> end print-timestamp)
-             (some-> duration print-duration)))
+             (-> clock compute-clock-duration print-duration)))
 
 (defn print-clock-location [{:keys [parents i] :as clock}]
   ;; (->> parents (map :name) (interpose "|") (apply str))
@@ -58,3 +52,11 @@
         mins (quot secs-left secs-in-one-min)
         mins-printed (if (and (zero? mins) (not (zero? (+ hours days)))) "" (cl-format nil "~d minute~:*~P" mins))]
     (s/join " " (keep not-empty [days-printed hours-printed mins-printed]))))
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+;; Clock
+
+(defmethod print-method Clock [{:keys [sections] :as clock} writer]
+  (cl-format writer "~a for \"~a\""
+             (print-clock clock)
+             (->> sections ((juxt first last)) (map :name) (apply format "(%s > %s)"))))
