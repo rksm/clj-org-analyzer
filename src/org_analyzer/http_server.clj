@@ -1,4 +1,4 @@
-(ns clj-org-analyzer.http_server
+(ns org-analyzer.http-server
   (:require [compojure.core :refer [defroutes GET]]
             [compojure.handler :as handler]
             [compojure.route :as route]
@@ -41,3 +41,5 @@
 (start-server)
 ;; (stop-server)
 
+(defn -main [& args]
+  (start-server))
