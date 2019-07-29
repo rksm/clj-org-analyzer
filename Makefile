@@ -13,4 +13,7 @@ http-server:
 cljs:
 	clojure -A:fig-prod
 
-.PHONY: nrepl chrome
+clean:
+	rm -rf target .cpcache
+
+.PHONY: nrepl chrome clean

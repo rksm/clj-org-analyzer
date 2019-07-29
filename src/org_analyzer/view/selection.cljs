@@ -1,6 +1,6 @@
-(ns org-analyzer.selection
-  (:require [org-analyzer.geo :refer [rect]]
-            [org-analyzer.dom :refer [mouse-position]]))
+(ns org-analyzer.view.selection
+  (:require [org-analyzer.view.geo :refer [rect]]
+            [org-analyzer.view.dom :refer [mouse-position]]))
 
 (def empty-rectangle-selection-state {:mousedown? false
                                       :start-pos nil

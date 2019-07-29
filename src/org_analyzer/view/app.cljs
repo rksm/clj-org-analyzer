@@ -1,12 +1,12 @@
-(ns org-analyzer.browser
+(ns org-analyzer.view.app
   (:require [reagent.core :as r]
             [reagent.ratom :refer [atom] :rename {atom ratom}]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]
             [cljs.pprint :refer [cl-format]]
             [clojure.string :refer [split lower-case join replace]]
-            [org-analyzer.dom :as dom]
-            [org-analyzer.selection :as sel]
+            [org-analyzer.view.dom :as dom]
+            [org-analyzer.view.selection :as sel]
             [clojure.set :refer [union]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
@@ -15,12 +15,6 @@
 (declare on-key-down-global)
 (declare on-key-up-global)
 (declare state)
-
-;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-(enable-console-print!)
-
-(println "running")
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
@@ -252,10 +246,3 @@
    [reload-button]
    [:div [calendar-view @(:clocks state) @(:calendar state)]]
    [:div [current-day @(:hovered-over-day state)]]])
-
-(defn start []
-  (r/render [app]
-            (js/document.querySelector "#app"))
-  (fetch-data))
-
-(start)

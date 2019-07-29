@@ -1,6 +1,6 @@
 ^{:hot-reload-cljs false
   :open-url false}
-{:main org-analyzer.browser
+{:main org-analyzer.view.main
  :output-to "target/public/cljs-out/main.js"
  :output-dir "target/public/cljs-out/prod"
  :optimizations :advanced}

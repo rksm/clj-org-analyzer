@@ -5,6 +5,6 @@
   :reload-clj-files #{:clj :cljc}
   :cljs-devtools true
   :ansi-color-output true}
-{:main org-analyzer.browser
+{:main org-analyzer.view.main
  :output-to "target/public/cljs-out/main.js"
  :output-dir "target/public/cljs-out/dev"}

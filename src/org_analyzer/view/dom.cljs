@@ -1,4 +1,4 @@
-(ns org-analyzer.dom)
+(ns org-analyzer.view.dom)
 
 (defn el-bounds [el]
   (let [b-rect (.getBoundingClientRect el)]
