@@ -31,7 +31,7 @@
   (cl-format nil "CLOCK: [~a]~:[~;--~:*[~a]~]~:[~; =>  ~:*~a~]"
              (print-timestamp start)
              (some-> end print-timestamp)
-             (-> clock compute-clock-duration print-duration)))
+             (some-> duration print-duration)))
 
 (defn print-clock-location [{:keys [parents i] :as clock}]
   ;; (->> parents (map :name) (interpose "|") (apply str))

@@ -137,10 +137,33 @@ Example:
   "Given a single clock, splits it into multiple clocks, all with the same
   section but with :start :end times adapted so that each clock fits into a
   single day."
-  (if (= (local-date start) (local-date end))
+  (if (or (not end) (= (local-date start) (local-date end)))
     [clock] ; start / end on same day
     (let [days (days-between start end)
           paired (map vector days (drop 1 days))]
-      (map (fn [[start end]] (assoc clock :start start :end end)) paired))))
+      (map (fn [[start end]] (assoc clock :start start :end end :duration (duration start end))) paired))))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+(defn- simple-calendar-day [date]
+  {:date (time/format "yyyy-MM-dd" date)
+   :dow (as date :day-of-week)
+   :dow-name (time/format "cccc" date)
+   :week (as date :week-of-week-based-year)
+   :month (time/format "LLLL" date)})
+
+
+(defn calendar
+  ([]
+   (calendar (local-date)))
+  ([date]
+   (calendar (adjust date :first-day-of-year) (adjust date :last-day-of-year)))
+  ([from-date to-date]
+   (let [from-date (adjust from-date (day-of-week :monday))
+         to-date (adjust (plus to-date (days 1)) (day-of-week :monday))
+         n-days (time/time-between from-date to-date :days)]
+     (map simple-calendar-day (take n-days (time/iterate plus from-date (days 1)))))))
+
+#_(clojure.pprint/cl-format
+   true "~{~a~^~%~}~%"
+   (map (juxt :date :dow-name) (calendar (local-date "2019-07-05") (local-date "2019-07-15"))))

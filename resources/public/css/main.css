@@ -1,0 +1,135 @@
+.app {
+  display: flex;
+  flex-direction: column;
+}
+.calendar {
+  font-size: small;
+  overflow: auto;
+  outline: 1px solid gray;
+  padding: 5px;
+  display: grid;
+  grid-template-columns: repeat(12, min-content);
+  grid-row-gap: 20px;
+  grid-column-gap: 5px;
+}
+.calendar .month {
+  display: flex;
+  align-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  width: calc(90px);
+}
+.calendar .month.january {
+  grid-column-start: 1;
+  grid-column-end: 2;
+}
+.calendar .month.february {
+  grid-column-start: 2;
+  grid-column-end: 3;
+}
+.calendar .month.march {
+  grid-column-start: 3;
+  grid-column-end: 4;
+}
+.calendar .month.april {
+  grid-column-start: 4;
+  grid-column-end: 5;
+}
+.calendar .month.may {
+  grid-column-start: 5;
+  grid-column-end: 6;
+}
+.calendar .month.june {
+  grid-column-start: 6;
+  grid-column-end: 7;
+}
+.calendar .month.july {
+  grid-column-start: 7;
+  grid-column-end: 8;
+}
+.calendar .month.august {
+  grid-column-start: 8;
+  grid-column-end: 9;
+}
+.calendar .month.september {
+  grid-column-start: 9;
+  grid-column-end: 10;
+}
+.calendar .month.october {
+  grid-column-start: 10;
+  grid-column-end: 11;
+}
+.calendar .month.november {
+  grid-column-start: 11;
+  grid-column-end: 12;
+}
+.calendar .month.december {
+  grid-column-start: 12;
+  grid-column-end: 13;
+}
+.calendar .weeks {
+  display: flex;
+  flex-direction: row;
+}
+.calendar .week:first-child {
+  align-self: flex-end;
+}
+.calendar .week {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.calendar .week .week-name {
+  margin: 5px;
+}
+.calendar .day {
+  outline: 1px solid lightgray;
+  width: 15px;
+  height: 15px;
+}
+.calendar .day.selected {
+  border: 3px solid orange;
+  box-sizing: border-box;
+}
+.calendar .day.emph-0 {
+  background-color: none;
+}
+.calendar .day.emph-1 {
+  background-color: rgba(0, 255, 100, 0.1);
+}
+.calendar .day.emph-2 {
+  background-color: rgba(0, 255, 100, 0.2);
+}
+.calendar .day.emph-3 {
+  background-color: rgba(0, 255, 100, 0.3);
+}
+.calendar .day.emph-4 {
+  background-color: rgba(0, 255, 100, 0.4);
+}
+.calendar .day.emph-5 {
+  background-color: rgba(0, 255, 100, 0.5);
+}
+.calendar .day.emph-6 {
+  background-color: rgba(0, 255, 100, 0.6);
+}
+.calendar .day.emph-7 {
+  background-color: rgba(0, 255, 100, 0.7);
+}
+.calendar .day.emph-8 {
+  background-color: rgba(0, 255, 100, 0.8);
+}
+.calendar .day.emph-9 {
+  background-color: rgba(0, 255, 100, 0.9);
+}
+.calendar .day.emph-10 {
+  background-color: #00ff64;
+}
+.day-detail > div {
+  margin: 10px;
+}
+.day-detail .date {
+  font-weight: bold;
+}
+.day-detail .duration {
+  margin-right: 1ex;
+}

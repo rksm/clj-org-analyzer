@@ -28,6 +28,9 @@
 
   (def clocks (mapcat (comp find-clocks parse-and-zip) org-files))
 
+
+  (count (clocks-between (minus (local-date-time) (days 3)) (local-date-time) clocks))
+
   (print-duration (sum-clock-duration (take 5 clocks)))
 
   ;; report / list past weeks
