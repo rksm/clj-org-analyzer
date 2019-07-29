@@ -76,24 +76,6 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(defn on-mouse-over-day [{:keys [day clocks] :as evt}]
-  (reset! (:hovered-over-day state) evt)
-  (reset! event evt))
-
-
-(defn on-mouse-out-day [{:keys [day clocks] :as evt}]
-  (reset! (:hovered-over-day state) nil)
-  ;(reset! event evt)
-  )
-
-(defn on-click-day [{:keys [day clocks] :as evt}]
-  (let [selected-day (some-> state :selected-day deref :day)]
-    (reset! (:selected-day state)
-            (if (and selected-day (= day selected-day)) nil evt)))
-  (reset! event evt))
-
-;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 (def org-link-re #"(.*)\[\[([^\]]+)\]\[([^\]]+)\]\](.*)")
 
 (defn parse-org-link [string i]
@@ -126,11 +108,57 @@
       js/Math.round
       ((partial str "emph-"))))
 
+
+(defn on-mouse-over-day [{:keys [day clocks] :as evt}]
+  (reset! (:hovered-over-day state) evt)
+  (reset! event evt))
+
+
+(defn on-mouse-out-day [{:keys [day clocks] :as evt}]
+  (reset! (:hovered-over-day state) nil)
+  ;(reset! event evt)
+  )
+
+(defn on-click-day [day]
+  (println day)
+  (let [selected-day (some-> state :selected-day deref)]
+    (println selected-day)
+    (reset! (:selected-day state)
+            (if (and selected-day (= day selected-day)) nil day))))
+
+
+(defn day-view [{:keys [date] :as day} {:keys [clocks-by-day selected-day sum-clocks-fn max-weight] :as calendar-state}]
+  (let [clocks (get clocks-by-day date)
+        selected? (= selected-day day)]
+    [:div.day {:key date
+               :class [(emph-css-class
+                        (sum-clocks-fn clocks)
+                        max-weight) (if selected? "selected")]
+               :on-mouse-over #(on-mouse-over-day {:day day :clocks clocks})
+               :on-mouse-out #(on-mouse-out-day {:day day :clocks clocks})
+               :on-click #(on-click-day day)}]))
+
+(defn week-view [week calendar-state]
+  (let [week-date (:date (first week))]
+    [:div.week {:key week-date}
+     (map #(day-view % calendar-state) week)]))
+
+
+(defn month-view [[date days-in-month] calendar-state]
+  [:div.month {:key date
+               :class (lower-case (:month (first days-in-month)))}
+   date
+   [:div.weeks (map #(week-view % calendar-state) (weeks days-in-month))]])
+
+
 (defn calendar-view [clocks calendar]
   (let [clocks-by-day (group-by (comp date-string :start) clocks)
         sum-clocks-fn @(:sum-clocks-fn state)
-        max-entries (reduce max (map (comp sum-clocks-fn second) clocks-by-day))
-        {selected-day :day} @(:selected-day state)]
+        max-weight (reduce max (map (comp sum-clocks-fn second) clocks-by-day))
+        calendar-state {:max-weight max-weight
+                        :sum-clocks-fn sum-clocks-fn
+                        :clocks-by-day clocks-by-day
+                        :selected-day @(:selected-day state)}]
 
     (let [by-month (into (sorted-map) (group-by
                                        (comp
@@ -140,28 +168,7 @@
                                         :date)
                                        calendar))]
       [:div.calendar
-       (for [[date days-in-month] by-month]
-         [:div.month {:key date
-                      :class (lower-case (:month (first days-in-month)))}
-          date
-          [:div.weeks (for [week (weeks ;calendar
-                                  days-in-month)]
-                        (let [week-date (:date (first week))]
-                          [:div.week
-                           {:key week-date}
-                           ;; [:p.week-name week-date]
-                           (for [{:keys [date] :as day} week
-                                 :let [clocks (get clocks-by-day date)
-                                       selected? (= selected-day day)]]
-                             [:div.day {:key date
-                                        :class [(emph-css-class
-                                                 (sum-clocks-fn clocks)
-                                                 max-entries) (if selected? "selected")]
-                                        :on-mouse-over #(on-mouse-over-day {:day day :clocks clocks})
-                                        :on-mouse-out #(on-mouse-out-day {:day day :clocks clocks})
-                                        :on-click #(on-click-day {:day day :clocks clocks})}
-                              ;; (count (get clocks-by-day date))
-                              ])]))]])])))
+       (map #(month-view % calendar-state) by-month)])))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
