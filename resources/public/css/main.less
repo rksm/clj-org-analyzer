@@ -1,15 +1,32 @@
 @day-width : 15px;
 
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.selection {
+    pointer-events: none;
+    position: absolute;
+    background-color: rgba(100, 100, 100, .3);
+}
+
 .app {
     display: flex;
     flex-direction: column;
 }
 
 .calendar {
+    position: relative;
+
     font-size: small;
     overflow: auto;
     outline: 1px solid gray;
-    padding: 5px;
+    padding: 15px;
 
     display: grid;
     grid-template-columns: repeat(12, min-content);
@@ -59,13 +76,14 @@
     }
 
     .day {
+        cursor: pointer;
         outline: 1px solid lightgray;
         width: @day-width; height: 15px;
 
-        &.selected {
-            border: 3px solid orange;
-            box-sizing: border-box;
-        }
+        // &.selected {
+        //     border: 3px solid orange;
+        //     box-sizing: border-box;
+        // }
 
         &.emph-0 {background-color: none;}
         &.emph-1 {background-color: rgba(0,255,100, .1);}
@@ -78,6 +96,18 @@
         &.emph-8 {background-color: rgba(0,255,100, .8);}
         &.emph-9 {background-color: rgba(0,255,100, .9);}
         &.emph-10 {background-color: rgba(0,255,100, 1);}
+
+        &.selected.emph-0 {background-color: rgba(255,110,10, .3);}
+        &.selected.emph-1 {background-color: rgba(255,110,10, .3);}
+        &.selected.emph-2 {background-color: rgba(255,110,10, .3);}
+        &.selected.emph-3 {background-color: rgba(255,110,10, .3);}
+        &.selected.emph-4 {background-color: rgba(255,110,10, .4);}
+        &.selected.emph-5 {background-color: rgba(255,110,10, .5);}
+        &.selected.emph-6 {background-color: rgba(255,110,10, .6);}
+        &.selected.emph-7 {background-color: rgba(255,110,10, .7);}
+        &.selected.emph-8 {background-color: rgba(255,110,10, .8);}
+        &.selected.emph-9 {background-color: rgba(255,110,10, .9);}
+        &.selected.emph-10 {background-color: rgba(255,110,10, 1);}
     }
 
 }
