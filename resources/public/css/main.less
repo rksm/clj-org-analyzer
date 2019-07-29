@@ -1,4 +1,10 @@
-@day-width : 15px;
+.app {
+    display: flex;
+    flex-direction: column;
+    // position: absolute;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 .noselect {
     -webkit-touch-callout: none;
@@ -15,13 +21,12 @@
     background-color: rgba(100, 100, 100, .3);
 }
 
-.app {
-    display: flex;
-    flex-direction: column;
-}
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+@day-width : 15px;
 
 .calendar {
-    position: relative;
+    position: absolute;
 
     font-size: small;
     overflow: auto;

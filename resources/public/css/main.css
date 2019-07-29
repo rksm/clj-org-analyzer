@@ -1,3 +1,7 @@
+.app {
+  display: flex;
+  flex-direction: column;
+}
 .noselect {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -11,12 +15,8 @@
   position: absolute;
   background-color: rgba(100, 100, 100, 0.3);
 }
-.app {
-  display: flex;
-  flex-direction: column;
-}
 .calendar {
-  position: relative;
+  position: absolute;
   font-size: small;
   overflow: auto;
   outline: 1px solid gray;

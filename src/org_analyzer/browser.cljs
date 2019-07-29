@@ -5,9 +5,16 @@
             [cljs.core.async :refer [<!]]
             [cljs.pprint :refer [cl-format]]
             [clojure.string :refer [split lower-case join replace]]
-            [org-analyzer.dom-helpers :as dom])
-  (:require-macros [cljs.core.async.macros :refer [go]])
-  (:import [goog.async Debouncer]))
+            [org-analyzer.dom :as dom]
+            [org-analyzer.selection :as sel]
+            [clojure.set :refer [union]])
+  (:require-macros [cljs.core.async.macros :refer [go]]))
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+(declare on-key-down-global)
+(declare on-key-up-global)
+(declare state)
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -15,45 +22,8 @@
 
 (println "running")
 
-(defn date-string [^js/Date date]
-  (first (split (.toISOString date) \T)))
-
-(defn- weeks [days]
-  (loop [week [] weeks [] days days]
-    (if (empty? days)
-      (if (empty? week) weeks (conj weeks week))
-      (let [[day & days] days
-            week (conj week day)
-            sunday? (= 7 (:dow day))
-            weeks (if sunday? (conj weeks week) weeks)]
-        (recur (if sunday? [] week) weeks days)))))
-
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-(defn sum-clocks-mins [clocks]
-  (reduce + (for [{:keys [duration]} clocks]
-              (let [[hours mins] (map #(js/Number. %) (split duration ":"))
-                    result (+ (* 60 hours) mins)]
-                (if (js/isNaN result) 0 result)))))
-
-(defn sum-clocks-count [clocks]
-  (count clocks))
-
-#_(reset! (:sum-clocks-fn state) sum-clocks-mins)
-#_(reset! (:sum-clocks-fn state) sum-clocks-count)
-
-;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-(def event (atom nil))
-
-(def state {:sum-clocks-fn (ratom sum-clocks-mins)
-            :calendar (ratom nil)
-            :clocks (ratom [])
-            :hovered-over-day (ratom nil)
-            :selected-days (ratom #{})
-            :selected-days-preview (ratom #{})})
-
-;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+;; data
 
 (defn fetch-data []
   (let [from (pr-str (js/Date. "2000-01-01"))
@@ -69,7 +39,27 @@
                   (println "got calendar")
                   (reset! (:calendar state) body))))))))
 
-;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+(defn date-string [^js/Date date]
+  (first (split (.toISOString date) \T)))
+
+(defn- weeks [days]
+  (loop [week [] weeks [] days days]
+    (if (empty? days)
+      (if (empty? week) weeks (conj weeks week))
+      (let [[day & days] days
+            week (conj week day)
+            sunday? (= 7 (:dow day))
+            weeks (if sunday? (conj weeks week) weeks)]
+        (recur (if sunday? [] week) weeks days)))))
+
+(defn sum-clocks-mins [clocks]
+  (reduce + (for [{:keys [duration]} clocks]
+              (let [[hours mins] (map #(js/Number. %) (split duration ":"))
+                    result (+ (* 60 hours) mins)]
+                (if (js/isNaN result) 0 result)))))
+
+(defn sum-clocks-count [clocks]
+  (count clocks))
 
 (def org-link-re #"(.*)\[\[([^\]]+)\]\[([^\]]+)\]\](.*)")
 
@@ -94,6 +84,61 @@
         mins (- mins (* hours 60))]
     (cl-format nil "~d:~2,'0d" hours mins)))
 
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+;; state
+
+(defonce state {:sum-clocks-fn (ratom sum-clocks-mins)
+                :calendar (ratom nil)
+                :clocks (ratom [])
+                :hovered-over-day (ratom nil)
+                :selected-days (ratom #{})
+                :selected-days-preview (ratom #{})
+                :selecting? (ratom false)
+                :sel-rect (atom sel/empty-rectangle-selection-state)
+                :keys (atom {:shift-down? false
+                             :alt-down? false})
+                :dom-state (atom {:day-bounds {}})
+                :global-event-handlers (let [down #(on-key-down-global %)
+                                             up #(on-key-up-global %)]
+                                         (.addEventListener js/document "keydown" down)
+                                         (.addEventListener js/document "keyup" up)
+                                         (atom {:key-down down :key-up up}))})
+
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+;; global events
+
+(defn on-key-down-global [evt]
+  (when (= "Alt" (.-key evt)) (swap! (:keys state) assoc :alt-down? true))
+  (when (= "Shift" (.-key evt)) (swap! (:keys state) assoc :shift-down? true)))
+
+(defn on-key-up-global [evt]
+  (when (= "Alt" (.-key evt)) (swap! (:keys state) assoc :alt-down? false))
+  (when (= "Shift" (.-key evt)) (swap! (:keys state) assoc :shift-down? false)))
+
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+;; rectangle selection helpers
+(defn- mark-days-as-potentially-selected [sel-state]
+  (let [{:keys [left top width height]} (:global-bounds sel-state)
+        contained (into #{} (for [[day {l :left t :top r :right b :bottom}]
+                                  (-> state :dom-state deref :day-bounds)
+                                  :when (and (<= left l)
+                                             (<= top t)
+                                             (>= (+ left width) r)
+                                             (>= (+ top height) b))]
+                              day))]
+    (reset! (:selected-days-preview state) contained)))
+
+(defn- commit-potentially-selected []
+  (let [selected (if (-> state :keys deref :shift-down?)
+                   (union @(:selected-days-preview state)
+                          @(:selected-days state))
+                   @(:selected-days-preview state))]
+    (reset! (:selected-days-preview state) #{})
+    (reset! (:selected-days state) selected)))
+
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defn- emph-css-class [count max-count]
@@ -103,27 +148,21 @@
       js/Math.round
       ((partial str "emph-"))))
 
-
 (defn on-mouse-over-day [{:keys [day clocks] :as evt}]
-  (reset! (:hovered-over-day state) evt))
+  (when (not @(:selecting? state))
+    (reset! (:hovered-over-day state) evt)))
 
 
 (defn on-mouse-out-day [{:keys [day clocks] :as evt}]
-  (reset! (:hovered-over-day state) nil)
-  ;(reset! event evt)
-  )
-
-;; (.- @event)
+  (reset! (:hovered-over-day state) nil))
 
 (defn on-click-day [evt day]
-  (reset! event evt)
-  (let [add-selection? (.-shiftKey evt)]
+  (let [add-selection? (-> state :keys deref :shift-down?)]
     (swap! (:selected-days state) (fn [selected-days]
                                     (cond
                                       (and add-selection? (selected-days day)) (disj selected-days day)
                                       add-selection? (conj selected-days day)
                                       :else #{day})))))
-
 
 (defn day-view [{:keys [date] :as day} {:keys [clocks-by-day selected-days sum-clocks-fn max-weight] :as calendar-state}]
   (let [clocks (get clocks-by-day date)
@@ -133,6 +172,10 @@
                :class [(emph-css-class
                         (sum-clocks-fn clocks)
                         max-weight) (if selected? "selected")]
+               :ref (fn [el]
+                      (if el
+                        (swap! (:dom-state state) #(update % :day-bounds assoc day (dom/el-bounds el)))
+                        (swap! (:dom-state state) #(update % :day-bounds dissoc day))))
                :on-mouse-over #(on-mouse-over-day {:day day :clocks clocks})
                :on-mouse-out #(on-mouse-out-day {:day day :clocks clocks})
                :on-click #(on-click-day % day)}]))
@@ -148,63 +191,6 @@
                :class (lower-case (:month (first days-in-month)))}
    date
    [:div.weeks (map #(week-view % calendar-state) (weeks days-in-month))]])
-
-(comment
-  
-  {:left 1065, :top 19, :width 72, :height 126}
- {:left 1105.5, :top 131.875, :right 1120.5, :bottom 146.875, :width 15, :height 15}
- (-> state :calendar deref first :date)
-
- (-> (js/document.querySelector "#calendar") .-offsetLeft)
- (-> (js/document.querySelector "#calendar") .-offsetTop)
- (-> (js/document.querySelector "#calendar") dom/el-bounds)
- (-> (js/document.querySelector ".day") .-id)
- (-> (js/document.querySelector ".day") dom/el-bounds)
-
- )
-
-
-;; (defn debounce [f interval]
-;;   (let [dbnc (Debouncer. f interval)]
-;;     ;; We use apply here to support functions of various arities
-;;     (fn [& args] (.apply (.-fire dbnc) dbnc (to-array args)))))
-
-;; (def deb (debounce #(reset! (-> %1 :selected-days-preview) (set %2)) 10))
-
-
-(defn mark-days-as-potentially-selected [drag-state]
-  (let [{:keys [days]} drag-state
-        {:keys [left top width height]} (dom/selection-rectangle drag-state)
-        offset-parent (js/document.querySelector "#calendar")
-        offset-x (.-offsetLeft offset-parent)
-        offset-y (.-offsetTop offset-parent)
-        left (+ left offset-x)
-        top (+ top offset-y)
-        contained (apply concat (for [el (js/Array.from (js/document.querySelectorAll ".day"))
-                                      :let [{l :left t :top r :right b :bottom} (dom/el-bounds el)]
-                                      :when (and (< left l)
-                                                 (< top t)
-                                                 (> (+ left width) r)
-                                                 (> (+ top height) b))]
-                                  (do
-                                        ;(println (filter (comp #{(.-id el)} :date) (-> state :calendar deref)))
-                                    (filter (comp #{(.-id el)} :date) (-> state :calendar deref))
-                                    )
-                                        ;(prn [left top width height] [l t w h] clocks-by-day)
-                                        ;(js/console.log el)
-                                  ))]
-
-    (reset! (-> state :selected-days-preview) (set contained))
-
-    ))
-
-(def empty-drag-state (assoc dom/empty-drag-state
-                             :on-selection-change mark-days-as-potentially-selected))
-
-
-(def drag-state (ratom empty-drag-state))
-
-(def last-evt (atom nil))
 
 (defn calendar-view [clocks calendar]
   (let [clocks-by-day (group-by (comp date-string :start) clocks)
@@ -226,11 +212,15 @@
                                         #(split % "-")
                                         :date)
                                        calendar))]
-      (swap! drag-state assoc :days calendar)
       [:div.calendar
-       (dom/drag-mouse-handlers "calendar" drag-state)
-       (when (:mousedown? @drag-state)
-         [:div.selection {:style (dom/selection-rectangle @drag-state)}])
+       (sel/drag-mouse-handlers (:sel-rect state)
+                                :on-selection-start #(reset! (:selecting? state) true)
+                                :on-selection-end #(do
+                                                     (reset! (:selecting? state) false)
+                                                     (commit-potentially-selected))
+                                :on-selection-change mark-days-as-potentially-selected)
+       (when @(:selecting? state)
+         [:div.selection {:style (:relative-bounds @(:sel-rect state))}])
        (map #(month-view % calendar-state) by-month)])))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -261,9 +251,7 @@
   [:div.app.noselect
    [reload-button]
    [:div [calendar-view @(:clocks state) @(:calendar state)]]
-   [:div [current-day @(:hovered-over-day state)]]
-   ;[:div [current-day (or @(:hovered-over-day state) @(:selected-days state))]]
-   ])
+   [:div [current-day @(:hovered-over-day state)]]])
 
 (defn start []
   (r/render [app]
@@ -271,93 +259,3 @@
   (fetch-data))
 
 (start)
-
-
-
-;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-;; (def dragged (atom nil))
-
-;; (cljs.core/add-watch dragged :drag-watcher (fn [key ref old-state new-state] (println "dragged changed")))
-
-;; (defn on-drag [evt]
-;;   (println "on-drag"))
-;; (defn on-drag-start [evt]
-;;   (println "on-drag-start")
-;;   (reset! dragged (.-target evt))
-;;   (set! (.. evt -target -style -opacity) .5))
-;; (defn on-drag-end [evt]
-;;   (println "on-drag-end")
-;;   (set! (.. evt -target -style -opacity) "")
-;;   (reset! dragged nil)
-;;   )
-;; (defn on-drag-over [evt]
-;;   (println "on-drag-over"))
-;; (defn on-drag-enter [evt]
-;;   (println "on-drag-enter"))
-;; (defn on-drag-leave [evt]
-;;   (println "on-drag-leave"))
-;; (defn on-drop [evt]
-;;   (println "on-drop"))
-
-
-;; (.addEventListener js/document.body "drag"      on-drag)
-;; (.addEventListener js/document.body "dragstart" on-drag-start)
-;; (.addEventListener js/document.body "dragend"   on-drag-end)
-;; (.addEventListener js/document.body "dragover"  on-drag-over)
-;; (.addEventListener js/document.body "dragenter" on-drag-enter)
-;; (.addEventListener js/document.body "dragleave" on-drag-leave)
-;; (.addEventListener js/document.body "drop"      on-drop)
-
-
-
-
-  ;; /* Event wird vom ge-drag-ten Element ausgelöst */
-  ;; document.addEventListener("drag", function( event ) {
-
-  ;; }, false);
-
-  ;; document.addEventListener("dragstart", function( event ) {
-  ;;     // Speichern einer ref auf das drag-bare Element
-  ;;     dragged = event.target;
-  ;;     // Element halb-transparent machen
-  ;;     event.target.style.opacity = .5;
-  ;; }, false);
-
-  ;; document.addEventListener("dragend", function( event ) {
-  ;;     // Transparenz zurücksetzen
-  ;;     event.target.style.opacity = "";
-  ;; }, false);
-
-  ;; /* events fired on the drop targets */
-  ;; document.addEventListener("dragover", function( event ) {
-  ;;     // Standard-Aktion verhindern um das drop-Event zu erlauben
-  ;;     event.preventDefault();
-  ;; }, false);
-
-  ;; document.addEventListener("dragenter", function( event ) {
-  ;;     // Hintergrund des möglichen Drop-Zeils anfärben, wenn das drag-bare Element auf das Ziel gezogen wird
-  ;;     if ( event.target.className == "dropzone" ) {
-  ;;         event.target.style.background = "purple";
-  ;;     }
-
-  ;; }, false);
-
-  ;; document.addEventListener("dragleave", function( event ) {
-  ;;     // Hintergrund des möglichen Drop-Ziels, wenn das drag-bare Element vom Ziel wieder weggezogen wird / verlässt
-  ;;     if ( event.target.className == "dropzone" ) {
-  ;;         event.target.style.background = "";
-  ;;     }
-  ;; }, false);
-
-  ;; document.addEventListener("drop", function( event ) {
-  ;;     // Standard-Aktion verhindern (Bei einigen Elementen wäre das das Öffnen als Link)
-  ;;     event.preventDefault();
-  ;;     // move dragged elem to the selected drop target
-  ;;     if ( event.target.className == "dropzone" ) {
-  ;;         event.target.style.background = "";
-  ;;         dragged.parentNode.removeChild( dragged );
-  ;;         event.target.appendChild( dragged );
-  ;;     }
-    
-  ;; }, false);
