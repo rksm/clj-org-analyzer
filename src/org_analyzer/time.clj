@@ -150,7 +150,8 @@ Example:
    :dow (as date :day-of-week)
    :dow-name (time/format "cccc" date)
    :week (as date :week-of-week-based-year)
-   :month (time/format "LLLL" date)})
+   :month (time/format "LLLL" date)
+   :year (as date :year)})
 
 
 (defn calendar

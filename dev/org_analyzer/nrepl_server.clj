@@ -69,7 +69,6 @@ suitable.middleware/wrap-complete]
   (start-cljs-nrepl-client))
 
 (defn -main [& args]
-  (println "foooo?")
   (start-clj-nrepl-server)
   (start-cljs-nrepl-server)
 

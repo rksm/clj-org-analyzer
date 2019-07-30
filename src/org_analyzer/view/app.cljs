@@ -19,20 +19,6 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
 
-(defn fetch-data []
-  (let [from (pr-str (js/Date. "2000-01-01"))
-        to (pr-str (js/Date.))]
-
-    (go (let [response (<! (http/get "/clocks" {:query-params {:from from :to to :by-day? true}}))
-              body (cljs.reader/read-string {:readers {'inst #(js/Date. %)}} (:body response))]
-          (println "got clocks")
-          (reset! (:clocks state) body)
-          (let [from (pr-str (:start (first @(:clocks state))))]
-            (go (let [response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
-                      body (cljs.reader/read-string (:body response))]
-                  (println "got calendar")
-                  (reset! (:calendar state) body))))))))
-
 (defn date-string [^js/Date date]
   (first (split (.toISOString date) \T)))
 
@@ -72,19 +58,30 @@
       (recur (concat parsed rest) (+ i (count parsed)))
       (concat [[:span attrs string]] rest))))
 
-
 (defn print-duration-mins [mins]
   (let [hours (quot mins 60)
         mins (- mins (* hours 60))]
     (cl-format nil "~d:~2,'0d" hours mins)))
 
+(defn fetch-data []
+  (let [from (pr-str (js/Date. "2000-01-01"))
+        to (pr-str (js/Date.))]
+
+    (go (let [response (<! (http/get "/clocks" {:query-params {:from from :to to :by-day? true}}))
+              clocks (cljs.reader/read-string {:readers {'inst #(js/Date. %)}} (:body response))]
+          (println "got clocks")
+          (reset! (:clocks-by-day state) (group-by (comp date-string :start) clocks))
+          (let [from (pr-str (:start (first clocks)))]
+            (go (let [response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
+                      body (cljs.reader/read-string (:body response))]
+                  (println "got calendar")
+                  (reset! (:calendar state) body))))))))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; state
 
-(defonce state {:sum-clocks-fn (ratom sum-clocks-mins)
-                :calendar (ratom nil)
-                :clocks (ratom [])
+(defonce state {:calendar (ratom nil)
+                :clocks-by-day (ratom {})
                 :hovered-over-day (ratom nil)
                 :selected-days (ratom #{})
                 :selected-days-preview (ratom #{})
@@ -98,7 +95,6 @@
                                          (.addEventListener js/document "keydown" down)
                                          (.addEventListener js/document "keyup" up)
                                          (atom {:key-down down :key-up up}))})
-
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; global events
@@ -125,7 +121,7 @@
                               day))]
     (reset! (:selected-days-preview state) contained)))
 
-(defn- commit-potentially-selected []
+(defn- commit-potentially-selected! []
   (let [selected (if (-> state :keys deref :shift-down?)
                    (union @(:selected-days-preview state)
                           @(:selected-days state))
@@ -142,62 +138,77 @@
       js/Math.round
       ((partial str "emph-"))))
 
-(defn on-mouse-over-day [{:keys [day clocks] :as evt}]
+(defn on-mouse-over-day [date]
   (when (not @(:selecting? state))
-    (reset! (:hovered-over-day state) evt)))
+    (reset! (:hovered-over-day state) date)))
 
-
-(defn on-mouse-out-day [{:keys [day clocks] :as evt}]
+(defn on-mouse-out-day []
   (reset! (:hovered-over-day state) nil))
 
-(defn on-click-day [evt day]
+(defn on-click-day [evt date]
   (let [add-selection? (-> state :keys deref :shift-down?)]
     (swap! (:selected-days state) (fn [selected-days]
                                     (cond
-                                      (and add-selection? (selected-days day)) (disj selected-days day)
-                                      add-selection? (conj selected-days day)
-                                      :else #{day})))))
+                                      (and add-selection? (selected-days date)) (disj selected-days date)
+                                      add-selection? (conj selected-days date)
+                                      :else #{date})))))
 
-(defn day-view [{:keys [date] :as day} {:keys [clocks-by-day selected-days sum-clocks-fn max-weight] :as calendar-state}]
+(defn day-view [{:keys [date]} {:keys [clocks-by-day selected-days max-weight] :as calendar-state}]
   (let [clocks (get clocks-by-day date)
-        selected? (selected-days day)]
+        selected? (selected-days date)]
     [:div.day {:key date
                :id date
                :class [(emph-css-class
-                        (sum-clocks-fn clocks)
+                        (sum-clocks-mins clocks)
                         max-weight) (if selected? "selected")]
                :ref (fn [el]
                       (if el
-                        (swap! (:dom-state state) #(update % :day-bounds assoc day (dom/el-bounds el)))
-                        (swap! (:dom-state state) #(update % :day-bounds dissoc day))))
-               :on-mouse-over #(on-mouse-over-day {:day day :clocks clocks})
-               :on-mouse-out #(on-mouse-out-day {:day day :clocks clocks})
-               :on-click #(on-click-day % day)}]))
+                        (swap! (:dom-state state) #(update % :day-bounds assoc date (dom/el-bounds el)))
+                        (swap! (:dom-state state) #(update % :day-bounds dissoc date))))
+               :on-mouse-over (partial on-mouse-over-day date)
+               :on-mouse-out on-mouse-out-day
+               :on-click #(on-click-day % date)}]))
+
+(defn on-click-week [evt week-no days]
+  (let [dates (into #{} (map :date days))
+        add-selection? (-> state :keys deref :shift-down?)]
+    (swap! (:selected-days state) (fn [selected-days]
+                                    (cond
+                                      add-selection? (union selected-days dates)
+                                      :else dates)))))
 
 (defn week-view [week calendar-state]
-  (let [week-date (:date (first week))]
+  (let [[{week-date :date week-no :week}] week]
     [:div.week {:key week-date}
+     [:div.week-no {:on-click #(on-click-week % week-no week)} [:span week-no]]
      (map #(day-view % calendar-state) week)]))
 
+
+(defn on-click-month [evt days]
+  (let [dates (into #{} (map :date days))
+        add-selection? (-> state :keys deref :shift-down?)]
+    (swap! (:selected-days state) (fn [selected-days]
+                                    (cond
+                                      add-selection? (union selected-days dates)
+                                      :else dates)))))
 
 (defn month-view [[date days-in-month] calendar-state]
   [:div.month {:key date
                :class (lower-case (:month (first days-in-month)))}
-   date
+   [:div.month-date {:on-click #(on-click-month % days-in-month)} [:span date]]
    [:div.weeks (map #(week-view % calendar-state) (weeks days-in-month))]])
 
-(defn calendar-view [clocks calendar]
-  (let [clocks-by-day (group-by (comp date-string :start) clocks)
-        sum-clocks-fn @(:sum-clocks-fn state)
-        max-weight (reduce max (map (comp sum-clocks-fn second) clocks-by-day))
+(defn calendar-view
+  [& {:keys [clocks-by-day
+             calendar
+             selected-days
+             selected-days-preview
+             selecting?
+             sel-rect]}]
+  (let [max-weight (reduce max (map (comp sum-clocks-mins second) clocks-by-day))
         calendar-state {:max-weight max-weight
-                        :sum-clocks-fn sum-clocks-fn
                         :clocks-by-day clocks-by-day
-                        :selected-days
-                        (clojure.set/union @(:selected-days state)
-                                           @(:selected-days-preview state))
-                        }]
-
+                        :selected-days (union selected-days selected-days-preview)}]
 
     (let [by-month (into (sorted-map) (group-by
                                        (comp
@@ -211,23 +222,24 @@
                                 :on-selection-start #(reset! (:selecting? state) true)
                                 :on-selection-end #(do
                                                      (reset! (:selecting? state) false)
-                                                     (commit-potentially-selected))
+                                                     (commit-potentially-selected!))
                                 :on-selection-change mark-days-as-potentially-selected)
-       (when @(:selecting? state)
-         [:div.selection {:style (:relative-bounds @(:sel-rect state))}])
+       (when selecting?
+         [:div.selection {:style (:relative-bounds sel-rect)}])
        (map #(month-view % calendar-state) by-month)])))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(defn current-day [{:keys [day clocks]}]
-  (if (empty? clocks)
+(defn selected-day [date clocks-by-day]
+  (if (nil? date)
     nil
-    (let [location-durations (reverse
+    (let [clocks (get clocks-by-day date)
+          location-durations (reverse
                               (sort-by second
                                        (map (fn [[a b]] [a (sum-clocks-mins b)])
                                             (group-by :location clocks))))]
       [:div.day-detail
-       [:div.date (str (:date day))]
+       [:div.date date]
        [:div.hours (print-duration-mins (apply + (map second location-durations)))]
        [:div.clock-list
         (for [[location duration] location-durations]
@@ -235,14 +247,77 @@
            [:span.duration (print-duration-mins duration)]
            (parse-all-org-links location)])]])))
 
+
+(defn analyze-clocks [days clocks-by-day]
+  (letfn [(clocks-avg [clocks-by-sth]
+            (print-duration-mins
+             (quot (->> clocks-by-sth
+                        (map (comp sum-clocks-mins second))
+                        (apply +))
+                   (count clocks-by-sth))))]
+    (let [weeks (group-by #(str (:year %) "-" (:week %)) days)
+          clocks-by-week (into {} (for [[week-id days] weeks
+                                        :let [clocks (apply concat (map
+                                                                    #(get clocks-by-day (:date %))
+                                                                    days))]]
+                                    [week-id clocks]))]
+      {:average-day-duration (clocks-avg clocks-by-day)
+       :average-week-duration (clocks-avg clocks-by-week)
+       :n-weeks (count weeks)})))
+
+
+(defn selected-days [dates clocks-by-day calendar]
+  ;; (sc.api/spy)
+  (let [clocks-by-day (select-keys clocks-by-day dates)
+        clocks (apply concat (vals clocks-by-day))
+        location-durations (reverse
+                            (sort-by second
+                                     (map (fn [[a b]] [a (sum-clocks-mins b)])
+                                          (group-by :location clocks))))
+        duration (sum-clocks-mins clocks)
+        days (filter #(-> % :date dates) calendar)
+        {:keys [average-day-duration
+                average-week-duration
+                n-weeks]} (analyze-clocks days clocks-by-day)]
+    [:div.day-detail
+     [:div.date
+      (cl-format nil "~d days over ~d week~:*~P selected" (count dates) n-weeks)]
+     [:div (str "Average time per week: " average-week-duration)]
+     [:div (str "Average time per day: " average-day-duration)]
+     [:div.hours (str "Entire time: " (print-duration-mins duration))]
+     [:div (cl-format nil "~d activit~:*~[ies~;y~:;ies~]" (count location-durations))]
+     [:div.clock-list
+      (for [[location duration] location-durations]
+        [:div.activity {:key location}
+         [:span.duration (print-duration-mins duration)]
+         (parse-all-org-links location)])]]))
+
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(defn reload-button []
-  [:input {:type "button" :value "reload" :on-click fetch-data}])
+(defn controls []
+  [:div.controls
+   [:input {:type "button" :value "reload" :on-click fetch-data}]])
 
 
 (defn app []
   [:div.app.noselect
-   [reload-button]
-   [:div [calendar-view @(:clocks state) @(:calendar state)]]
-   [:div [current-day @(:hovered-over-day state)]]])
+   [controls]
+   [:div [calendar-view
+          :calendar @(:calendar state)
+          :clocks-by-day @(:clocks-by-day state)
+          :selected-days @(:selected-days state)
+          :selected-days-preview @(:selected-days-preview state)
+          :selecting? @(:selecting? state)
+          :sel-rect @(:sel-rect state)]]
+
+   [:div (let [hovered @(:hovered-over-day state)
+               selected @(:selected-days state)
+               clocks @(:clocks-by-day state)
+               n-selected (count selected)
+               calendar @(:calendar state)]
+           (cond
+             hovered [selected-day hovered clocks]
+             (= n-selected 1) [selected-day (first selected) clocks]
+             (> n-selected 1) [selected-days selected clocks calendar]
+             :else nil))]])
+

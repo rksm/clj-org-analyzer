@@ -1,7 +1,6 @@
 .app {
     display: flex;
     flex-direction: column;
-    // position: absolute;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -23,20 +22,29 @@
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+.controls {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 20px;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 @day-width : 15px;
+@day-height : 15px;
 
 .calendar {
-    position: absolute;
+    position: relative;
 
     font-size: small;
     overflow: auto;
     outline: 1px solid gray;
-    padding: 15px;
+    padding: 10px 10px 25px;
 
     display: grid;
     grid-template-columns: repeat(12, min-content);
     grid-row-gap: 20px;
-    grid-column-gap: 5px;
+    grid-column-gap: 12px;
 
     .month {
         display: flex;
@@ -44,6 +52,8 @@
         align-items: center;
         flex-direction: column;
         width: calc(6 * @day-width);
+
+        .month-date { cursor: pointer; }
 
         &.january   { grid-column-start: 1; grid-column-end: 2; };
         &.february  { grid-column-start: 2; grid-column-end: 3 };
@@ -59,25 +69,32 @@
         &.december  { grid-column-start: 12; grid-column-end: 13; };
     }
 
-
     .weeks {
         display: flex;
         flex-direction: row;
     }
 
-    .week:first-child {
-        align-self: flex-end;
-    }
-
     .week {
         display: flex;
         flex-direction: column;
-        align-items: center;
 
         .week-name {
             margin: 5px;
         }
 
+        // push down week days of first week as they might not start with monday
+        &:first-child {
+            .week-no { flex-grow: 1; }
+        }
+
+        .week-no {
+            cursor: pointer;
+            color: #AAA;
+            text-align: center;
+            opacity: 0;
+
+            &:hover { opacity: 1; }
+        }
     }
 
     .day {

@@ -72,7 +72,6 @@
 ;; ring-logger {:mvn/version "1.0.1"}
 ;; (require 'ring.logger)
 
-
 (defonce server (atom nil))
 
 (defn stop-server []

@@ -15,16 +15,21 @@
   position: absolute;
   background-color: rgba(100, 100, 100, 0.3);
 }
+.controls {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20px;
+}
 .calendar {
-  position: absolute;
+  position: relative;
   font-size: small;
   overflow: auto;
   outline: 1px solid gray;
-  padding: 15px;
+  padding: 10px 10px 25px;
   display: grid;
   grid-template-columns: repeat(12, min-content);
   grid-row-gap: 20px;
-  grid-column-gap: 5px;
+  grid-column-gap: 12px;
 }
 .calendar .month {
   display: flex;
@@ -32,6 +37,9 @@
   align-items: center;
   flex-direction: column;
   width: calc(90px);
+}
+.calendar .month .month-date {
+  cursor: pointer;
 }
 .calendar .month.january {
   grid-column-start: 1;
@@ -85,16 +93,24 @@
   display: flex;
   flex-direction: row;
 }
-.calendar .week:first-child {
-  align-self: flex-end;
-}
 .calendar .week {
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 .calendar .week .week-name {
   margin: 5px;
+}
+.calendar .week:first-child .week-no {
+  flex-grow: 1;
+}
+.calendar .week .week-no {
+  cursor: pointer;
+  color: #AAA;
+  text-align: center;
+  opacity: 0;
+}
+.calendar .week .week-no:hover {
+  opacity: 1;
 }
 .calendar .day {
   cursor: pointer;
