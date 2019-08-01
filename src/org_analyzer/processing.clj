@@ -118,34 +118,39 @@
   information to them. Parent relationship is definend through an index to a
   previous item."
   [file-name parsed]
-  (loop [[current & rest] parsed
-         index 0
-         result (list (read-file-props file-name parsed))
-         parent-cache [0]]
-    (if-not current
-      (reverse result)
-      (let [{:keys [type depth]} current
-            depth (or depth ##Inf)]
-        (if-not (#{:clock :section :metadata} type)
-          (recur rest index result parent-cache)
-          (let [
-                index (inc index)
-                [parent parent-cache] (let [size (count parent-cache)
-                                            section? (= type :section)
-                                            parent-at-or-before (dec (if section? (min size depth) size))
-                                            parent (loop [i parent-at-or-before] (if-let [index (nth parent-cache i)] index (recur (dec i))))
-                                            cache (if section?
-                                                    (conj (case (compare size depth)
-                                                            1 (into [] (take depth parent-cache))
-                                                            0 parent-cache
-                                                            -1 (concat parent-cache (map (constantly nil) (range (- depth (dec size))))))
-                                                          index)
-                                                    parent-cache)]
-                                        [parent cache])
-                entry (case type
-                        (:clock :metadata) (assoc current :parent parent :index index)
-                        :section (assoc current :parent parent :index index))]
-            (recur rest index (conj result entry) parent-cache)))))))
+  (let [parent-cache (let [size (count parsed)
+                           arr (int-array 10 0)]
+                       (aset arr 0 0)
+                       (transient {:size size :max-depth 0 :cache arr}))]
+    (loop [[current & rest] parsed
+           index 0
+           result (list (read-file-props file-name parsed))]
+      (if-not current
+        (reverse result)
+        (let [{:keys [type depth]} current
+              depth (or depth ##Inf)]
+          (if-not (#{:clock :section :metadata} type)
+            (recur rest index result)
+            (let [
+                  index (inc index)
+                  parent (let [{:keys [max-depth cache size]} parent-cache
+                               section? (= type :section)
+                               parent-at-or-before (if section? (min max-depth (dec depth)) max-depth)
+                               parent (loop [i parent-at-or-before] (or (and (= i 0) 0) (let [n (aget cache i)] (and (> n 0) n)) (recur (dec i))))]
+                           (when section?
+                             (when
+                               ;; need to "resize" cache to depth
+                               (> max-depth depth) (loop [i depth]
+                                                     (when (<= i max-depth) (aset cache i 0)
+                                                           (recur (inc i)))))
+                             (assoc! parent-cache :max-depth depth)
+                             (aset cache depth index))
+                           parent)
+                  entry (case type
+                          (:clock :metadata) (assoc current :parent parent :index index)
+                          :section (assoc current :parent parent :index index))]
+              (recur rest index (conj result entry)))))))))
+
 
 
 (defn parent-entries [entry org-data]
