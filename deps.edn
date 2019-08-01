@@ -1,5 +1,4 @@
 {:deps {org.clojure/clojurescript {:mvn/version "1.10.520"}
-        org.clojars.gmorpheme/organum {:mvn/version "0.1.1"}
         clojure.java-time {:mvn/version "0.3.2"}
         reagent {:mvn/version "0.8.1"}
         ring {:mvn/version "1.7.1"}

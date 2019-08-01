@@ -66,7 +66,6 @@
 (defn fetch-data []
   (let [from (pr-str (js/Date. "2000-01-01"))
         to (pr-str (js/Date.))]
-
     (go (let [response (<! (http/get "/clocks" {:query-params {:from from :to to :by-day? true}}))
               clocks (cljs.reader/read-string {:readers {'inst #(js/Date. %)}} (:body response))]
           (println "got clocks")
@@ -217,6 +216,7 @@
                                         #(split % "-")
                                         :date)
                                        calendar))]
+
       [:div.calendar
        (sel/drag-mouse-handlers (:sel-rect state)
                                 :on-selection-start #(reset! (:selecting? state) true)
@@ -247,7 +247,6 @@
            [:span.duration (print-duration-mins duration)]
            (parse-all-org-links location)])]])))
 
-
 (defn analyze-clocks [days clocks-by-day]
   (letfn [(clocks-avg [clocks-by-sth]
             (print-duration-mins
@@ -266,8 +265,8 @@
        :n-weeks (count weeks)})))
 
 
+
 (defn selected-days [dates clocks-by-day calendar]
-  ;; (sc.api/spy)
   (let [clocks-by-day (select-keys clocks-by-day dates)
         clocks (apply concat (vals clocks-by-day))
         location-durations (reverse

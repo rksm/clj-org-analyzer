@@ -7,7 +7,7 @@
             [compojure.route :as route]
             [java-time :as time]
             [org-analyzer.printing :refer [print-duration]]
-            [org-analyzer.processing :refer [find-clocks parse-and-zip]]
+            [org-analyzer.processing :refer [find-clocks parse-org-file]]
             [org-analyzer.time
              :refer
              [calendar clock->each-day-clocks clocks-between]]
@@ -17,14 +17,17 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(defonce org-files (let [dir (io/file "/home/robert/org/")]
-                     (->> dir
-                          file-seq
-                          (filter #(and
-                                    ;; (= dir (.getParentFile %))
-                                    (s/ends-with? (.getName %) ".org"))))))
+(defn get-clocks []
+  (let [org-files (let [dir (io/file "/home/robert/org/")]
+                    (->> dir
+                         file-seq
+                         (filter #(and
+                                   ;; (= dir (.getParentFile %))
+                                   (s/ends-with? (.getName %) ".org")))))
 
-(defonce clocks (mapcat (comp find-clocks parse-and-zip) org-files))
+        clocks (mapcat (comp find-clocks parse-org-file) org-files)]
+    clocks))
+
 
 (defn- as-instant [time]
   (-> time
@@ -35,6 +38,7 @@
   {:start (as-instant start)
    :end (and (not (nil? end)) (as-instant end))
    :duration (and (not (nil? duration)) (print-duration duration))
+   ;; :tags (all-tags TODO!!!)
    :location (->> sections ((juxt first last)) (map :name) (apply format "%s > %s"))})
 
 (defn read-with-inst [string]
@@ -44,7 +48,7 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defn send-clocks-between [start end & {:keys [by-day?] :or {by-day? false}}]
-  (let [clocks (clocks-between start end clocks)
+  (let [clocks (clocks-between start end (get-clocks))
         clocks (if by-day?
                  (apply concat (map clock->each-day-clocks clocks))
                  clocks)]

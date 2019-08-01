@@ -1,8 +1,11 @@
 (ns org-analyzer.test
-  (:require [clojure.test :as t :refer [deftest is]]
+  (:require [clojure.pprint :refer [cl-format]]
+            [clojure.test :as t :refer [deftest is]]
+            [clojure.zip :as zip]
             [org-analyzer.printing :as print]
+            [org-analyzer.processing :as process]
             [org-analyzer.time :as org-time]
-            [org-analyzer.processing :as process])
+            [clojure.string :as s])
   (:import [java.time Duration LocalDateTime]))
 
 (deftest clock-re
@@ -50,7 +53,7 @@ CREATED: [2018-02-01 Thu 03:12]
 :END:
 Some more
 text here
-* section 2
+* section 2 :tag2_1:tag2_2:
 :LOGBOOK:
 CREATED: [2018-12-15 Sa 12:05]
 :END:
@@ -61,23 +64,144 @@ CLOCK: [2018-02-19 Mon 18:20]--[2018-02-19 Mon 18:58] =>  0:38
 :END:
 " )
 
+(def expected-org-data '({:type :file,
+                          :name "pseudo.org"
+                          :depth 0,
+                          :index 0,
+                          :props ({:line 1, :type :file-prop, :prop "FILETAGS", :value ":pseudo:"}),
+                          :tags ("pseudo")}
+                         {:line 3,
+                          :type :section,
+                          :depth 1,
+                          :name "section 1",
+                          :tags ("section1tag"),
+                          :parent 0,
+                          :index 1}
+                         {:line 4, :type :section, :depth 2, :name "section 1.1" :parent 1, :index 2}
+                         {:line 6, :type :section, :depth 2, :name "section 1.2" :parent 1, :index 3}
+                         {:line 8,
+                          :type :clock,
+                          :text "CLOCK: [2018-02-02 Fri 19:55]--[2018-02-02 Fri 20:20] =>  0:25",
+                          :parent 3,
+                          :index 4}
+                         {:line 9,
+                          :type :metadata,
+                          :text "CREATED: [2018-02-01 Thu 03:12]",
+                          :parent 3,
+                          :index 5}
+                         {:line 13,
+                          :type :section,
+                          :depth 1,
+                          :name "section 2",
+                          :tags ("tag2_1" "tag2_2"),
+                          :parent 0,
+                          :index 6}
+                         {:line 15,
+                          :type :metadata,
+                          :text "CREATED: [2018-12-15 Sa 12:05]",
+                          :parent 6,
+                          :index 7}
+                         {:line 17,
+                          :type :section,
+                          :depth 2,
+                          :keyword "TODO",
+                          :name "section 2.1",
+                          :tags ("section21tag"),
+                          :parent 6,
+                          :index 8}
+                         {:line 19,
+                          :type :clock,
+                          :text "CLOCK: [2018-02-20 Tue 14:36]--[2018-02-20 Tue 15:00] =>  0:24",
+                          :parent 8,
+                          :index 9}
+                         {:line 20,
+                          :type :clock,
+                          :text "CLOCK: [2018-02-19 Mon 18:20]--[2018-02-19 Mon 18:58] =>  0:38",
+                          :parent 8,
+                          :index 10}))
+
+
 (defn read-pseudo-org []
-  (process/parse-and-zip
+  (process/parse-org-file
    "pseudo.org"
    (java.io.StringBufferInputStream. pseudo-org-content)))
 
-
 (deftest find-clocks
   (let [clocks (process/find-clocks (read-pseudo-org))]
-    (is (= ["CLOCK: [2018-02-02 Fri 19:55]--[2018-02-02 Fri 20:20] =>  0:25"
-            "CLOCK: [2018-02-20 Tue 14:36]--[2018-02-20 Tue 15:00] =>  0:24"
-            "CLOCK: [2018-02-19 Mon 18:20]--[2018-02-19 Mon 18:58] =>  0:38"]
+    (is (= '("CLOCK: [2018-02-02 Fri 19:55]--[2018-02-02 Fri 20:20] =>  0:25"
+             "CLOCK: [2018-02-20 Tue 14:36]--[2018-02-20 Tue 15:00] =>  0:24"
+             "CLOCK: [2018-02-19 Mon 18:20]--[2018-02-19 Mon 18:58] =>  0:38")
            (map print/print-clock clocks)))
-    (is (= (->> clocks first :sections (map :name))
-           ["pseudo.org" "section 1" "section 1.1" "section 1.2"]))))
+    (is (= '(["0:25"
+              "2018-02-02 Fri 19:55"
+              "2018-02-02 Fri 20:20"
+              "section 1.2"
+              #{"pseudo" "section1tag"}]
+             ["0:24"
+              "2018-02-20 Tue 14:36"
+              "2018-02-20 Tue 15:00"
+              "section 2.1"
+              #{"pseudo" "tag2_2" "section21tag" "tag2_1"}]
+             ["0:38"
+              "2018-02-19 Mon 18:20"
+              "2018-02-19 Mon 18:58"
+              "section 2.1"
+              #{"pseudo" "tag2_2" "section21tag" "tag2_1"}])
+           (map (juxt (comp print/print-duration :duration)
+                      (comp print/print-timestamp :start)
+                      (comp print/print-timestamp :end)
+                      (comp :name first :sections)
+                      :tags)
+                clocks)))))
+
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+(deftest parse-org-data
+  (is (= expected-org-data (read-pseudo-org))))
+
+(deftest find-parents
+  (let [org-data (read-pseudo-org)]
+    (is (= '("section 2.1" "section 2" "pseudo.org")
+           (map #(or (:text %) (:name %))
+                (process/parent-entries (last org-data) org-data))))))
+
+(deftest all-tags
+  (let [org-data (read-pseudo-org)]
+    (is (= #{"pseudo" "tag2_2" "section21tag" "tag2_1"}
+           (process/all-tags-for (last org-data) org-data)))))
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
 (comment
+
+  (require '[organum.core :as org])
+
+  (org/parse-file
+   (java.io.StringBufferInputStream. pseudo-org-content))
+
+  (-> (read-pseudo-org) z/next z/next z/next z/next z/node)
+
+  (cl-format true "~{~a~^~%~}~%" (take 10 (map zip/node (iterate zip/next (read-pseudo-org)))))
+
+  (->> (read-pseudo-org)
+       (iterate zip/next)
+       (drop 10)
+       first
+       ((juxt (comp zip/up zip/up) zip/up identity))
+       (map zip/node))
+
+  (def n (->> (read-pseudo-org)
+              (iterate zip/next)
+              (drop 10)
+              first))
+
+  (-> n zip/up zip/node :name)
+  (-> n zip/up zip/up zip/node :name)
+
+
+  (require '[clojure.zip :as z])
 
   (def clocks (process/find-clocks (read-pseudo-org)))
 
