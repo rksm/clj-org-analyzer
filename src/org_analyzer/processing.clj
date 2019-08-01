@@ -1,7 +1,8 @@
 (ns org-analyzer.processing
   (:require [clojure.java.io :as io]
             [clojure.string :as s]
-            [java-time :as time :refer [duration]])
+            [java-time :as time :refer [duration]]
+            [taoensso.tufte :refer [p defnp]])
   (:import [java.time LocalDate LocalDateTime]
            java.time.format.DateTimeFormatter
            java.util.Locale))
@@ -15,14 +16,14 @@
 (def brackets-re #"^(\[|<)|(\]|>)$")
 (def colon-re #":")
 
-(def date-time-patterns [{:parse #(LocalDateTime/parse %1 (DateTimeFormatter/ofPattern %2 %3))
+(def date-time-patterns [{:parse #(p ::localdatetime-parse-timestamp (LocalDateTime/parse %1 (DateTimeFormatter/ofPattern %2 %3)))
                           :pattern "y-M-d[ ][cccc][ccc][ ]H:m"}
-                         {:parse #(. (LocalDate/parse %1 (DateTimeFormatter/ofPattern %2 %3)) (atTime 0 0))
+                         {:parse #(p ::localdate-parse-timestamp (. (LocalDate/parse %1 (DateTimeFormatter/ofPattern %2 %3)) (atTime 0 0)))
                           :pattern "y-M-d[ ][cccc][ccc]"}])
 
 (def locales [Locale/ENGLISH Locale/GERMAN])
 
-(defn parse-timestamp
+(defnp parse-timestamp
   "`string` like \"[2019-06-19 Wed 14:11]\". Returns LocalDateTime."
   [string]
   (let [sanitized (s/replace string brackets-re "")]
@@ -32,7 +33,7 @@
                    {:keys [parse pattern]} date-time-patterns]
                (try (parse sanitized pattern locale) (catch Exception e nil)))))))
 
-(defn parse-duration
+(defnp parse-duration
   "`duration-string` like \"3:22\"."
   [duration-string]
   (as-> duration-string it
@@ -40,7 +41,7 @@
     (str "PT" it "M")
     (duration it)))
 
-(defn parse-clock [clock-string]
+(defnp parse-clock [clock-string]
   (let [[_ start end duration] (re-find clock-re clock-string)]
     {:start (parse-timestamp start)
      :end (when end (parse-timestamp end))
@@ -48,12 +49,12 @@
 
 (declare parent-entries all-tags-for)
 
-(defn find-clocks [org-data]
+(defnp find-clocks [org-data]
   (for [{:keys [type text] :as entry} org-data
         :when (= type :clock)]
     (merge {:clock-string text
-            :sections (parent-entries entry org-data)
-            :tags (all-tags-for entry org-data)}
+            :sections (p ::parent-entries (parent-entries entry org-data))
+            :tags (p ::all-tags-for (all-tags-for entry org-data))}
            (parse-clock text))))
 
 (defn clocks-by-section [clocks]
@@ -126,11 +127,12 @@
         (if-not (#{:clock :section :metadata} type)
           (recur rest index result)
           (let [index (inc index)
-                parent (when (#{:clock :section :metadata} type)
-                         (some->> result
-                                  (filter #(some-> % :depth (< depth)))
-                                  first
-                                  :index))
+                parent (p ::read-sections-parent
+                          (when (#{:clock :section :metadata} type)
+                            (some->> result
+                                     (filter #(some-> % :depth (< depth)))
+                                     first
+                                     :index)))
                 entry (case type
                         (:clock :metadata) (assoc current :parent parent :index index)
                         :section (assoc current :parent parent :index index))]
@@ -146,13 +148,13 @@
   (let [with-parents (conj (parent-entries entry org-data) entry)]
     (set (apply concat (keep :tags with-parents)))))
 
-(defn parse-org-file
+(defnp parse-org-file
   "The main function to turn org-content into a flat sequence of entry maps, each having at least :type, :line, and :index fields."
   ([org-file]
    (let [org-file (if (string? org-file) (io/file org-file) org-file)]
      (parse-org-file (.getName org-file) org-file)))
   ([name org-file]
-   (let [lines (line-seq (io/reader org-file))
-         parsed (read-org-lines lines)
-         org-data (read-sections name parsed)]
+   (let [lines (p ::parse-org-file-lines (line-seq (io/reader org-file)))
+         parsed (p ::parse-org-file-read-org-lines (read-org-lines lines))
+         org-data (p ::parse-org-file-read-sections (read-sections name parsed))]
      org-data)))

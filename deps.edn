@@ -3,7 +3,8 @@
         reagent {:mvn/version "0.8.1"}
         ring {:mvn/version "1.7.1"}
         compojure {:mvn/version "1.6.1"}
-        cljs-http {:mvn/version "0.1.46"}}
+        cljs-http {:mvn/version "0.1.46"}
+        com.taoensso/tufte {:mvn/version "2.1.0-RC4"}}
 
  :paths ["src" "test"]
 

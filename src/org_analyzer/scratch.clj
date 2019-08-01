@@ -17,8 +17,9 @@
               plus
               truncate-to
               weeks]]
+            [org-analyzer.http-server :as http]
             [org-analyzer.printing :refer [print-duration]]
-            [org-analyzer.processing :refer [find-clocks parse-and-zip]]
+            [org-analyzer.processing :refer [find-clocks]]
             [org-analyzer.time :as org-time :refer :all]))
 
 (comment
@@ -27,9 +28,16 @@
                    (->> dir file-seq (filter #(and (= dir (.getParentFile %)) (s/ends-with? (.getName %) ".org"))))))
 
   (def clocks (mapcat (comp find-clocks parse-and-zip) org-files))
+  (def clocks (-> (first org-files)  parse-and-zip find-clocks))
 
+  (-> (first org-files) parse-and-zip)
+  (count clocks)
 
   (count (clocks-between (minus (local-date-time) (days 3)) (local-date-time) clocks))
+  (def c (first (clocks-between (minus (local-date-time) (days 3)) (local-date-time) clocks)))
+
+  (->> c :sections (map :name) (s/join " - "))
+  (-> clocks first)
 
   (print-duration (sum-clock-duration (take 5 clocks)))
 
@@ -163,10 +171,6 @@
   ;; (pretty-print-duration (Duration/ofMinutes (+ (* 24 60) 65)))
 
 
-
-
-
-
   (= (.atStartOfDay (local-date))
      (.atTime (local-date) 0 0))
 
@@ -207,8 +211,6 @@
   (->> (io/file "/home/robert/org/") file-seq (filter #(s/ends-with? (.getName %) ".org")))
 
 
-
-
   (sc.api/defsc 57)
   (first clocks)
 
@@ -219,3 +221,17 @@
 
   (-> clocks :start)
   (-> clocks :duration))
+
+
+(comment
+
+  (require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
+
+  ;; We'll request to send `profile` stats to `println`:
+  (tufte/add-basic-println-handler! {})
+
+
+  (do (profile {} (count (http/get-clocks))))
+
+
+)
