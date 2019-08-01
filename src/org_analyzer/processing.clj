@@ -112,6 +112,7 @@
                   (apply concat))]
     {:type :file :name file-name :depth 0 :index 0 :props props :tags tags}))
 
+
 (defn read-sections
   "Takes the parsed lines filters out sections and clocks and adds parent
   information to them. Parent relationship is definend through an index to a
@@ -119,24 +120,33 @@
   [file-name parsed]
   (loop [[current & rest] parsed
          index 0
-         result (list (read-file-props file-name parsed))]
+         result (list (read-file-props file-name parsed))
+         parent-cache [0]]
     (if-not current
       (reverse result)
       (let [{:keys [type depth]} current
             depth (or depth ##Inf)]
         (if-not (#{:clock :section :metadata} type)
-          (recur rest index result)
-          (let [index (inc index)
-                parent (p ::read-sections-parent
-                          (when (#{:clock :section :metadata} type)
-                            (some->> result
-                                     (filter #(some-> % :depth (< depth)))
-                                     first
-                                     :index)))
+          (recur rest index result parent-cache)
+          (let [
+                index (inc index)
+                [parent parent-cache] (let [size (count parent-cache)
+                                            section? (= type :section)
+                                            parent-at-or-before (dec (if section? (min size depth) size))
+                                            parent (loop [i parent-at-or-before] (if-let [index (nth parent-cache i)] index (recur (dec i))))
+                                            cache (if section?
+                                                    (conj (case (compare size depth)
+                                                            1 (into [] (take depth parent-cache))
+                                                            0 parent-cache
+                                                            -1 (concat parent-cache (map (constantly nil) (range (- depth (dec size))))))
+                                                          index)
+                                                    parent-cache)]
+                                        [parent cache])
                 entry (case type
                         (:clock :metadata) (assoc current :parent parent :index index)
                         :section (assoc current :parent parent :index index))]
-            (recur rest index (conj result entry))))))))
+            (recur rest index (conj result entry) parent-cache)))))))
+
 
 (defn parent-entries [entry org-data]
   (loop [index (:parent entry) result []]
