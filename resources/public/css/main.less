@@ -45,93 +45,92 @@
     grid-template-columns: repeat(12, min-content);
     grid-row-gap: 20px;
     grid-column-gap: 12px;
+}
 
-    .month {
-        display: flex;
-        align-content: flex-start;
-        align-items: center;
-        flex-direction: column;
-        width: calc(6 * @day-width);
+.month {
+    display: flex;
+    align-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: calc(6 * @day-width);
 
-        .month-date { cursor: pointer; }
+    .month-date { cursor: pointer; }
 
-        &.january   { grid-column-start: 1; grid-column-end: 2; };
-        &.february  { grid-column-start: 2; grid-column-end: 3 };
-        &.march     { grid-column-start: 3; grid-column-end: 4; };
-        &.april     { grid-column-start: 4; grid-column-end: 5; };
-        &.may       { grid-column-start: 5; grid-column-end: 6; };
-        &.june      { grid-column-start: 6; grid-column-end: 7; };
-        &.july      { grid-column-start: 7; grid-column-end: 8; };
-        &.august    { grid-column-start: 8; grid-column-end: 9; };
-        &.september { grid-column-start: 9; grid-column-end: 10; };
-        &.october   { grid-column-start: 10; grid-column-end: 11; };
-        &.november  { grid-column-start: 11; grid-column-end: 12; };
-        &.december  { grid-column-start: 12; grid-column-end: 13; };
+    &.january   { grid-column-start: 1; grid-column-end: 2; };
+    &.february  { grid-column-start: 2; grid-column-end: 3 };
+    &.march     { grid-column-start: 3; grid-column-end: 4; };
+    &.april     { grid-column-start: 4; grid-column-end: 5; };
+    &.may       { grid-column-start: 5; grid-column-end: 6; };
+    &.june      { grid-column-start: 6; grid-column-end: 7; };
+    &.july      { grid-column-start: 7; grid-column-end: 8; };
+    &.august    { grid-column-start: 8; grid-column-end: 9; };
+    &.september { grid-column-start: 9; grid-column-end: 10; };
+    &.october   { grid-column-start: 10; grid-column-end: 11; };
+    &.november  { grid-column-start: 11; grid-column-end: 12; };
+    &.december  { grid-column-start: 12; grid-column-end: 13; };
+}
+
+.weeks {
+    display: flex;
+    flex-direction: row;
+}
+
+.week {
+    display: flex;
+    flex-direction: column;
+
+    .week-name {
+        margin: 5px;
     }
 
-    .weeks {
-        display: flex;
-        flex-direction: row;
+    // push down week days of first week as they might not start with monday
+    &:first-child {
+        .week-no { flex-grow: 1; }
     }
 
-    .week {
-        display: flex;
-        flex-direction: column;
-
-        .week-name {
-            margin: 5px;
-        }
-
-        // push down week days of first week as they might not start with monday
-        &:first-child {
-            .week-no { flex-grow: 1; }
-        }
-
-        .week-no {
-            cursor: pointer;
-            color: #AAA;
-            text-align: center;
-            opacity: 0;
-
-            &:hover { opacity: 1; }
-        }
-    }
-
-    .day {
+    .week-no {
         cursor: pointer;
-        outline: 1px solid lightgray;
-        width: @day-width; height: 15px;
+        color: #AAA;
+        text-align: center;
+        opacity: 0;
 
-        // &.selected {
-        //     border: 3px solid orange;
-        //     box-sizing: border-box;
-        // }
-
-        &.emph-0 {background-color: none;}
-        &.emph-1 {background-color: rgba(0,255,100, .1);}
-        &.emph-2 {background-color: rgba(0,255,100, .2);}
-        &.emph-3 {background-color: rgba(0,255,100, .3);}
-        &.emph-4 {background-color: rgba(0,255,100, .4);}
-        &.emph-5 {background-color: rgba(0,255,100, .5);}
-        &.emph-6 {background-color: rgba(0,255,100, .6);}
-        &.emph-7 {background-color: rgba(0,255,100, .7);}
-        &.emph-8 {background-color: rgba(0,255,100, .8);}
-        &.emph-9 {background-color: rgba(0,255,100, .9);}
-        &.emph-10 {background-color: rgba(0,255,100, 1);}
-
-        &.selected.emph-0 {background-color: rgba(255,110,10, .3);}
-        &.selected.emph-1 {background-color: rgba(255,110,10, .3);}
-        &.selected.emph-2 {background-color: rgba(255,110,10, .3);}
-        &.selected.emph-3 {background-color: rgba(255,110,10, .3);}
-        &.selected.emph-4 {background-color: rgba(255,110,10, .4);}
-        &.selected.emph-5 {background-color: rgba(255,110,10, .5);}
-        &.selected.emph-6 {background-color: rgba(255,110,10, .6);}
-        &.selected.emph-7 {background-color: rgba(255,110,10, .7);}
-        &.selected.emph-8 {background-color: rgba(255,110,10, .8);}
-        &.selected.emph-9 {background-color: rgba(255,110,10, .9);}
-        &.selected.emph-10 {background-color: rgba(255,110,10, 1);}
+        &:hover { opacity: 1; }
     }
+}
 
+.day {
+    cursor: pointer;
+    outline: 1px solid lightgray;
+    width: @day-width; height: 15px;
+
+    // &.selected {
+    //     border: 3px solid orange;
+    //     box-sizing: border-box;
+    // }
+
+    &.emph-0 {background-color: none;}
+    &.emph-1 {background-color: rgba(0,255,100, .1);}
+    &.emph-2 {background-color: rgba(0,255,100, .2);}
+    &.emph-3 {background-color: rgba(0,255,100, .3);}
+    &.emph-4 {background-color: rgba(0,255,100, .4);}
+    &.emph-5 {background-color: rgba(0,255,100, .5);}
+    &.emph-6 {background-color: rgba(0,255,100, .6);}
+    &.emph-7 {background-color: rgba(0,255,100, .7);}
+    &.emph-8 {background-color: rgba(0,255,100, .8);}
+    &.emph-9 {background-color: rgba(0,255,100, .9);}
+    &.emph-10 {background-color: rgba(0,255,100, 1);}
+
+    &.selected.emph-0 {background-color: rgba(255,110,10, .3);}
+    &.selected.emph-1 {background-color: rgba(255,110,10, .3);}
+    &.selected.emph-2 {background-color: rgba(255,110,10, .3);}
+    &.selected.emph-3 {background-color: rgba(255,110,10, .3);}
+    &.selected.emph-4 {background-color: rgba(255,110,10, .4);}
+    &.selected.emph-5 {background-color: rgba(255,110,10, .5);}
+    &.selected.emph-6 {background-color: rgba(255,110,10, .6);}
+    &.selected.emph-7 {background-color: rgba(255,110,10, .7);}
+    &.selected.emph-8 {background-color: rgba(255,110,10, .8);}
+    &.selected.emph-9 {background-color: rgba(255,110,10, .9);}
+    &.selected.emph-10 {background-color: rgba(255,110,10, 1);}
 }
 
 

@@ -31,157 +31,157 @@
   grid-row-gap: 20px;
   grid-column-gap: 12px;
 }
-.calendar .month {
+.month {
   display: flex;
   align-content: flex-start;
   align-items: center;
   flex-direction: column;
   width: calc(90px);
 }
-.calendar .month .month-date {
+.month .month-date {
   cursor: pointer;
 }
-.calendar .month.january {
+.month.january {
   grid-column-start: 1;
   grid-column-end: 2;
 }
-.calendar .month.february {
+.month.february {
   grid-column-start: 2;
   grid-column-end: 3;
 }
-.calendar .month.march {
+.month.march {
   grid-column-start: 3;
   grid-column-end: 4;
 }
-.calendar .month.april {
+.month.april {
   grid-column-start: 4;
   grid-column-end: 5;
 }
-.calendar .month.may {
+.month.may {
   grid-column-start: 5;
   grid-column-end: 6;
 }
-.calendar .month.june {
+.month.june {
   grid-column-start: 6;
   grid-column-end: 7;
 }
-.calendar .month.july {
+.month.july {
   grid-column-start: 7;
   grid-column-end: 8;
 }
-.calendar .month.august {
+.month.august {
   grid-column-start: 8;
   grid-column-end: 9;
 }
-.calendar .month.september {
+.month.september {
   grid-column-start: 9;
   grid-column-end: 10;
 }
-.calendar .month.october {
+.month.october {
   grid-column-start: 10;
   grid-column-end: 11;
 }
-.calendar .month.november {
+.month.november {
   grid-column-start: 11;
   grid-column-end: 12;
 }
-.calendar .month.december {
+.month.december {
   grid-column-start: 12;
   grid-column-end: 13;
 }
-.calendar .weeks {
+.weeks {
   display: flex;
   flex-direction: row;
 }
-.calendar .week {
+.week {
   display: flex;
   flex-direction: column;
 }
-.calendar .week .week-name {
+.week .week-name {
   margin: 5px;
 }
-.calendar .week:first-child .week-no {
+.week:first-child .week-no {
   flex-grow: 1;
 }
-.calendar .week .week-no {
+.week .week-no {
   cursor: pointer;
   color: #AAA;
   text-align: center;
   opacity: 0;
 }
-.calendar .week .week-no:hover {
+.week .week-no:hover {
   opacity: 1;
 }
-.calendar .day {
+.day {
   cursor: pointer;
   outline: 1px solid lightgray;
   width: 15px;
   height: 15px;
 }
-.calendar .day.emph-0 {
+.day.emph-0 {
   background-color: none;
 }
-.calendar .day.emph-1 {
+.day.emph-1 {
   background-color: rgba(0, 255, 100, 0.1);
 }
-.calendar .day.emph-2 {
+.day.emph-2 {
   background-color: rgba(0, 255, 100, 0.2);
 }
-.calendar .day.emph-3 {
+.day.emph-3 {
   background-color: rgba(0, 255, 100, 0.3);
 }
-.calendar .day.emph-4 {
+.day.emph-4 {
   background-color: rgba(0, 255, 100, 0.4);
 }
-.calendar .day.emph-5 {
+.day.emph-5 {
   background-color: rgba(0, 255, 100, 0.5);
 }
-.calendar .day.emph-6 {
+.day.emph-6 {
   background-color: rgba(0, 255, 100, 0.6);
 }
-.calendar .day.emph-7 {
+.day.emph-7 {
   background-color: rgba(0, 255, 100, 0.7);
 }
-.calendar .day.emph-8 {
+.day.emph-8 {
   background-color: rgba(0, 255, 100, 0.8);
 }
-.calendar .day.emph-9 {
+.day.emph-9 {
   background-color: rgba(0, 255, 100, 0.9);
 }
-.calendar .day.emph-10 {
+.day.emph-10 {
   background-color: #00ff64;
 }
-.calendar .day.selected.emph-0 {
+.day.selected.emph-0 {
   background-color: rgba(255, 110, 10, 0.3);
 }
-.calendar .day.selected.emph-1 {
+.day.selected.emph-1 {
   background-color: rgba(255, 110, 10, 0.3);
 }
-.calendar .day.selected.emph-2 {
+.day.selected.emph-2 {
   background-color: rgba(255, 110, 10, 0.3);
 }
-.calendar .day.selected.emph-3 {
+.day.selected.emph-3 {
   background-color: rgba(255, 110, 10, 0.3);
 }
-.calendar .day.selected.emph-4 {
+.day.selected.emph-4 {
   background-color: rgba(255, 110, 10, 0.4);
 }
-.calendar .day.selected.emph-5 {
+.day.selected.emph-5 {
   background-color: rgba(255, 110, 10, 0.5);
 }
-.calendar .day.selected.emph-6 {
+.day.selected.emph-6 {
   background-color: rgba(255, 110, 10, 0.6);
 }
-.calendar .day.selected.emph-7 {
+.day.selected.emph-7 {
   background-color: rgba(255, 110, 10, 0.7);
 }
-.calendar .day.selected.emph-8 {
+.day.selected.emph-8 {
   background-color: rgba(255, 110, 10, 0.8);
 }
-.calendar .day.selected.emph-9 {
+.day.selected.emph-9 {
   background-color: rgba(255, 110, 10, 0.9);
 }
-.calendar .day.selected.emph-10 {
+.day.selected.emph-10 {
   background-color: #ff6e0a;
 }
 .day-detail > div {

@@ -4,7 +4,8 @@
   :open-url false
   :reload-clj-files #{:clj :cljc}
   :cljs-devtools true
-  :ansi-color-output true}
+  :ansi-color-output true
+  :extra-main-files {:expts {:main org-analyzer.view.expts}}}
 {:main org-analyzer.view.main
  :output-to "target/public/cljs-out/main.js"
  :output-dir "target/public/cljs-out/dev"}
