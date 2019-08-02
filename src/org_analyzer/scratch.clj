@@ -233,5 +233,6 @@
 
   (do (profile {} (count (http/get-clocks))))
 
+(sc.api.logging/register-cs-logger :sc.api.logging/log-spy-cs (fn [cs] nil))
 
 )

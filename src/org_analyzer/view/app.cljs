@@ -12,6 +12,19 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
 
+(defn empty-state []
+  {:calendar (ratom nil)
+   :clocks-by-day (ratom {})
+   :hovered-over-day (ratom nil)
+   :selected-days (ratom #{})
+   :selected-days-preview (ratom #{})
+   :selecting? (ratom false)
+   :sel-rect (atom sel/empty-rectangle-selection-state)
+   :keys (atom {:shift-down? false
+                :alt-down? false})
+   :dom-state (atom {:day-bounds {}})
+   :global-event-handlers (atom {})})
+
 (defn date-string [^js/Date date]
   (first (split (.toISOString date) \T)))
 

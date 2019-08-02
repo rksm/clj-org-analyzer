@@ -6,17 +6,7 @@
 
 (enable-console-print!)
 
-(defonce state {:calendar (rg/atom nil)
-                :clocks-by-day (rg/atom {})
-                :hovered-over-day (rg/atom nil)
-                :selected-days (rg/atom #{})
-                :selected-days-preview (rg/atom #{})
-                :selecting? (rg/atom false)
-                :sel-rect (atom sel/empty-rectangle-selection-state)
-                :keys (atom {:shift-down? false
-                             :alt-down? false})
-                :dom-state (atom {:day-bounds {}})
-                :global-event-handlers (atom {})})
+(defonce state (app/empty-state))
 
 (defn -main []
   (app/setup-global-events state)

@@ -10,21 +10,31 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defonce example-1-state
-  (let [state (rg/atom {:clocks-by-day {} :calendar []})]
+  (let [state (app/empty-state)]
     (go (let [{cal-data :calendar clock-data :clocks-by-day}
               (<! (fetch-data :from (js/Date. "2019-07-01") :to (js/Date. "2019-07-05")))]
-          (reset! state {:clocks-by-day clock-data :calendar cal-data})))
+          (reset! (:clocks-by-day state) clock-data)
+          (reset! (:calendar state) cal-data)))
     state))
 
 (defn example-1 []
-  (let [{:keys [calendar clocks-by-day]} @example-1-state]
+  (let [calendar @(:calendar example-1-state)
+        month-date-and-days (first (into (sorted-map) (group-by
+                                      #(s/replace (:date %) #"^([0-9]+-[0-9]+).*" "$1")
+                                      @(:calendar example-1-state))))
+        clocks-by-day @(:clocks-by-day example-1-state)]
     [:div.example
      [:h1 "example 1"]
      (if (empty? calendar)
        [:span "Loading..."]
-       (app/month-view ["2019-07" calendar]
-                       {:clocks-by-day clocks-by-day
-                        :selected-days #{}}))]))
+       (app/month-view example-1-state
+                       month-date-and-days
+                       (into {} (map
+                                 (juxt first (comp deref second))
+                                 (select-keys example-1-state
+                                              [:clocks-by-day :selected-days :max-weight])))))]))
+
+
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
