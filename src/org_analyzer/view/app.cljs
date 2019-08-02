@@ -2,13 +2,12 @@
   (:require [reagent.core :as r]
             [reagent.ratom :refer [atom] :rename {atom ratom}]
             [cljs-http.client :as http]
-            [cljs.core.async :refer [<!]]
+            [cljs.core.async :refer [<! >! close! chan go]]
             [cljs.pprint :refer [cl-format]]
             [clojure.string :refer [split lower-case join replace]]
             [org-analyzer.view.dom :as dom]
             [org-analyzer.view.selection :as sel]
-            [clojure.set :refer [union]])
-  (:require-macros [cljs.core.async.macros :refer [go]]))
+            [clojure.set :refer [union]]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -63,18 +62,24 @@
         mins (- mins (* hours 60))]
     (cl-format nil "~d:~2,'0d" hours mins)))
 
-(defn fetch-data []
-  (let [from (pr-str (js/Date. "2000-01-01"))
-        to (pr-str (js/Date.))]
+(defn fetch-data
+  [& {:keys [from to]
+      :or {from (js/Date. "2000-01-01")
+           to (js/Date.)}}]
+  (let [result-chan (chan 1)
+        from (pr-str from)
+        to (pr-str to)]
     (go (let [response (<! (http/get "/clocks" {:query-params {:from from :to to :by-day? true}}))
               clocks (cljs.reader/read-string {:readers {'inst #(js/Date. %)}} (:body response))]
           (println "got clocks")
-          (reset! (:clocks-by-day state) (group-by (comp date-string :start) clocks))
-          (let [from (pr-str (:start (first clocks)))]
-            (go (let [response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
-                      body (cljs.reader/read-string (:body response))]
-                  (println "got calendar")
-                  (reset! (:calendar state) body))))))))
+          (let [from (pr-str (:start (first clocks)))
+                response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
+                body (cljs.reader/read-string (:body response))]
+            (println "got calendar")
+            (>! result-chan {:calendar body :clocks-by-day
+                             (group-by (comp date-string :start) clocks)})
+            (close! result-chan))))
+    result-chan))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; state
@@ -98,14 +103,20 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; global events
 
-(defn on-key-down-global [evt]
+(defn on-key-down-global [state evt]
   (when (= "Alt" (.-key evt)) (swap! (:keys state) assoc :alt-down? true))
   (when (= "Shift" (.-key evt)) (swap! (:keys state) assoc :shift-down? true)))
 
-(defn on-key-up-global [evt]
+(defn on-key-up-global [state evt]
   (when (= "Alt" (.-key evt)) (swap! (:keys state) assoc :alt-down? false))
   (when (= "Shift" (.-key evt)) (swap! (:keys state) assoc :shift-down? false)))
 
+(defn setup-global-events [state]
+  (let [down #(on-key-down-global state %)
+        up #(on-key-up-global state %)]
+    (.addEventListener js/document "keydown" down)
+    (.addEventListener js/document "keyup" up)
+    (reset! (:global-event-handlers state) {:key-down down :key-up up})))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; rectangle selection helpers
@@ -154,12 +165,16 @@
 
 (defn day-view [{:keys [date]} {:keys [clocks-by-day selected-days max-weight] :as calendar-state}]
   (let [clocks (get clocks-by-day date)
-        selected? (selected-days date)]
+        selected? (selected-days date)
+        max-weight (or max-weight (->> clocks-by-day
+                                       (map #(sum-clocks-mins (val %)))
+                                       (apply max)))]
     [:div.day {:key date
                :id date
                :class [(emph-css-class
                         (sum-clocks-mins clocks)
-                        max-weight) (if selected? "selected")]
+                        max-weight)
+                       (if selected? "selected")]
                :ref (fn [el]
                       (if el
                         (swap! (:dom-state state) #(update % :day-bounds assoc date (dom/el-bounds el)))
@@ -210,11 +225,7 @@
                         :selected-days (union selected-days selected-days-preview)}]
 
     (let [by-month (into (sorted-map) (group-by
-                                       (comp
-                                        (partial join "-")
-                                        (partial take 2)
-                                        #(split % "-")
-                                        :date)
+                                       #(replace (:date %) #"^([0-9]+-[0-9]+).*" "$1")
                                        calendar))]
 
       [:div.calendar
@@ -319,4 +330,3 @@
              (= n-selected 1) [selected-day (first selected) clocks]
              (> n-selected 1) [selected-days selected clocks calendar]
              :else nil))]])
-
