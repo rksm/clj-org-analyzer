@@ -2,10 +2,10 @@
   (:require cider.nrepl
             cider.piggieback
             [clojure.pprint :refer [cl-format pprint]]
-            figwheel.main
             figwheel.main.api
             nrepl.core
             nrepl.server
+            [org-analyzer.http-server :as http-server]
             refactor-nrepl.middleware
             [suitable.middleware :refer [wrap-complete]]))
 
@@ -71,6 +71,7 @@ suitable.middleware/wrap-complete]
 (defn -main [& args]
   (start-clj-nrepl-server)
   (start-cljs-nrepl-server)
+  (http-server/start-server)
 
   ;; (start-cljs-nrepl-client)
   ;; (cljs-send-eval "(require 'figwheel.main) (figwheel.main/start :fig)")
