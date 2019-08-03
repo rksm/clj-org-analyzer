@@ -8,15 +8,15 @@
 
 (defonce app-state (app/empty-app-state))
 (defonce dom-state (app/empty-dom-state))
+(defonce event-handlers (app/event-handlers app-state dom-state))
 
 (defn -main []
-  (app/setup-global-events dom-state)
-  (rg/render [app/app app-state dom-state]
-          (js/document.querySelector "#app"))
+  (rg/render [app/app app-state dom-state event-handlers]
+             (js/document.querySelector "#app"))
   (go (let [{:keys [calendar clocks-by-day]} (<! (app/fetch-data))]
         (swap! app-state assoc
                :calendar calendar
-                :clocks-by-day clocks-by-day))))
+               :clocks-by-day clocks-by-day))))
 
 (-main)
 

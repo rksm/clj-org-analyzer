@@ -9,35 +9,44 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(defonce example-1-app-state
-  (let [app-state (app/empty-app-state)]
+(defonce example-1-state
+  (let [app-state (app/empty-app-state)
+        dom-state (app/empty-dom-state)
+        event-handlers (app/event-handlers app-state dom-state)]
+
+    ;; fetch data
     (go (let [{cal-data :calendar clock-data :clocks-by-day}
               (<! (fetch-data :from (js/Date. "2019-07-01") :to (js/Date. "2019-07-05")))]
           (swap! app-state assoc
                  :clocks-by-day clock-data
                  :calendar cal-data)))
-    app-state))
 
-(defonce example-1-dom-state (app/empty-dom-state))
+    {:app-state app-state
+     :dom-state dom-state
+     :event-handlers event-handlers }))
 
 (defn example-1 []
-  (let [calendar (:calendar @example-1-app-state)
-        month-date-and-days (first (into (sorted-map) (group-by
-                                                       #(s/replace (:date %) #"^([0-9]+-[0-9]+).*" "$1")
-                                                       calendar)))
-        clocks-by-day (:clocks-by-day @example-1-app-state)]
+  (let [{:keys [dom-state event-handlers app-state]} example-1-state
+        {:keys [calendar clocks-by-day selected-days]} @app-state
+        month-date-and-days (->> calendar
+                                 (group-by #(s/replace (:date %) #"^([0-9]+-[0-9]+).*" "$1"))
+                                 (into (sorted-map))
+                                 first)
+        max-weight (->> clocks-by-day
+                        (map (comp app/sum-clocks-mins second))
+                        (reduce max))
+        calendar-state {:max-weight max-weight
+                        :clocks-by-day clocks-by-day
+                        :selected-days selected-days}]
     [:div.example
      [:h1 "example 1"]
      (if (empty? calendar)
        [:span "Loading..."]
        [app/month-view
-        example-1-app-state
-        example-1-dom-state
+        dom-state
+        event-handlers
         month-date-and-days
-        (into {} (map
-                  (juxt first second)
-                  (select-keys @example-1-app-state
-                               [:clocks-by-day :selected-days :max-weight])))])]))
+        calendar-state])]))
 
 
 
@@ -46,12 +55,6 @@
 (defn start []
   (rg/render [example-1]
              (. js/document (querySelector "#app"))
-             #(println "rendered"))
-  )
+             #(println "rendered")))
 
 (start)
-
-;; (rg/force-update-all)
-
-
-;; (sc.api/letsc [35 -4 ] [days-in-month])

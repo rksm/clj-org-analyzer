@@ -24,8 +24,61 @@
   (atom {:sel-rect (atom sel/empty-rectangle-selection-state)
          :keys {:shift-down? false
                 :alt-down? false}
-         :dom-state {:day-bounds {}}
-         :global-event-handlers {}}))
+         :day-bounding-boxes {}}))
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+(defn event-handlers [app-state dom-state]
+  (letfn [(set-key-down! [evt key field down?]
+            (when (= key (.-key evt)) (swap! dom-state assoc-in [:keys field] down?)))
+
+          (shift-down? [] (-> @dom-state :keys :shift-down?))
+
+          (on-key-down-global [evt]
+            (set-key-down! evt "Alt" :alt-down? true)
+            (set-key-down! evt "Shift" :shift-down? true))
+
+          (on-key-up-global [evt]
+            (set-key-down! evt "Alt" :alt-down? false)
+            (set-key-down! evt "Shift" :shift-down? false))
+
+          (on-click-month [evt days]
+            (let [dates (into #{} (map :date days))]
+              (swap! app-state update :selected-days #(cond
+                                                       (shift-down?) (union % dates)
+                                                       :else dates))))
+
+          (on-click-week [evt week-no days]
+            (let [dates (into #{} (map :date days))]
+              (swap! app-state update :selected-days #(cond
+                                                       (shift-down?) (union % dates)
+                                                       :else dates))))
+
+          (on-mouse-over-day [date]
+            (when (not (:selecting? @app-state))
+              (swap! app-state assoc :hovered-over-day date)))
+
+          (on-mouse-out-day []
+            (swap! app-state assoc :hovered-over-day nil))
+
+          (on-click-day [evt date]
+            (let [add-selection? (shift-down?)]
+              (swap! app-state update :selected-days #(cond
+                                                       (and add-selection? (% date)) (disj % date)
+                                                       add-selection? (conj % date)
+                                                       :else #{date}))))]
+
+    (println "registering global event handlers")
+    (.addEventListener js/document "keydown" on-key-down-global)
+    (.addEventListener js/document "keyup" on-key-up-global)
+
+    {:on-key-down-global on-key-down-global
+     :on-key-up-global on-key-up-global
+     :on-click-month on-click-month
+     :on-click-week on-click-week
+     :on-mouse-over-day on-mouse-over-day
+     :on-mouse-out-day on-mouse-out-day
+     :on-click-day on-click-day}))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -93,29 +146,11 @@
     result-chan))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-;; global events
-
-(defn on-key-down-global [state evt]
-  (when (= "Alt" (.-key evt)) (swap! (:keys state) assoc :alt-down? true))
-  (when (= "Shift" (.-key evt)) (swap! (:keys state) assoc :shift-down? true)))
-
-(defn on-key-up-global [state evt]
-  (when (= "Alt" (.-key evt)) (swap! (:keys state) assoc :alt-down? false))
-  (when (= "Shift" (.-key evt)) (swap! (:keys state) assoc :shift-down? false)))
-
-(defn setup-global-events [dom-state]
-  (let [down #(on-key-down-global dom-state %)
-        up #(on-key-up-global dom-state %)]
-    (.addEventListener js/document "keydown" down)
-    (.addEventListener js/document "keyup" up)
-    (swap! dom-state update :global-event-handlers {:key-down down :key-up up})))
-
-;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; rectangle selection helpers
 (defn- mark-days-as-potentially-selected [app-state dom-state sel-state]
   (let [{:keys [left top width height]} (:global-bounds sel-state)
         contained (into #{} (for [[day {l :left t :top r :right b :bottom}]
-                                  (-> @dom-state :dom-state :day-bounds)
+                                  (:day-bounding-boxes @dom-state)
                                   :when (and (<= left l)
                                              (<= top t)
                                              (>= (+ left width) r)
@@ -141,27 +176,12 @@
       js/Math.round
       ((partial str "emph-"))))
 
-(defn on-mouse-over-day [app-state date]
-  (when (not (:selecting? @app-state))
-    (swap! app-state assoc :hovered-over-day date)))
-
-(defn on-mouse-out-day [app-state]
-  (swap! app-state assoc :hovered-over-day nil))
-
-(defn on-click-day [app-state dom-state evt date]
-  (let [add-selection? (-> @dom-state :keys :shift-down?)]
-    (swap! app-state update :selected-days (fn [selected-days]
-                                             (cond
-                                               (and add-selection? (selected-days date)) (disj selected-days date)
-                                               add-selection? (conj selected-days date)
-                                               :else #{date})))))
-
-(defn day-view [app-state dom-state {:keys [date]} {:keys [clocks-by-day selected-days max-weight] :as calendar-state}]
+(defn day-view
+  [dom-state event-handlers
+   {:keys [date] :as day}
+   {:keys [clocks-by-day selected-days max-weight] :as calendar-state}]
   (let [clocks (get clocks-by-day date)
-        selected? (selected-days date)
-        max-weight (or max-weight (->> clocks-by-day
-                                       (map #(sum-clocks-mins (val %)))
-                                       (apply max)))]
+        selected? (selected-days date)]
     [:div.day {:key date
                :id date
                :class [(emph-css-class
@@ -170,43 +190,26 @@
                        (if selected? "selected")]
                :ref (fn [el]
                       (if el
-                        (swap! dom-state update-in [:dom-state :day-bounds] #(assoc % date (dom/el-bounds el)))
-                        (swap! dom-state update-in [:dom-state :day-bounds] #(dissoc % date))))
-               :on-mouse-over #(on-mouse-over-day app-state date)
-               :on-mouse-out #(on-mouse-out-day app-state)
-               :on-click #(on-click-day app-state dom-state % date)}]))
+                        (swap! dom-state assoc-in [:day-bounding-boxes date] (dom/el-bounds el))
+                        (swap! dom-state update :day-bounding-boxes #(dissoc % date))))
+               :on-mouse-over #((:on-mouse-over-day event-handlers) date)
+               :on-mouse-out #((:on-mouse-out-day event-handlers))
+               :on-click #((:on-click-day event-handlers) % date)}]))
 
-(defn on-click-week [state evt week-no days]
-  (let [dates (into #{} (map :date days))
-        add-selection? (-> state :keys deref :shift-down?)]
-    (swap! (:selected-days state) (fn [selected-days]
-                                    (cond
-                                      add-selection? (union selected-days dates)
-                                      :else dates)))))
-
-(defn week-view [app-state dom-state week calendar-state]
+(defn week-view [dom-state event-handlers week calendar-state]
   (let [[{week-date :date week-no :week}] week]
     [:div.week {:key week-date}
-     [:div.week-no {:on-click #(on-click-week app-state % week-no week)} [:span week-no]]
-     (map #(day-view app-state dom-state % calendar-state) week)]))
+     [:div.week-no {:on-click #((:on-click-week event-handlers) % week-no week)} [:span week-no]]
+     (map #(day-view dom-state event-handlers % calendar-state) week)]))
 
-
-(defn on-click-month [state evt days]
-  (let [dates (into #{} (map :date days))
-        add-selection? (-> state :keys deref :shift-down?)]
-    (swap! (:selected-days state) (fn [selected-days]
-                                    (cond
-                                      add-selection? (union selected-days dates)
-                                      :else dates)))))
-
-(defn month-view [app-state dom-state [date days-in-month] calendar-state]
+(defn month-view [dom-state event-handlers [date days-in-month] calendar-state]
   [:div.month {:key date
                :class (lower-case (:month (first days-in-month)))}
-   [:div.month-date {:on-click #(on-click-month app-state % days-in-month)} [:span date]]
-   [:div.weeks (map #(week-view app-state dom-state % calendar-state) (weeks days-in-month))]])
+   [:div.month-date {:on-click #((:on-click-month event-handlers) % days-in-month)} [:span date]]
+   [:div.weeks (map #(week-view dom-state event-handlers % calendar-state) (weeks days-in-month))]])
 
 (defn calendar-view
-  [app-state dom-state]
+  [app-state dom-state event-handlers]
   (let [max-weight (->> @app-state
                         :clocks-by-day
                         (map (comp sum-clocks-mins second))
@@ -233,7 +236,7 @@
                                 :on-selection-change #(mark-days-as-potentially-selected app-state dom-state %))
        (when @selecting?
          [:div.selection {:style (:relative-bounds @(:sel-rect @dom-state))}])
-       (map #(month-view app-state dom-state % calendar-state) by-month)])))
+       (map #(month-view dom-state event-handlers % calendar-state) by-month)])))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -304,10 +307,10 @@
    [:input {:type "button" :value "reload" :on-click fetch-data}]])
 
 
-(defn app [app-state dom-state]
+(defn app [app-state dom-state event-handlers]
   [:div.app.noselect
    [controls]
-   [:div [calendar-view app-state dom-state]]
+   [:div [calendar-view app-state dom-state event-handlers]]
    [:div (let [{:keys [hovered-over-day
                        selected-days
                        clocks-by-day
