@@ -6,15 +6,17 @@
 
 (enable-console-print!)
 
-(defonce state (app/empty-state))
+(defonce app-state (app/empty-app-state))
+(defonce dom-state (app/empty-dom-state))
 
 (defn -main []
-  (app/setup-global-events state)
-  (rg/render [app/app state]
+  (app/setup-global-events dom-state)
+  (rg/render [app/app app-state dom-state]
           (js/document.querySelector "#app"))
   (go (let [{:keys [calendar clocks-by-day]} (<! (app/fetch-data))]
-        (reset! (:calendar state) calendar)
-        (reset! (:clocks-by-day state) clocks-by-day))))
+        (swap! app-state assoc
+               :calendar calendar
+                :clocks-by-day clocks-by-day))))
 
 (-main)
 
