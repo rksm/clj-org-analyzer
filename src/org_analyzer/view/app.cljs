@@ -1,11 +1,12 @@
 (ns org-analyzer.view.app
-  (:require [reagent.core :as r]
-            [reagent.ratom :refer [atom] :rename {atom ratom}]
+  (:require [reagent.core :as r :refer [cursor]]
+            [reagent.ratom :refer [atom reaction] :rename {atom ratom}]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<! >! close! chan go]]
             [cljs.pprint :refer [cl-format]]
             [clojure.string :refer [split lower-case join replace]]
             [org-analyzer.view.dom :as dom]
+            [org-analyzer.view.geo :as geo]
             [org-analyzer.view.selection :as sel]
             [clojure.set :refer [union]]))
 
@@ -148,13 +149,10 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; rectangle selection helpers
 (defn- mark-days-as-potentially-selected [app-state dom-state sel-state]
-  (let [{:keys [left top width height]} (:global-bounds sel-state)
-        contained (into #{} (for [[day {l :left t :top r :right b :bottom}]
+  (let [sel-bounds (:global-bounds sel-state)
+        contained (into #{} (for [[day day-bounds]
                                   (:day-bounding-boxes @dom-state)
-                                  :when (and (<= left l)
-                                             (<= top t)
-                                             (>= (+ left width) r)
-                                             (>= (+ top height) b))]
+                                  :when (geo/contains-rect? sel-bounds day-bounds)]
                               day))]
     (swap! app-state assoc :selected-days-preview contained)))
 
@@ -180,13 +178,13 @@
   [dom-state event-handlers
    {:keys [date] :as day}
    {:keys [clocks-by-day selected-days max-weight] :as calendar-state}]
-  (let [clocks (get clocks-by-day date)
-        selected? (selected-days date)]
+  (let [clocks (get @clocks-by-day date)
+        selected? (@selected-days date)]
     [:div.day {:key date
                :id date
                :class [(emph-css-class
                         (sum-clocks-mins clocks)
-                        max-weight)
+                        @max-weight)
                        (if selected? "selected")]
                :ref (fn [el]
                       (if el
@@ -200,28 +198,27 @@
   (let [[{week-date :date week-no :week}] week]
     [:div.week {:key week-date}
      [:div.week-no {:on-click #((:on-click-week event-handlers) % week-no week)} [:span week-no]]
-     (map #(day-view dom-state event-handlers % calendar-state) week)]))
+     (doall (map #(day-view dom-state event-handlers % calendar-state) week))]))
 
 (defn month-view [dom-state event-handlers [date days-in-month] calendar-state]
   [:div.month {:key date
                :class (lower-case (:month (first days-in-month)))}
    [:div.month-date {:on-click #((:on-click-month event-handlers) % days-in-month)} [:span date]]
-   [:div.weeks (map #(week-view dom-state event-handlers % calendar-state) (weeks days-in-month))]])
+   [:div.weeks (doall (map #(week-view dom-state event-handlers % calendar-state) (weeks days-in-month)))]])
 
 (defn calendar-view
   [app-state dom-state event-handlers]
-  (let [max-weight (->> @app-state
-                        :clocks-by-day
-                        (map (comp sum-clocks-mins second))
-                        (reduce max))
-        calendar-state {:max-weight max-weight
-                        :clocks-by-day (:clocks-by-day @app-state)
-                        :selected-days (union (:selected-days @app-state)
-                                              (:selected-days-preview @app-state))}]
+  (let [clocks-by-day (cursor app-state [:clocks-by-day])
+        calendar-state {:max-weight (reaction (->> @clocks-by-day
+                                                   (map (comp sum-clocks-mins second))
+                                                   (reduce max)))
+                        :clocks-by-day clocks-by-day
+                        :selected-days (reaction (union (:selected-days @app-state)
+                                                        (:selected-days-preview @app-state)))}]
 
-    (let [selecting? (r/cursor app-state [:selecting?])
-          selected-days (r/cursor app-state [:selected-days])
-          selected-days-preview (r/cursor app-state [:selected-days-preview])
+    (let [selecting? (cursor app-state [:selecting?])
+          selected-days (cursor app-state [:selected-days])
+          selected-days-preview (cursor app-state [:selected-days-preview])
           by-month (into (sorted-map) (->> @app-state
                                            :calendar
                                            (group-by
@@ -233,10 +230,13 @@
                                 :on-selection-end #(do
                                                      (reset! selecting? false)
                                                      (commit-potentially-selected! selected-days selected-days-preview dom-state))
-                                :on-selection-change #(mark-days-as-potentially-selected app-state dom-state %))
+                                :on-selection-change #(when @selecting?
+                                                        (mark-days-as-potentially-selected app-state dom-state %)))
        (when @selecting?
-         [:div.selection {:style (:relative-bounds @(:sel-rect @dom-state))}])
-       (map #(month-view dom-state event-handlers % calendar-state) by-month)])))
+         [:div.selection {:style
+                          (let [[x y w h] (:relative-bounds @(:sel-rect @dom-state))]
+                               {:left x :top y :width w :height h})}])
+       (doall (map #(month-view dom-state event-handlers % calendar-state) by-month))])))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
