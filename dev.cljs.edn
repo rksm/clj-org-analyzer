@@ -8,4 +8,6 @@
   :extra-main-files {:expts {:main org-analyzer.view.expts}}}
 {:main org-analyzer.view.main
  :output-to "target/public/cljs-out/main.js"
+ ;; :main org-analyzer.view.expts
+ ;; :output-to "target/public/cljs-out/expts-main.js"
  :output-dir "target/public/cljs-out/dev"}

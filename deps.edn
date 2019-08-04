@@ -18,9 +18,8 @@
            :fig
            {:extra-paths ["resources" "target"]
             :extra-deps {com.bhauman/figwheel-main {:mvn/version "RELEASE"}}
-            :main-opts ["-m" "suitable.nrepl"]}
+            :main-opts ["-m cljs.main -co dev.cljs.edn -c org-analyzer.view.app"]}
 
            :fig-prod
            {:extra-paths ["resources" "target"]
-            :main-opts ["-m cljs.main -co prod.cljs.edn -c org-analyzer.browser"]}}}
-
+            :main-opts ["-m cljs.main -co prod.cljs.edn -c org-analyzer.view.app"]}}}

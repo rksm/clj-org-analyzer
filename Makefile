@@ -11,7 +11,10 @@ http-server:
 	clojure -A:http-server
 
 cljs:
-	clojure -A:fig-prod
+	clojure -A:fig
+
+cljs-prod:
+	clojure -R:fig -A:fig-prod
 
 clean:
 	rm -rf target .cpcache
