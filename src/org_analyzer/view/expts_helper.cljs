@@ -3,7 +3,7 @@
             [reagent.ratom :refer [atom] :rename {atom ratom}])
   (:require-macros [org-analyzer.view.expts-helper]))
 
-(def expt-registry (ratom (sorted-map)))
+(def expt-registry (ratom {}))
 
 (def visible-expts
   (let [state
@@ -38,6 +38,8 @@
 (defn purge-expt! [expt-id]
   (swap! expt-registry dissoc expt-id))
 
+(defn purge-all! []
+  (reset! expt-registry {}))
 
 (defn expts []
   [:div.expts
