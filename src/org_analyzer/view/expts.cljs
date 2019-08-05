@@ -8,16 +8,18 @@
             [clojure.string :as s]
             [clojure.set :refer [union]]
             [cljs.pprint :refer [cl-format]]
-            [org-analyzer.view.expts-helper :as e :refer [expts]])
-  (:require-macros [org-analyzer.view.expts-helper-macros :refer [expt]]))
+            [org-analyzer.view.expts-helper :as e :refer [expts defexpt]]))
 
 (enable-console-print!)
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defn minutes-since-midnight
-  [js-time]
-  (+ (* 60 (.getHours js-time)) (.getMinutes js-time)))
+  [time-string]
+  (let [[hours mins]
+        (map cljs.reader/read-string
+             (drop 1 (re-find #"0?([0-9]{1,2}):0?([0-9]{1,2})" time-string)))]
+    (+ (* 60 hours) mins)))
 
 (defn clocks-each-minute [clocks]
   (let [mins (mapv transient (repeat (* 24 60) []))]
@@ -57,14 +59,14 @@
 
     ;; fetch data
     (go (let [{cal-data :calendar clock-data :clocks-by-day}
-              (<! (fetch-data :from (js/Date. "2019-07-01") :to (js/Date. "2019-08-03")))]
+              (<! (fetch-data :from (js/Date. "2019-07-01") :to (js/Date. "2019-08-05")))]
           (swap! app-state assoc
                  :calendar cal-data
-                 :clocks-by-day clock-data
+                 :clocks-by-day (into (sorted-map-by <) clock-data)
                  :clock-minute-intervals-by-day
-                 (into {} (map
-                           (fn [[key clocks]] [key (clock-minute-intervals clocks)])
-                           clock-data)))))
+                 (into (sorted-map-by <) (map
+                                          (fn [[key clocks]] [key (clock-minute-intervals clocks)])
+                                          clock-data)))))
 
     {:app-state app-state
      :dom-state dom-state
@@ -124,7 +126,9 @@
                         (for [[row [date clock-intervals]] (map-indexed vector clock-minute-intervals-by-day)
                               bounds (clock-bounds-on-canvas clock-intervals 0 heading-h w-ea row h-ea)]
                           (with-meta bounds {:row row})))
-          selected @moused-over]
+          [_ _ _ _ selected-clocks :as selected] @moused-over
+          selected-clocks (set (map :location selected-clocks))]
+      (js/console.log selected-clocks)
 
       [:canvas {:id "canvas"
                 :width width
@@ -134,8 +138,15 @@
                                        bounds (->> clock-bounds
                                                    (filter #(geo/contains-point? % p))
                                                    first)]
-                                   (if-let [[_ _ _ _ clocks] bounds]
-                                     (reset! tooltip (str (:location (first clocks)))))
+                                   (when-let [[_ _ _ _ clocks] bounds]
+
+                                     (reset! tooltip [:div (interpose [:br] (map (fn [clock] [:span (str (:location clock)
+                                                                                                         " "
+                                                                                                         (:start clock)
+                                                                                                         "-"
+                                                                                                         (:end clock))])
+                                                                                 clocks))])
+                                     (println @tooltip))
                                    (reset! moused-over bounds)))
                 :ref (fn [canvas]
                        (when canvas
@@ -147,14 +158,34 @@
                              (let [[x y w h clocks] bounds
                                    {row :row} (meta bounds)
                                    {selected-row :row} (meta selected)
-                                   selected? (= row selected-row)
+                                   row-selected? (= row selected-row)
+                                   bounds-selected? (= selected bounds)
+                                   no-clocks? (empty? clocks)
+                                   highlighted-a-bit? (not (empty? (clojure.set/intersection selected-clocks (set (map :location clocks)))))
                                    color (cond
-                                           (empty? clocks) (if selected? "#eee" "#ddd")
-                                           (= selected bounds) "red"
-                                           selected? "#333"
-                                           :else "#666")]
+                                           (and no-clocks? row-selected?) "#ddd"
+                                           no-clocks? "#fff"
+                                           bounds-selected? "red"
+                                           highlighted-a-bit? "salmon"
+                                           row-selected? "#6fA"
+                                           :else "#3e8")]
+
+                               (.save ctx)
                                (set! (.-fillStyle ctx) color)
-                               (.fillRect ctx x y w h)))
+
+                               (set! (.-strokeStyle ctx) "rgba(60,160,120,.4)")
+                               (set! (.-lineWidth ctx) 1)
+
+                               #_(when no-clocks?
+                                 (set! (.-shadowColor ctx) "#d53")
+                                 (set! (.-shadowBlur ctx) 10)
+                                 (set! (.-lineJoin ctx) "bevel"))
+                               (.fillRect ctx x y w h)
+                               (when-not no-clocks?
+                                 (.strokeRect ctx (inc x) (inc y) (dec w) (dec h)))
+                               (.restore ctx)
+
+                               ))
                            (doto ctx (.restore) (.save))
                            (set! (.-textBaseline ctx) "top")
                            (set! (.-textAlign ctx) "center")
@@ -168,34 +199,93 @@
 
 (declare with-tooltip-following-mouse)
 
-(expt expt-2
-      (let [app-state (:app-state expt-1-state)
-            clocks-by-day (:clocks-by-day @app-state)
-            clock-minute-intervals-by-day (:clock-minute-intervals-by-day @app-state)]
-        (rg/with-let [tooltip (ratom "")]
-          (with-tooltip-following-mouse
-            tooltip
-            [:div [activities-by-minute-view
-                   clock-minute-intervals-by-day
-                   tooltip]]))))
+(defexpt expt-2
+  (let [app-state (:app-state expt-1-state)
+        clocks-by-day (:clocks-by-day @app-state)
+        clock-minute-intervals-by-day (:clock-minute-intervals-by-day @app-state)]
+    (rg/with-let [tooltip (ratom "")]
+      (with-tooltip-following-mouse
+        tooltip
+        [:div [activities-by-minute-view
+               clock-minute-intervals-by-day
+               tooltip]]))))
+
+(defexpt fix-clocks-by-minute
+  (let [app-state (:app-state expt-1-state)
+        clocks-by-day (:clocks-by-day @app-state)
+        clock-minute-intervals-by-day (:clock-minute-intervals-by-day @app-state)
+        heading-h 20
+        w-ea 10
+        h-ea 10
+        clock-bounds (doall
+                      (for [[row [date clock-intervals]] (map-indexed vector clock-minute-intervals-by-day)
+                            bounds (clock-bounds-on-canvas clock-intervals 0 heading-h w-ea row h-ea)]
+                        (with-meta bounds {:row row})))]
+
+    [:div.fix-clocks-by-minute.verbatim
+     (map (fn [[_ _ _ _ clocks :as bounds] i] ^{:key i}
+            (let [row (:row (meta bounds))]
+              [:div.bounds
+               [:span row " " (pr-str (take 4 bounds))]
+               [:br]
+               (for [{:keys [location start end]} clocks]
+                 ^{:key (str row location)} [:div.clock "  [" start "] - [" end "]: " location])]))
+          clock-bounds (range))]))
+
+(defexpt fix-clocks-by-minute-2
+  (let [app-state (:app-state expt-1-state)
+        clocks-by-day (:clocks-by-day @app-state)]
+
+    [:div.fix-clocks-by-minute.verbatim
+     (doall (for [[day clocks] clocks-by-day]
+              [:div
+               [:div day]
+               (doall (for [{:keys [location start end]} clocks]
+                        [:div.clock "  [" start "] - [" end "]: " location]))
+               ]))]))
+
+
+(into (sorted-map-by <) (:clock-minute-intervals-by-day @(:app-state expt-1-state)))
+
+(defexpt fix-clocks-by-minute-3
+  (let [app-state (:app-state expt-1-state)
+        clock-intervals (:clock-minute-intervals-by-day @app-state)]
+
+    [:div.fix-clocks-by-minute.verbatim
+     (doall (for [[day intervals] clock-intervals]
+              [:div
+               [:div day]
+               (doall (for [[from to clocks] intervals]
+                        [:div (str "  " from " " to)
+                         (doall (for [{:keys [location start end]} clocks]
+                                  ^{:key (str day location)}
+                                  [:div.clock "    [" start "] - [" end "]: " location]))]))
+               ]))]))
+
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(def el (first (js->clj (js/Array.from (js/document.getElementsByClassName "stalker")))))
+;; (def el (first (js->clj (js/Array.from (js/document.getElementsByClassName "stalker")))))
 
-(dom/el-bounds el)
+;; (dom/el-bounds el)
 
 (defn with-tooltip-following-mouse
   ([tooltip-content comp]
    (with-tooltip-following-mouse tooltip-content {} comp))
   ([tooltip-content {:keys [align offset] :as config} comp]
-   (rg/with-let [dom-state (atom {:el nil :bounds [0 0 0 0]})
+   (rg/with-let [bounds (atom [0 0 0 0])
+                 el (atom nil)
                  follow (ratom false)]
      (let [react-el (rg/as-element comp)
 
+           tooltip-content @tooltip-content
            stalker [:div.stalker
-                    {:ref #(reset! el %)}
-                    @tooltip-content]
+                    {:ref #(do (reset! el %)
+                               (reset! bounds (if % (dom/el-bounds %) [0 0 0 0])))
+                     :class (if (or (not (string? tooltip-content))
+                                    (not-empty tooltip-content))
+                              nil "hidden")}
+                    tooltip-content]
 
            type (.-type react-el)
            ref (.-ref react-el)
@@ -221,9 +311,7 @@
                                                   (when (fn? onMouseMove)
                                                     (onMouseMove evt))
                                                   (when (and @el @follow)
-                                                    (let [[x y] (geo/pos+ (dom/mouse-position evt) offset)]
-                                                      (set! (.. @el -style -left) (str x "px"))
-                                                      (set! (.. @el -style -top) (str y "px")))))}))
+                                                    (dom/align-element! :top @el (dom/mouse-position evt) 5)))}))
            ]
 
        (rg/create-element
@@ -232,38 +320,38 @@
         children
         (when @follow (rg/as-element stalker)))))))
 
-(expt expt-3
+(defexpt expt-3
 
-      (rg/with-let [tooltip (ratom "foo")]
-        (with-tooltip-following-mouse
-          tooltip
-          [:div {:style {:background "red"
-                         :height "300px"
-                         :width "300px"}
-                 :on-mouse-move (fn [evt] (let [[x y] (dom/mouse-position evt)]
-                                            (reset! tooltip [:div [:h1 (str x "/" y)]])))}
-           [:div.foo "barrr"]
-           ;; [:div.foo "zorrr"]
-           ])))
+  (rg/with-let [tooltip (ratom "foo")]
+    (with-tooltip-following-mouse
+      tooltip
+      [:div {:style {:background "red"
+                     :height "300px"
+                     :width "300px"}
+             :on-mouse-move (fn [evt] (let [[x y] (dom/mouse-position evt)]
+                                        (reset! tooltip [:div [:h1 (str x "/" y)]])))}
+       [:div.foo "barrr"]
+       ;; [:div.foo "zorrr"]
+       ])))
 
-(expt expt-4
-      (rg/with-let [el (atom nil)
-                    follow (ratom false)]
-        [:div {:style {:background "red"
-                       :height "300px"
-                       :width "300px"}
+(defexpt expt-4
+  (rg/with-let [el (atom nil)
+                follow (ratom false)]
+    [:div {:style {:background "red"
+                   :height "300px"
+                   :width "300px"}
 
-               :on-mouse-over #(reset! follow true)
-               :on-mouse-out #(reset! follow false)
-               :on-mouse-move (fn [evt]
-                                (when (and @el @follow)
-                                  (let [[x y] (dom/mouse-position evt)]
-                                    (set! (.. @el -style -left) (str x "px"))
-                                    (set! (.. @el -style -top) (str y "px")))))}
-         "outer"
-         (when @follow [:div.stalker
-                        {:ref #(do (def el %) (println %) (reset! el %))}
-                        "123"])]))
+           :on-mouse-over #(reset! follow true)
+           :on-mouse-out #(reset! follow false)
+           :on-mouse-move (fn [evt]
+                            (when (and @el @follow)
+                              (let [[x y] (dom/mouse-position evt)]
+                                (set! (.. @el -style -left) (str x "px"))
+                                (set! (.. @el -style -top) (str y "px")))))}
+     "outer"
+     (when @follow [:div.stalker
+                    {:ref #(do (def el %) (println %) (reset! el %))}
+                    "123"])]))
 
 (defn start []
   (rg/render [e/expts]
