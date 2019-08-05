@@ -1,4 +1,5 @@
-(ns org-analyzer.view.dom)
+(ns org-analyzer.view.dom
+  (:require [org-analyzer.view.geo :as geo]))
 
 (defn el-bounds [el]
   (let [b-rect (.getBoundingClientRect el)]
@@ -29,3 +30,21 @@
         [(+ client-x (- scroll-left client-left) offset-x)
          (+ client-y (- scroll-top client-top) offset-y)])
       [0 0])))
+
+(defn align-element!
+  ([how el to-point]
+   (align-element! how el to-point 0))
+  ([how el to-point offset]
+   (let [[rect-point-fn o-x o-y] (case how
+                                   :top [geo/bottom-center 0 (- offset)]
+                                   :bottom [geo/top-center 0 offset]
+                                   :left [geo/right-center (- offset) 0]
+                                   :right [geo/left-center offset 0])
+         bounds (el-bounds el)
+         [x y] (geo/align bounds
+                          (rect-point-fn bounds)
+                          to-point)
+         x (+ o-x x)
+         y (+ o-y y)]
+     (set! (.. el -style -left) (str x "px"))
+     (set! (.. el -style -top) (str y "px")))))
