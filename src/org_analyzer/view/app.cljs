@@ -8,7 +8,9 @@
             [org-analyzer.view.dom :as dom]
             [org-analyzer.view.geo :as geo]
             [org-analyzer.view.selection :as sel]
-            [clojure.set :refer [union]]))
+            [clojure.set :refer [union]]
+            [sc.api]
+            [clojure.string :as s]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
@@ -127,22 +129,31 @@
         mins (- mins (* hours 60))]
     (cl-format nil "~d:~2,'0d" hours mins)))
 
+(defn format-date-time [d]
+  (apply cl-format nil "~d-~2,'0d-~2,'0d ~2,'0d:~2,'0d"
+         ((juxt #(.getFullYear %)
+                #(inc (.getMonth %))
+                #(.getDate %)
+                #(.getHours %)
+                #(.getMinutes %)) d)))
+
 (defn fetch-data
   [& {:keys [from to]
       :or {from (js/Date. "2000-01-01")
            to (js/Date.)}}]
   (let [result-chan (chan 1)
-        from (pr-str from)
-        to (pr-str to)]
+        from (format-date-time from)
+        to (format-date-time to)]
     (go (let [response (<! (http/get "/clocks" {:query-params {:from from :to to :by-day? true}}))
-              clocks (cljs.reader/read-string {:readers {'inst #(js/Date. %)}} (:body response))]
+              clocks (cljs.reader/read-string (:body response))]
           (println "got clocks")
-          (let [from (pr-str (:start (first clocks)))
+          (let [from (:start (first clocks))
                 response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
-                body (cljs.reader/read-string (:body response))]
+                cal-data (cljs.reader/read-string (:body response))]
             (println "got calendar")
-            (>! result-chan {:calendar body :clocks-by-day
-                             (group-by (comp date-string :start) clocks)})
+            (js/console.log clocks)
+            (>! result-chan {:calendar cal-data :clocks-by-day
+                             (into (sorted-map-by <) (group-by #(-> % :start (s/split #" ") first) clocks))})
             (close! result-chan))))
     result-chan))
 

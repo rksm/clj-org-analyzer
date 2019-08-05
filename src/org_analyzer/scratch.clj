@@ -20,9 +20,33 @@
             [org-analyzer.http-server :as http]
             [org-analyzer.printing :refer [print-duration]]
             [org-analyzer.processing :refer [find-clocks]]
-            [org-analyzer.time :as org-time :refer :all]))
+            [org-analyzer.time :as org-time :refer :all])
+  (:import [java.time LocalDateTime ZoneId]))
 
 (comment
+
+  (def clocks (map http/clock-data (http/get-clocks)))
+  (def clocks (http/get-clocks))
+  (def clocks (http/send-clocks-between
+               (LocalDateTime/ofInstant (time/instant #inst "2019-07-08T00:00:00.000-00:00") (ZoneId/of "UTC"))
+               (LocalDateTime/ofInstant (time/instant #inst "2019-07-10T00:00:00.000-00:00") (ZoneId/of "UTC"))))
+
+  clocks
+
+
+  (count (mapcat org-time/clock->each-day-clocks clocks))
+  (count clocks)
+
+  (def clocks-by-day (group-by #(time/format "yyyy-MM-dd" (local-date (:start %))) clocks))
+
+
+  (def clock (last (sort-by :start (get clocks-by-day "2019-07-04"))))
+
+  (time/before? (local-date (:start clock))
+                (local-date (:end clock)))
+
+
+  (time/format "yyyy-MM-dd" (local-date (:start (first clocks))))
 
   (def org-files (let [dir (io/file "/home/robert/org/")]
                    (->> dir file-seq (filter #(and (= dir (.getParentFile %)) (s/ends-with? (.getName %) ".org"))))))

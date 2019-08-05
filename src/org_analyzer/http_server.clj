@@ -7,13 +7,14 @@
             [compojure.route :as route]
             [java-time :as time]
             [org-analyzer.printing :refer [print-duration]]
-            [org-analyzer.processing :refer [find-clocks parse-org-file]]
+            [org-analyzer.processing :refer [find-clocks parse-org-file parse-timestamp]]
             [org-analyzer.time
              :refer
              [calendar clock->each-day-clocks clocks-between]]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
-            [ring.util.response :as response]))
+            [ring.util.response :as response])
+  (:import [java.time LocalDateTime ZoneId]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -22,10 +23,11 @@
                     (->> dir
                          file-seq
                          (filter #(and
-                                   ;; (= dir (.getParentFile %))
+                                   ;; (= dir (.getPaarentFile %))
                                    (s/ends-with? (.getName %) ".org")))))
 
-        clocks (mapcat (comp find-clocks parse-org-file) org-files)]
+        clocks (mapcat (comp find-clocks parse-org-file) org-files)
+        clocks (mapcat clock->each-day-clocks clocks)]
     clocks))
 
 
@@ -35,23 +37,27 @@
       time/instant->sql-timestamp))
 
 (defn clock-data [{:keys [start end duration sections] :as clock}]
-  {:start (as-instant start)
-   :end (and (not (nil? end)) (as-instant end))
+  {:start (time/format "yyyy-MM-dd HH:mm" start)
+   :end (and (not (nil? end)) (time/format "yyyy-MM-dd HH:mm" end))
    :duration (and (not (nil? duration)) (print-duration duration))
    ;; :tags (all-tags TODO!!!)
    :location (->> sections ((juxt first last)) (map :name) (apply format "%s > %s"))})
 
+(defn time-string-to-local-date [time-string]
+  (time/local-date-time (time/zoned-date-time time-string)))
+
 (defn read-with-inst [string]
-  (let [readers {'inst (comp time/local-date-time time/offset-date-time)}]
+  (let [readers {'inst time-string-to-local-date}]
     (edn/read-string {:readers readers} string)))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defn send-clocks-between [start end & {:keys [by-day?] :or {by-day? false}}]
   (let [clocks (clocks-between start end (get-clocks))
-        clocks (if by-day?
-                 (apply concat (map clock->each-day-clocks clocks))
-                 clocks)]
+        ;; clocks (if by-day?
+        ;;          (apply concat (map clock->each-day-clocks clocks))
+        ;;          clocks)
+        ]
     (map clock-data clocks)))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -61,12 +67,12 @@
   (GET "/index.html" [] (response/redirect "/"))
   (GET "/bar" [] (/ 1 0))
   (GET "/clocks" [from to by-day?] (pr-str (send-clocks-between
-                                            (read-with-inst from)
-                                            (read-with-inst to)
+                                            (parse-timestamp from)
+                                            (parse-timestamp to)
                                             :by-day? (edn/read-string by-day?))))
-  (GET "/calendar" [from to] (pr-str (into [] (calendar
-                                               (read-with-inst from)
-                                               (read-with-inst to)))))
+  (GET "/calendar" [from to] (do (prn from)(pr-str (into [] (calendar
+                                                (parse-timestamp from)
+                                                (parse-timestamp to))))))
   (route/resources "/" {:root "public"})
   (route/not-found "NOTFOUND "))
 
@@ -90,3 +96,6 @@
 
 (defn -main [& args]
   (start-server))
+
+;; (sc.api.logging/register-cs-logger :sc.api.logging/log-spy-cs (fn [cs] nil))
+
