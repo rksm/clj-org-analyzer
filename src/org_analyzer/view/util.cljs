@@ -53,3 +53,42 @@
                 #(.getDate %)
                 #(.getHours %)
                 #(.getMinutes %)) d)))
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+(defn- minutes-since-midnight
+  [time-string]
+  (when time-string
+    (let [[hours mins]
+          (map cljs.reader/read-string
+               (drop 1 (re-find #"0?([0-9]{1,2}):0?([0-9]{1,2})" time-string)))]
+      (+ (* 60 hours) mins))))
+
+(defn clocks-each-minute [clocks]
+  (let [mins (mapv transient (repeat (* 24 60) []))]
+    (doseq [clock clocks
+            :let [start (minutes-since-midnight (:start clock))
+                  end (minutes-since-midnight (:end clock))
+                  end (cond
+                        (zero? end) (if (zero? start) 0 1440)
+                        (< end start) nil
+                        :else end)]
+            :when end
+            i (range start end)]
+      (conj! (nth mins i) clock))
+    (mapv persistent! mins)))
+
+(defn clock-minute-intervals [clocks]
+  (loop [i 0
+         current-clocks []
+         each-minute (clocks-each-minute clocks)
+         result []]
+    (if (empty? each-minute)
+      result
+      (let [n (count (take-while #(= current-clocks %) each-minute))
+            next-i (+ i n)
+            next (drop n each-minute)]
+        (recur next-i
+               (first next)
+               next
+               (if (zero? n) result (conj result [i (+ i n) current-clocks])))))))

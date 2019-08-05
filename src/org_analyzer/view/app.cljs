@@ -21,6 +21,7 @@
 (defn empty-app-state []
   (ratom {:calendar nil
           :clocks-by-day {}
+          :clock-minute-intervals-by-day {}
           :hovered-over-day nil
           :selected-days #{}
           :selected-days-preview #{}
@@ -32,7 +33,6 @@
                 :alt-down? false}
          :day-bounding-boxes {}}))
 
-
 (defn fetch-data
   [& {:keys [from to]
       :or {from (js/Date. "2000-01-01")
@@ -43,13 +43,21 @@
     (go (let [response (<! (http/get "/clocks" {:query-params {:from from :to to :by-day? true}}))
               clocks (cljs.reader/read-string (:body response))]
           (println "got clocks")
+
           (let [from (:start (first clocks))
                 response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
-                cal-data (cljs.reader/read-string (:body response))]
+                calendar (cljs.reader/read-string (:body response))]
             (println "got calendar")
-            (js/console.log clocks)
-            (>! result-chan {:calendar cal-data :clocks-by-day
-                             (into (sorted-map-by <) (group-by #(-> % :start (s/split #" ") first) clocks))})
+
+            (let [clocks-by-day
+                  (into (sorted-map-by <) (group-by #(-> % :start (s/split #" ") first) clocks))
+                  clock-minute-intervals-by-day
+                  (into (sorted-map-by <) (map
+                                           (fn [[key clocks]] [key (util/clock-minute-intervals clocks)])
+                                           clocks-by-day))]
+              (>! result-chan {:calendar calendar
+                               :clocks-by-day clocks-by-day
+                               :clock-minute-intervals-by-day clock-minute-intervals-by-day}))
             (close! result-chan))))
     result-chan))
 
