@@ -66,7 +66,7 @@
   [r]
   [(left r) (top r)])
 
-(defn center-left
+(defn left-center
   [[_ y _ h :as r]]
   [(left r) [(+ y (/ h 2))]])
 
@@ -87,6 +87,7 @@
   [(right r) [(+ y (/ h 2))]])
 
 (defn bottom-right
+  [r]
   [(right r) (bottom r)])
 
 (defn bottom-center
