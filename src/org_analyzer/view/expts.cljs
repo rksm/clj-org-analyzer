@@ -50,7 +50,7 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(defonce expt-1-state
+(def expt-1-state
   (let [app-state (app/empty-app-state)
         dom-state (app/empty-dom-state)
         event-handlers (app/event-handlers app-state dom-state)]
@@ -70,7 +70,7 @@
      :dom-state dom-state
      :event-handlers event-handlers }))
 
-(expt expt-1
+(defexpt expt-1
   (let [{:keys [dom-state event-handlers app-state]} expt-1-state
         month-date-and-days (->> @app-state
                                  :calendar
