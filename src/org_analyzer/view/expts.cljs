@@ -2,6 +2,8 @@
   (:require [org-analyzer.view.app :as app :refer [fetch-data]]
             [org-analyzer.view.geo :as geo]
             [org-analyzer.view.dom :as dom]
+            [org-analyzer.view.util :as util]
+            [org-analyzer.view.calendar :as calendar]
             [reagent.core :as rg :refer [cursor]]
             [reagent.ratom :refer [atom reaction] :rename {atom ratom}]
             [cljs.core.async :refer [go <! chan]]
@@ -81,7 +83,7 @@
                                  first)
         clocks-by-day (cursor app-state [:clocks-by-day])
         max-weight (reaction (->> @clocks-by-day
-                                  (map (comp app/sum-clocks-mins second))
+                                  (map (comp util/sum-clocks-mins second))
                                   (reduce max)))
         calendar-state {:max-weight max-weight
                         :clocks-by-day clocks-by-day
@@ -92,7 +94,7 @@
      [:h1 "expt 1"]
      (if (empty? (:calendar @app-state))
        [:span "Loading..."]
-       [app/month-view
+       [calendar/month-view
         dom-state
         event-handlers
         month-date-and-days
