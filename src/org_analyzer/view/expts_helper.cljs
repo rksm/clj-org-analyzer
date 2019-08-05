@@ -1,7 +1,7 @@
 (ns org-analyzer.view.expts-helper
   (:require [clojure.string :as s]
             [reagent.ratom :refer [atom] :rename {atom ratom}])
-  (:require-macros [org-analyzer.view.expts-helper-macros]))
+  (:require-macros [org-analyzer.view.expts-helper]))
 
 (def expt-registry (ratom (sorted-map)))
 
