@@ -38,6 +38,8 @@
   (let [{:keys [dom-state event-handlers app-state]} expt-1-state
         month-date-and-days (->> @app-state
                                  :calendar
+                                 vals
+                                 flatten
                                  (group-by #(s/replace (:date %) #"^([0-9]+-[0-9]+).*" "$1"))
                                  (into (sorted-map))
                                  first)
@@ -49,7 +51,6 @@
                         :clocks-by-day clocks-by-day
                         :selected-days (reaction (union (:selected-days @app-state)
                                                         (:selected-days-preview @app-state)))}]
-    ;; (sc.api/spy)
     [:div.expt
      [:h1 "expt 1"]
      (if (empty? (:calendar @app-state))

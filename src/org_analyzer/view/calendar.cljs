@@ -27,10 +27,10 @@
 
           (on-mouse-over-day [date]
             (when (not (:selecting? @app-state))
-              (swap! app-state assoc :hovered-over-day date)))
+              (swap! app-state assoc :hovered-over-date date)))
 
           (on-mouse-out-day []
-            (swap! app-state assoc :hovered-over-day nil))
+            (swap! app-state assoc :hovered-over-date nil))
 
           (on-click-day [evt date]
             (let [add-selection? (shift-down?)]
@@ -119,6 +119,8 @@
           selected-days-preview (cursor app-state [:selected-days-preview])
           by-month (into (sorted-map) (->> @app-state
                                            :calendar
+                                           vals
+                                           flatten
                                            (group-by
                                             #(replace (:date %) #"^([0-9]+-[0-9]+).*" "$1"))))]
 
@@ -133,5 +135,5 @@
        (when @selecting?
          [:div.selection {:style
                           (let [[x y w h] (:relative-bounds @(:sel-rect @dom-state))]
-                               {:left x :top y :width w :height h})}])
+                            {:left x :top y :width w :height h})}])
        (doall (map #(month-view dom-state event-handlers % calendar-state) by-month))])))

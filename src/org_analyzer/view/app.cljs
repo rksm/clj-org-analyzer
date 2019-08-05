@@ -22,7 +22,7 @@
   (ratom {:calendar nil
           :clocks-by-day {}
           :clock-minute-intervals-by-day {}
-          :hovered-over-day nil
+          :hovered-over-date nil
           :selected-days #{}
           :selected-days-preview #{}
           :selecting? false}))
@@ -46,7 +46,7 @@
 
           (let [from (:start (first clocks))
                 response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
-                calendar (cljs.reader/read-string (:body response))]
+                calendar (into (sorted-map-by <) (map (juxt :date identity) (cljs.reader/read-string (:body response))))]
             (println "got calendar")
 
             (let [clocks-by-day
@@ -89,18 +89,18 @@
   [:div.controls
    [:input {:type "button" :value "reload" :on-click fetch-data}]])
 
-
 (defn app [app-state dom-state event-handlers]
   [:div.app.noselect
    [controls]
    [:div [calendar/calendar-view app-state dom-state event-handlers]]
-   [:div (let [{:keys [hovered-over-day
+   [:div (let [{:keys [hovered-over-date
                        selected-days
                        clocks-by-day
                        calendar]} @app-state
+               hovered-over-day (get calendar hovered-over-date)
                n-selected (count selected-days)]
            (cond
-             hovered-over-day [selected-day/selected-day-view hovered-over-day clocks-by-day]
+             hovered-over-date [selected-day/selected-day-view hovered-over-day clocks-by-day]
              (= n-selected 1) [selected-day/selected-day-view (first selected-days) clocks-by-day]
              (> n-selected 1) [selected-day/selected-days-view selected-days clocks-by-day calendar]
              :else nil))]])
