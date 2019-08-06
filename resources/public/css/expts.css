@@ -22,32 +22,6 @@ h1 {
   padding: 10px;
   border: 1px gray solid;
 }
-.activities-by-minute {
-  display: flex;
-  flex-direction: row;
-}
-.activities-by-minute .minute {
-  display: flex;
-  flex-direction: column;
-}
-.activities-by-minute .minute .label {
-  overflow: hidden;
-  font-size: x-small;
-  overflow: visible;
-  width: 1px;
-  height: 1em;
-  height: 0;
-}
-.activities-by-minute .minute .activity {
-  width: 1px;
-  height: 1em;
-}
-.activities-by-minute .minute.active .activity {
-  background: red;
-}
-.activities-by-minute .minute.not-active .activity {
-  background: green;
-}
 .stalker {
   position: absolute;
   pointer-events: none;

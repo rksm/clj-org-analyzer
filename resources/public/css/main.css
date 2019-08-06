@@ -1,6 +1,8 @@
 .app {
+  font-family: sans-serif;
   display: flex;
   flex-direction: column;
+  font-size: small;
 }
 .noselect {
   -webkit-touch-callout: none;
@@ -19,10 +21,12 @@
   display: flex;
   flex-direction: row;
   margin-bottom: 20px;
+  top: 20px;
+  background-color: white;
+  z-index: 1;
 }
 .calendar {
   position: relative;
-  font-size: small;
   overflow: auto;
   outline: 1px solid gray;
   padding: 10px 10px 25px;
@@ -184,6 +188,10 @@
 .day.selected.emph-10 {
   background-color: #ff6e0a;
 }
+.day-detail {
+  overflow: hidden;
+  white-space: nowrap;
+}
 .day-detail > div {
   margin: 10px;
 }
@@ -192,4 +200,25 @@
 }
 .day-detail .duration {
   margin-right: 1ex;
+}
+.day-detail .clocks {
+  display: flex;
+  flex-direction: row;
+  position: relative;
+}
+.day-detail .clocks .clock-list {
+  margin-right: 20px;
+  min-width: 100px;
+  max-width: 35%;
+}
+.day-detail .clocks .clock-list .activity.highlighted {
+  color: salmon;
+}
+.day-detail .clocks .by-minute {
+  overflow: hidden;
+  margin-top: -12px;
+}
+.day-detail .clocks .by-minute.sticky {
+  position: relative;
+  margin-top: 0px;
 }

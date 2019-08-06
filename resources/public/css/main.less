@@ -1,6 +1,8 @@
 .app {
+    font-family: sans-serif;
     display: flex;
     flex-direction: column;
+    font-size: small;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -26,6 +28,9 @@
     display: flex;
     flex-direction: row;
     margin-bottom: 20px;
+    top: 20px;
+    background-color: white;
+    z-index: 1;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -36,7 +41,6 @@
 .calendar {
     position: relative;
 
-    font-size: small;
     overflow: auto;
     outline: 1px solid gray;
     padding: 10px 10px 25px;
@@ -133,8 +137,14 @@
     &.selected.emph-10 {background-color: rgba(255,110,10, 1);}
 }
 
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// analysis
 
 .day-detail {
+    // font-size: 0.7em;
+    overflow: hidden;
+    white-space: nowrap;
+
     & > div { margin: 10px; }
 
     .date {
@@ -143,5 +153,34 @@
 
     .duration {
         margin-right: 1ex;
+    }
+
+    .clocks {
+
+        display: flex;
+        flex-direction: row;
+        position: relative;
+
+        .clock-list {
+            margin-right: 20px;
+            min-width: 100px;
+            max-width: 35%;
+
+            .activity {}
+            .activity.highlighted {
+                color: salmon;
+            }
+        }
+
+        .by-minute {
+            overflow: hidden;
+            margin-top: -12px;
+        }
+
+        .by-minute.sticky {
+            position: relative;
+            margin-top: 0px;
+        }
+
     }
 }

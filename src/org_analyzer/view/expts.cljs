@@ -28,7 +28,7 @@
     ;; fetch data
     (go (swap! app-state merge
                (<! (fetch-data :from (js/Date. "2019-07-01")
-                               :to (js/Date. "2019-08-05")))))
+                               :to (js/Date. "2019-08-06")))))
 
     {:app-state app-state
      :dom-state dom-state
@@ -107,7 +107,7 @@
 
 ;; (def el (first (js->clj (js/Array.from (js/document.getElementsByClassName "stalker")))))
 
-;; (dom/el-bounds el)
+;; (dom/screen-relative-bounds el)
 
 (defexpt tooltip
 

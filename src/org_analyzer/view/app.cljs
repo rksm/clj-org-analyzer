@@ -31,7 +31,8 @@
   (atom {:sel-rect (atom sel/empty-rectangle-selection-state)
          :keys {:shift-down? false
                 :alt-down? false}
-         :day-bounding-boxes {}}))
+         :day-bounding-boxes {}
+         :scrolled-window-bounds (ratom [0 0 0 0])}))
 
 (defn fetch-data
   [& {:keys [from to]
@@ -73,15 +74,24 @@
 
           (on-key-up-global [evt]
             (set-key-down! evt "Alt" :alt-down? false)
-            (set-key-down! evt "Shift" :shift-down? false))]
+            (set-key-down! evt "Shift" :shift-down? false))
 
-    (println "registering global event handlers")
+          (on-window-resize [evt] nil)
+          (on-window-scroll [evt] (-> @dom-state
+                                      :scrolled-window-bounds
+                                      (reset! (dom/scrolled-window-bounds))))]
+
     (.addEventListener js/document "keydown" on-key-down-global)
     (.addEventListener js/document "keyup" on-key-up-global)
+    (.addEventListener js/window "resize" on-window-resize)
+    (.addEventListener js/window "scroll" on-window-scroll #js {"passive" true})
+    (println "registering global event handlers")
 
     (merge (calendar/event-handlers app-state dom-state)
            {:on-key-down-global on-key-down-global
-            :on-key-up-global on-key-up-global})))
+            :on-key-up-global on-key-up-global
+            :on-window-resize on-window-resize
+            :on-window-scroll on-window-scroll})))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -96,11 +106,19 @@
    [:div (let [{:keys [hovered-over-date
                        selected-days
                        clocks-by-day
+                       clock-minute-intervals-by-day
                        calendar]} @app-state
                hovered-over-day (get calendar hovered-over-date)
-               n-selected (count selected-days)]
+               n-selected (count selected-days)
+               selected-days (vals (select-keys calendar selected-days))]
+
            (cond
              hovered-over-date [selected-day/selected-day-view hovered-over-day clocks-by-day]
              (= n-selected 1) [selected-day/selected-day-view (first selected-days) clocks-by-day]
-             (> n-selected 1) [selected-day/selected-days-view selected-days clocks-by-day calendar]
+             (> n-selected 1) [selected-day/selected-days-view
+                               selected-days
+                               clocks-by-day
+                               clock-minute-intervals-by-day
+                               calendar
+                               (:scrolled-window-bounds @dom-state)]
              :else nil))]])

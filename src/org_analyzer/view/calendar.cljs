@@ -86,7 +86,7 @@
                        (if selected? "selected")]
                :ref (fn [el]
                       (if el
-                        (swap! dom-state assoc-in [:day-bounding-boxes date] (dom/el-bounds el))
+                        (swap! dom-state assoc-in [:day-bounding-boxes date] (dom/screen-relative-bounds el))
                         (swap! dom-state update :day-bounding-boxes #(dissoc % date))))
                :on-mouse-over #((:on-mouse-over-day event-handlers) date)
                :on-mouse-out #((:on-mouse-out-day event-handlers))

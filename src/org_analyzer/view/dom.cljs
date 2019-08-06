@@ -1,12 +1,24 @@
 (ns org-analyzer.view.dom
   (:require [org-analyzer.view.geo :as geo]))
 
-(defn el-bounds [el]
+(defn scrolled-window-bounds []
+  [(.-scrollLeft js/document.documentElement)
+   (.-scrollTop js/document.documentElement)
+   (.-scrollWidth js/document.documentElement)
+   (.-scrollHeight js/document.documentElement)])
+
+
+(defn screen-relative-bounds [el]
   (let [b-rect (.getBoundingClientRect el)]
     [(.-left b-rect)
      (.-top b-rect)
      (.-width b-rect)
      (.-height b-rect)]))
+
+(defn global-bounds [el]
+  (geo/translate
+   (screen-relative-bounds el)
+   [js/window.scrollX js/window.scrollY]))
 
 (defn mouse-position [event & {:keys [relative?]}]
   (let [client-x (.-clientX event) client-y (.-clientY event)]
@@ -40,7 +52,7 @@
                                    :bottom [geo/top-center 0 offset]
                                    :left [geo/right-center (- offset) 0]
                                    :right [geo/left-center offset 0])
-         bounds (el-bounds el)
+         bounds (screen-relative-bounds el)
          [x y] (geo/align bounds
                           (rect-point-fn bounds)
                           to-point)
@@ -48,3 +60,4 @@
          y (+ o-y y)]
      (set! (.. el -style -left) (str x "px"))
      (set! (.. el -style -top) (str y "px")))))
+

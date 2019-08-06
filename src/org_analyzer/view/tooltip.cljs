@@ -15,7 +15,7 @@
            tooltip-content @tooltip-content
            stalker [:div.stalker
                     {:ref #(do (reset! el %)
-                               (reset! bounds (if % (dom/el-bounds %) [0 0 0 0])))
+                               (reset! bounds (if % (dom/screen-relative-bounds %) [0 0 0 0])))
                      :class (if (or (not (string? tooltip-content))
                                     (not-empty tooltip-content))
                               nil "hidden")}

@@ -27,37 +27,6 @@ h1 {
     border: 1px gray solid;
 }
 
-
-
-.activities-by-minute {
-    display: flex;
-    flex-direction: row;
-
-    .minute {
-        display: flex;
-        flex-direction: column;
-
-
-        .label {
-            overflow: hidden;
-            font-size: x-small;
-            overflow: visible;
-            width: 1px;
-            height: 1em;
-            height: 0;
-        }
-
-        .activity {
-            width: 1px;
-            height: 1em;
-        }
-
-        &.active .activity { background: red; }
-        &.not-active .activity { background: green; }
-    }
-}
-
-
 .stalker {
     position: absolute;
     pointer-events: none;
