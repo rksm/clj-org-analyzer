@@ -31,9 +31,10 @@
   [:div.clock-list
    (apply concat (doall
                   (for [{:keys [id duration] [{:keys [name tags path] :as clock}] :clocks} clocks-with-id-and-duration]
-                    [^{:key (str id "-duration")} [:span.duration (util/print-duration-mins duration)]
-                     ^{:key (str id "-path")} [:span.path (cl-format nil "[~{~a~^ > ~}]" (map s/trim path))]
+                    [
                      ^{:key (str id "-name")} [:span.name (util/parse-all-org-links name)]
+                     ^{:key (str id "-duration")} [:span.duration (util/print-duration-mins duration)]
+                     ^{:key (str id "-path")} [:span.path (cl-format nil "[~{~a~^ > ~}]" (map s/trim path))]
                      ^{:key (str id "-tags")} [:span.tags.md-chips
                                                (for [tag tags]
                                                  ^{:key (str id "-" tag)}
@@ -61,8 +62,8 @@
         (cl-format nil "~d days over ~d week~:*~P selected" (count dates) n-weeks))]
 
      [:div.hours (str "Clocked time: " (util/print-duration-mins duration))]
-     (when (> n 1) [:div (str "Average time per day: " average-day-duration)])
-     (when (> n 1) [:div (str "Average time per week: " average-week-duration)])
-     [:div (cl-format nil "~d activit~:*~[ies~;y~:;ies~]" (count clocks-with-id-and-duration))]
+     (when (> n 1) [:div.avg-per-day (str "Average time per day: " average-day-duration)])
+     (when (> n 1) [:div.avg-per-week (str "Average time per week: " average-week-duration)])
+     [:div.activity-count (cl-format nil "~d activit~:*~[ies~;y~:;ies~]" (count clocks-with-id-and-duration))]
 
      (clock-list clocks-with-id-and-duration)]))

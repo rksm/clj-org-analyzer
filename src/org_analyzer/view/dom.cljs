@@ -4,8 +4,8 @@
 (defn scrolled-window-bounds []
   [(.-scrollLeft js/document.documentElement)
    (.-scrollTop js/document.documentElement)
-   (.-scrollWidth js/document.documentElement)
-   (.-scrollHeight js/document.documentElement)])
+   (.-clientWidth js/document.documentElement)
+   (.-clientHeight js/document.documentElement)])
 
 
 (defn screen-relative-bounds [el]
@@ -47,17 +47,39 @@
   ([how el to-point]
    (align-element! how el to-point 0))
   ([how el to-point offset]
+   (align-element! how el to-point offset true))
+  ([how el to-point offset keep-inside-view-bounds?]
    (let [[rect-point-fn o-x o-y] (case how
                                    :top [geo/bottom-center 0 (- offset)]
                                    :bottom [geo/top-center 0 offset]
                                    :left [geo/right-center (- offset) 0]
                                    :right [geo/left-center offset 0])
+
          bounds (screen-relative-bounds el)
-         [x y] (geo/align bounds
-                          (rect-point-fn bounds)
-                          to-point)
+         [x y w h] (geo/align bounds
+                              (rect-point-fn bounds)
+                              to-point)
+
          x (+ o-x x)
-         y (+ o-y y)]
+         y (+ o-y y)
+
+         [x y] (if keep-inside-view-bounds?
+                 (let [[win-x win-y win-w win-h :as screen-window-bounds]
+                       (when keep-inside-view-bounds? (scrolled-window-bounds))
+                       r (+ x w)
+                       b (+ y h)
+                       win-r (+ win-x win-w)
+                       win-b (+ win-y win-h)]
+                   [(cond
+                      (< x 0) 0
+                      (> r win-r) (- x (- r win-r))
+                      :else x)
+                    (cond
+                      (< y 0) 0
+                      (> b win-b) (- y (- b win-b))
+                      :else y)])
+                 [x y])]
+
      (set! (.. el -style -left) (str x "px"))
      (set! (.. el -style -top) (str y "px")))))
 

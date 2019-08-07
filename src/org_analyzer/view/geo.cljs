@@ -42,6 +42,28 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+(defn translate-to-fit-in
+  [[x1 y1 w1 h1 :as smaller-rect]
+   [x2 y2 w2 h2 :as larger-rect]]
+  (let [r1 (+ x1 w1)
+        b1 (+ y1 h1)
+        r2 (+ x2 w2)
+        b2 (+ y2 h2)
+
+        x1 (cond
+             (< x1 x2) x2
+             (> r1 r2) (- x1 (- r1 r2))
+             :else x1)
+        y1 (cond
+             (< y1 y2) y2
+             (> b1 b2) (- y1 (- b1 b2))
+             :else y1)]
+    [x1 y1 w1 h1]))
+
+;; (translate-to-fit-in [10 10 10 10] [0 0 30 30])
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 (defn top
   [[_ y _ _]]
   y)

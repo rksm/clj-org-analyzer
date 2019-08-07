@@ -13,7 +13,8 @@
             [org-analyzer.view.selection :as sel]
             [clojure.set :refer [union]]
             [sc.api]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [org-analyzer.view.tooltip :as tooltip]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
@@ -112,53 +113,52 @@
 
 
 (defn app [app-state dom-state event-handlers]
-  [:div.app.noselect
-   [controls]
 
-   ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-   ;; calendar
+  (let [{:keys [hovered-over-date
+                selected-days
+                clocks-by-day
+                clock-minute-intervals-by-day
+                calendar]} @app-state
+        n-selected (count selected-days)
+        selected-days (cond
+                        (> n-selected 0) (vals (select-keys calendar selected-days))
+                        hovered-over-date [(get calendar hovered-over-date)]
+                        :else nil)]
 
-   (collapsible app-state :calendar-collapsed? "Calendar"
-                (fn [] [calendar/calendar-view app-state dom-state event-handlers]))
+    [:div.app.noselect
+     [controls]
 
-   ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-   ;; clocks
-   (collapsible app-state :clocks-collapsed? "Clocks"
-                (fn [] (let [{:keys [hovered-over-date
-                                     selected-days
-                                     clocks-by-day
-                                     calendar]} @app-state
-                             hovered-over-day (get calendar hovered-over-date)
-                             n-selected (count selected-days)
-                             selected-days (cond
-                                             (> (count selected-days) 0) (vals (select-keys calendar selected-days))
-                                             hovered-over-date [(get calendar hovered-over-date)]
-                                             :else nil)]
-                         (when selected-days
+     ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+     ;; calendar
+     (collapsible app-state :calendar-collapsed? "Calendar"
+                  (fn [] [calendar/calendar-view app-state dom-state event-handlers]))
+
+     ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+     ;; clocks
+     (collapsible app-state :clocks-collapsed? "Clocks"
+                  (fn [] (when selected-days
                            [selected-day/selected-days-view
                             selected-days
                             clocks-by-day
-                            calendar]))))
+                            calendar])))
 
-   ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-   ;; by-minute
-   (collapsible app-state :by-minute-collapsed? "Per Day"
-                (fn [] [:div.by-minute
-                        (let [{:keys [selected-days
-                                      clock-minute-intervals-by-day
-                                      calendar]} @app-state
-                              n-selected (count selected-days)
-                              selected-days (vals (select-keys calendar selected-days))
-                              dates (map :date selected-days)
-                              clock-minute-intervals-by-day (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day dates))]
-                          (when (> n-selected 0)
-                            [org-analyzer.view.day-by-minute-view/activities-by-minute-view
-                             clock-minute-intervals-by-day
-                             (ratom #{}) ;; highlighted-clocks
-                             nil
-                             {:width (- js/document.documentElement.clientWidth 60)}]))]))
+     ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+     ;; by-minute
+     (collapsible app-state :by-minute-collapsed? "Per Day"
+                  (fn [] (r/with-let [tooltip (ratom nil)
+                                      highlighted-clocks (ratom #{})]
+                           (tooltip/with-tooltip-following-mouse tooltip
+                             [:div.by-minute
+                              (let [dates (map :date selected-days)
+                                    clock-minute-intervals-by-day (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day dates))]
+                                (when (> (count dates) 0)
+                                  [org-analyzer.view.day-by-minute-view/activities-by-minute-view
+                                   clock-minute-intervals-by-day
+                                   highlighted-clocks
+                                   tooltip
+                                   {:width (- js/document.documentElement.clientWidth 60)}]))]))))
 
-   ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-   ;; clock
-   (collapsible app-state :clock-details-collapsed? "Clock"
-                (fn [] "details"))])
+     ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+     ;; clock
+     (collapsible app-state :clock-details-collapsed? "Clock"
+                  (fn [] "details"))]))

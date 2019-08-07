@@ -5,7 +5,7 @@ body {
   overflow: scroll;
 }
 .app {
-  font-family: sans-serif;
+  font-family: roboto, sans-serif;
   display: flex;
   flex-direction: column;
   font-size: small;
@@ -315,31 +315,54 @@ body {
   width: 100%;
 }
 .day-detail > div {
-  margin: 10px;
+  margin: 0 10px;
 }
 .day-detail .date {
   font-weight: bold;
+  margin-bottom: 10px;
+}
+.day-detail .activity-count {
+  margin-bottom: 10px;
+  color: #666;
+}
+.day-detail .hours {
+  color: #666;
+}
+.day-detail .avg-per-day {
+  color: #666;
+}
+.day-detail .avg-per-week {
+  color: #666;
 }
 .day-detail .duration {
   margin-right: 1ex;
 }
 .day-detail .clock-list {
+  margin-bottom: 10px;
   overflow: hidden;
   display: grid;
-  grid-template-columns: min-content minmax(20ex, min-content) minmax(250px, min-content) min-content;
-  justify-items: start;
-  grid-column-gap: 3px;
+  grid-template-columns: minmax(250px, min-content) minmax(6ex, min-content) minmax(20ex, min-content) min-content;
+  align-items: flex-end;
+  grid-column-gap: 6px;
 }
 .day-detail .clock-list * {
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 1.5em;
+  height: 1.2em;
+}
+.day-detail .clock-list .duration {
+  color: #666;
 }
 .day-detail .clock-list .path {
-  color: #AAA;
+  color: #666;
 }
-.day-detail .clock-list .activity.highlighted {
-  color: salmon;
+@media (max-width: 860px) {
+  .day-detail .clock-list {
+    grid-template-columns: minmax(250px, min-content) minmax(6ex, min-content) minmax(20ex, min-content);
+  }
+  .day-detail .clock-list .tags {
+    display: none;
+  }
 }
 .by-minute {
   height: 100%;
@@ -463,4 +486,15 @@ body {
 }
 .elev-2 {
   box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+}
+.stalker {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.stalker.hidden {
+  display: none;
 }

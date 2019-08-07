@@ -1,7 +1,8 @@
 (ns org-analyzer.view.tooltip
   (:require [reagent.core :as rg :refer [cursor]]
             [reagent.ratom :refer [atom reaction] :rename {atom ratom}]
-            [org-analyzer.view.dom :as dom]))
+            [org-analyzer.view.dom :as dom]
+            [org-analyzer.view.geo :as geo]))
 
 (defn with-tooltip-following-mouse
   ([tooltip-content comp]
@@ -16,8 +17,9 @@
            stalker [:div.stalker
                     {:ref #(do (reset! el %)
                                (reset! bounds (if % (dom/screen-relative-bounds %) [0 0 0 0])))
-                     :class (if (or (not (string? tooltip-content))
-                                    (not-empty tooltip-content))
+                     :class (if (and (seq tooltip-content)
+                                     (or (not (string? tooltip-content))
+                                         (not-empty tooltip-content)))
                               nil "hidden")}
                     tooltip-content]
 
@@ -51,3 +53,4 @@
         props
         children
         (when @follow (rg/as-element stalker)))))))
+
