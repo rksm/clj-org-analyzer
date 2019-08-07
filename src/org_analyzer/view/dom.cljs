@@ -83,3 +83,8 @@
      (set! (.. el -style -left) (str x "px"))
      (set! (.. el -style -top) (str y "px")))))
 
+(defn select-element [el]
+  (.empty (js/document.getSelection))
+  (let [r (js/document.createRange)]
+    (-> r (.selectNode el))
+    (.addRange (js/document.getSelection) r)))

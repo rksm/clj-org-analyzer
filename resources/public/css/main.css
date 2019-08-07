@@ -47,6 +47,37 @@ body {
     max-width: 60%;
   }
 }
+.search-bar .loading {
+  margin-left: 5px;
+  opacity: 0;
+}
+.search-bar .loading.visible {
+  opacity: 1;
+  animation-name: rotate;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  transition-property: transform;
+  transition-duration: 1s;
+}
+.search-bar .loading:after {
+  font-family: "Material Icons";
+  font-size: 20px;
+  content: "hourglass_full";
+  height: 10px;
+  color: #999;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 .panel {
   margin: 10px;
   display: flex;

@@ -1,6 +1,8 @@
 (ns org-analyzer.view.util
   (:require [cljs.pprint :refer [cl-format]]
-            [clojure.string :refer [split lower-case join replace]]))
+            [clojure.string :refer [split lower-case join replace]]
+            [cljs.reader :as reader])
+  (:import goog.async.Debouncer))
 
 (defn date-string [^js/Date date]
   (first (split (.toISOString date) \T)))
@@ -56,11 +58,17 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+(defn debounce [f interval]
+  (let [dbnc (goog.async.Debouncer. f interval)]
+    (fn [& args] (.apply (.-fire dbnc) dbnc (to-array args)))))
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 (defn- minutes-since-midnight
   [time-string]
   (when time-string
     (let [[hours mins]
-          (map cljs.reader/read-string
+          (map reader/read-string
                (drop 1 (re-find #"0?([0-9]{1,2}):0?([0-9]{1,2})" time-string)))]
       (+ (* 60 hours) mins))))
 
@@ -92,3 +100,9 @@
                (first next)
                next
                (if (zero? n) result (conj result [i (+ i n) current-clocks])))))))
+
+(defn clock-minute-intervals-by-day [clocks-by-day]
+  (into (sorted-map-by <) (map
+                           (fn [[key clocks]] [key (clock-minute-intervals clocks)])
+                           clocks-by-day)))
+

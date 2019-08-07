@@ -140,7 +140,7 @@
                                             :when (first (filter #(highlighted-locations (:location %)) clocks))]
                                         date))))]
 
-    [:div.calendar
+    [:div.calendar.noselect
      (sel/drag-mouse-handlers (:sel-rect @dom-state)
                               :on-selection-start #(reset! selecting? true)
                               :on-selection-end #(do

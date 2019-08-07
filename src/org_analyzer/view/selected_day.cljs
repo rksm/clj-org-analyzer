@@ -44,7 +44,9 @@
                ^{:key (str location "-path")}     [:span.path          attrs (cl-format nil "[~{~a~^ > ~}]" (map s/trim path))]
                ^{:key (str location "-tags")}     [:span.tags.md-chips attrs (for [tag tags]
                                                                                ^{:key (str location "-" tag)}
-                                                                               [:span.tag.md-chip.md-chip-raised tag])]])))]))
+                                                                               [:span.tag.md-chip.md-chip-raised
+                                                                                {:on-click #(dom/select-element (.-target %))}
+                                                                                tag])]])))]))
 
 (defn selected-days-view
   [days clocks-by-day calendar highlighted-entries]
@@ -54,11 +56,11 @@
         clocks-by-day (into (sorted-map-by <) (select-keys clocks-by-day dates))
         clocks (apply concat (vals clocks-by-day))
         clocks-with-id-and-duration (reverse
-                            (sort-by :duration
-                                     (map (fn [[location clocks]] {:location location
-                                                                   :clocks clocks
-                                                                   :duration (util/sum-clocks-mins clocks)})
-                                          (group-by :location clocks))))
+                                     (sort-by :duration
+                                              (map (fn [[location clocks]] {:location location
+                                                                            :clocks clocks
+                                                                            :duration (util/sum-clocks-mins clocks)})
+                                                   (group-by :location clocks))))
         duration (util/sum-clocks-mins clocks)
         days (vals (select-keys calendar dates))
         {:keys [average-day-duration average-week-duration n-weeks]} (analyze-clocks days clocks-by-day)]

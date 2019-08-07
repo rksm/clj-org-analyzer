@@ -11,11 +11,12 @@
             [org-analyzer.view.selected-day :as selected-day]
             [org-analyzer.view.geo :as geo]
             [org-analyzer.view.selection :as sel]
-            [clojure.set :refer [union]]
+            [clojure.set :refer [union difference]]
             [sc.api]
             [clojure.string :as s]
             [org-analyzer.view.tooltip :as tooltip]
-            [org-analyzer.view.search-view :as search-view]))
+            [org-analyzer.view.search-view :as search-view]
+            [cljs.reader :as reader]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
@@ -35,7 +36,8 @@
           :clock-details-collapsed? false
           :highlighted-calendar-dates #{}
           :highlighted-entries #{} ;; uses clock :locations for id'ing
-          :search-input ""}))
+          :search-input ""
+          :search-focused? false}))
 
 (defn empty-dom-state []
   (atom {:sel-rect (atom sel/empty-rectangle-selection-state)
@@ -53,25 +55,25 @@
     (go (let [response (<! (http/get "/clocks"
                                      {:query-params {:from from :to to :by-day? true}
                                       :headers {"Cache-Control" "no-cache"}}))
-              clocks (cljs.reader/read-string (:body response))]
+              clocks (reader/read-string (:body response))]
           (println "got clocks")
 
           (let [from (:start (first clocks))
                 response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
-                calendar (into (sorted-map-by <) (map (juxt :date identity) (cljs.reader/read-string (:body response))))]
+                calendar (into (sorted-map-by <) (map (juxt :date identity) (reader/read-string (:body response))))]
             (println "got calendar")
 
-            (let [clocks-by-day
-                  (into (sorted-map-by <) (group-by #(-> % :start (s/split #" ") first) clocks))
-                  clock-minute-intervals-by-day
-                  (into (sorted-map-by <) (map
-                                           (fn [[key clocks]] [key (util/clock-minute-intervals clocks)])
-                                           clocks-by-day))]
+            (let [clocks-by-day (group-by #(-> % :start (s/split #" ") first) clocks)
+                  clocks-by-day (merge
+                                 (into (sorted-map-by <) (map #(vector % []) (difference
+                                                                              (set (keys calendar))
+                                                                              (set (keys clocks-by-day)))))
+                                 clocks-by-day)]
               (>! result-chan {:calendar calendar
                                :clocks-by-day clocks-by-day
+                               :clock-minute-intervals-by-day (util/clock-minute-intervals-by-day clocks-by-day)
                                :clocks-by-day-filtered clocks-by-day
-                               :clock-minute-intervals-by-day clock-minute-intervals-by-day
-                               :clock-minute-intervals-by-day-filtered clock-minute-intervals-by-day}))
+                               :clock-minute-intervals-by-day-filtered (util/clock-minute-intervals-by-day clocks-by-day)}))
             (close! result-chan))))
     result-chan))
 
@@ -86,6 +88,17 @@
             (when (= key (.-key evt)) (swap! dom-state assoc-in [:keys field] down?)))
 
           (on-key-down-global [evt]
+            (cond
+              ;; select all
+              (and (= "a" (.-key evt)) (.-ctrlKey evt))
+              (do (swap! app-state assoc :selected-days (set (keys (:calendar @app-state))))
+                  (.preventDefault evt))
+
+              ;; focus search
+              (and (= "s" (.-key evt)) (.-ctrlKey evt))
+              (do (swap! app-state assoc :search-focused? true)
+                  (.preventDefault evt)))
+
             (set-key-down! evt "Alt" :alt-down? true)
             (set-key-down! evt "Shift" :shift-down? true))
 
@@ -140,7 +153,7 @@
 
         highlighted-entries-cursor (r/cursor app-state [:highlighted-entries])]
 
-    [:div.app.noselect
+    [:div.app
      [controls app-state]
 
      [search-view/search-bar app-state]

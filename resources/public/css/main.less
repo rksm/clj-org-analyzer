@@ -44,6 +44,7 @@ body { overflow: scroll; }
 .search-bar {
     padding: 10px;
     display: flex;
+
     &.panel {
         flex-direction: row;
         justify-content: center;
@@ -54,6 +55,37 @@ body { overflow: scroll; }
         @media (min-width: 1000px){
             max-width: 60%;
         }
+    }
+
+    .loading {
+        margin-left: 5px;
+        opacity: 0;
+    }
+
+    .loading.visible {
+        opacity: 1;
+        animation-name: rotate;
+        animation-duration: 2s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+        transition-property: transform;
+        transition-duration: 1s;
+    }
+
+    .loading:after {
+        font-family: "Material Icons";
+        font-size: 20px;
+        content: "hourglass_full";
+        height: 10px;
+        color: #999;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    @keyframes rotate {
+        from {transform: rotate(0deg);}
+        to {transform: rotate(360deg);}
     }
 }
 
