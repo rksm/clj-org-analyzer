@@ -75,15 +75,18 @@
 (defn day-view
   [dom-state event-handlers
    {:keys [date] :as day}
-   {:keys [clocks-by-day selected-days max-weight] :as calendar-state}]
+   {:keys [clocks-by-day selected-days max-weight] :as calendar-state}
+   highlighted-days]
   (let [clocks (get @clocks-by-day date)
-        selected? (@selected-days date)]
+        selected? (@selected-days date)
+        highlighted? (@highlighted-days date)]
     [:div.day {:key date
                :id date
                :class [(emph-css-class
                         (util/sum-clocks-mins clocks)
                         @max-weight)
-                       (if selected? "selected")]
+                       (when selected? "selected")
+                       (when highlighted? "highlighted")]
                :ref (fn [el]
                       (if el
                         (swap! dom-state assoc-in [:day-bounding-boxes date] (dom/screen-relative-bounds el))
@@ -92,48 +95,61 @@
                :on-mouse-out #((:on-mouse-out-day event-handlers))
                :on-click #((:on-click-day event-handlers) % date)}]))
 
-(defn week-view [dom-state event-handlers week calendar-state]
+(defn week-view
+  [dom-state event-handlers week calendar-state highlighted-days]
   (let [[{week-date :date week-no :week}] week]
     [:div.week {:key week-date}
      [:div.week-no {:on-click #((:on-click-week event-handlers) % week-no week)} [:span week-no]]
-     (doall (map #(day-view dom-state event-handlers % calendar-state) week))]))
+     (doall (map #(day-view dom-state event-handlers % calendar-state highlighted-days)
+                 week))]))
 
-(defn month-view [dom-state event-handlers [date days-in-month] calendar-state]
+(defn month-view
+  [dom-state event-handlers [date days-in-month] calendar-state highlighted-days]
   [:div.month {:key date
                :class (lower-case (:month (first days-in-month)))}
    [:div.month-date {:on-click #((:on-click-month event-handlers) % days-in-month)} [:span date]]
-   [:div.weeks (doall (map #(week-view dom-state event-handlers % calendar-state) (util/weeks days-in-month)))]])
+   [:div.weeks (doall (map
+                       #(week-view dom-state event-handlers % calendar-state highlighted-days)
+                       (util/weeks days-in-month)))]])
 
 (defn calendar-view
   [app-state dom-state event-handlers]
-  (let [clocks-by-day (cursor app-state [:clocks-by-day])
+  (let [clocks-by-day (cursor app-state [:clocks-by-day-filtered])
         calendar-state {:max-weight (reaction (->> @clocks-by-day
                                                    (map (comp util/sum-clocks-mins second))
                                                    (reduce max)))
                         :clocks-by-day clocks-by-day
                         :selected-days (reaction (union (:selected-days @app-state)
-                                                        (:selected-days-preview @app-state)))}]
+                                                        (:selected-days-preview @app-state)))}
 
-    (let [selecting? (cursor app-state [:selecting?])
-          selected-days (cursor app-state [:selected-days])
-          selected-days-preview (cursor app-state [:selected-days-preview])
-          by-month (into (sorted-map) (->> @app-state
-                                           :calendar
-                                           vals
-                                           flatten
-                                           (group-by
-                                            #(replace (:date %) #"^([0-9]+-[0-9]+).*" "$1"))))]
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+        selecting? (cursor app-state [:selecting?])
+        selected-days (cursor app-state [:selected-days])
+        selected-days-preview (cursor app-state [:selected-days-preview])
+        by-month (into (sorted-map) (->> @app-state
+                                         :calendar
+                                         vals
+                                         flatten
+                                         (group-by
+                                          #(replace (:date %) #"^([0-9]+-[0-9]+).*" "$1"))))
 
-      [:div.calendar
-       (sel/drag-mouse-handlers (:sel-rect @dom-state)
-                                :on-selection-start #(reset! selecting? true)
-                                :on-selection-end #(do
-                                                     (reset! selecting? false)
-                                                     (commit-potentially-selected! selected-days selected-days-preview dom-state))
-                                :on-selection-change #(when @selecting?
-                                                        (mark-days-as-potentially-selected app-state dom-state %)))
-       (when @selecting?
-         [:div.selection {:style
-                          (let [[x y w h] (:relative-bounds @(:sel-rect @dom-state))]
-                            {:left x :top y :width w :height h})}])
-       (doall (map #(month-view dom-state event-handlers % calendar-state) by-month))])))
+        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+        highlighted-days (reaction (set
+                                    (let [highlighted-locations (-> @app-state :highlighted-entries)]
+                                      (for [[date clocks] (-> @app-state :clocks-by-day)
+                                            :when (first (filter #(highlighted-locations (:location %)) clocks))]
+                                        date))))]
+
+    [:div.calendar
+     (sel/drag-mouse-handlers (:sel-rect @dom-state)
+                              :on-selection-start #(reset! selecting? true)
+                              :on-selection-end #(do
+                                                   (reset! selecting? false)
+                                                   (commit-potentially-selected! selected-days selected-days-preview dom-state))
+                              :on-selection-change #(when @selecting?
+                                                      (mark-days-as-potentially-selected app-state dom-state %)))
+     (when @selecting?
+       [:div.selection {:style
+                        (let [[x y w h] (:relative-bounds @(:sel-rect @dom-state))]
+                          {:left x :top y :width w :height h})}])
+     (doall (map #(month-view dom-state event-handlers % calendar-state highlighted-days) by-month))]))

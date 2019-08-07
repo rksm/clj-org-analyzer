@@ -27,21 +27,27 @@
        :average-week-duration (clocks-avg clocks-by-week)
        :n-weeks (count weeks)})))
 
-(defn clock-list [clocks-with-id-and-duration]
-  [:div.clock-list
-   (apply concat (doall
-                  (for [{:keys [id duration] [{:keys [name tags path] :as clock}] :clocks} clocks-with-id-and-duration]
-                    [
-                     ^{:key (str id "-name")} [:span.name (util/parse-all-org-links name)]
-                     ^{:key (str id "-duration")} [:span.duration (util/print-duration-mins duration)]
-                     ^{:key (str id "-path")} [:span.path (cl-format nil "[~{~a~^ > ~}]" (map s/trim path))]
-                     ^{:key (str id "-tags")} [:span.tags.md-chips
-                                               (for [tag tags]
-                                                 ^{:key (str id "-" tag)}
-                                                 [:span.tag.md-chip.md-chip-raised tag])]])))])
+(defn clock-list [clocks-with-id-and-duration highlighted-entries]
+  (let [current-highlighted-entries @highlighted-entries]
+   [:div.clock-list
+    (apply concat
+           (doall
+            (for [{:keys [location duration] [{:keys [name tags path] :as clock}] :clocks} clocks-with-id-and-duration
+                  :let [highlighted? (current-highlighted-entries location)
+                        on-mouse-over #(reset! highlighted-entries #{location})
+                        on-mouse-out #(reset! highlighted-entries #{})
+                        attrs {:on-mouse-over on-mouse-over
+                               :on-mouse-out on-mouse-out
+                               :class (if highlighted? "highlighted" "")}]]
+              [^{:key (str location "-name")}     [:span.name          attrs (util/parse-all-org-links name)]
+               ^{:key (str location "-duration")} [:span.duration      attrs (util/print-duration-mins duration)]
+               ^{:key (str location "-path")}     [:span.path          attrs (cl-format nil "[~{~a~^ > ~}]" (map s/trim path))]
+               ^{:key (str location "-tags")}     [:span.tags.md-chips attrs (for [tag tags]
+                                                                               ^{:key (str location "-" tag)}
+                                                                               [:span.tag.md-chip.md-chip-raised tag])]])))]))
 
 (defn selected-days-view
-  [days clocks-by-day calendar]
+  [days clocks-by-day calendar highlighted-entries]
 
   (let [n (count days)
         dates (map :date days)
@@ -49,8 +55,10 @@
         clocks (apply concat (vals clocks-by-day))
         clocks-with-id-and-duration (reverse
                             (sort-by :duration
-                                     (map (fn [[id clocks]] {:id id :clocks clocks :duration (util/sum-clocks-mins clocks)})
-                                          (group-by :id clocks))))
+                                     (map (fn [[location clocks]] {:location location
+                                                                   :clocks clocks
+                                                                   :duration (util/sum-clocks-mins clocks)})
+                                          (group-by :location clocks))))
         duration (util/sum-clocks-mins clocks)
         days (vals (select-keys calendar dates))
         {:keys [average-day-duration average-week-duration n-weeks]} (analyze-clocks days clocks-by-day)]
@@ -66,4 +74,4 @@
      (when (> n 1) [:div.avg-per-week (str "Average time per week: " average-week-duration)])
      [:div.activity-count (cl-format nil "~d activit~:*~[ies~;y~:;ies~]" (count clocks-with-id-and-duration))]
 
-     (clock-list clocks-with-id-and-duration)]))
+     (clock-list clocks-with-id-and-duration highlighted-entries)]))

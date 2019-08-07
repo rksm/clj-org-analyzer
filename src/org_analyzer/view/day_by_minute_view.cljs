@@ -20,11 +20,11 @@
 
 (defn activities-by-minute-view
   [clock-minute-intervals-by-day
-   highlighted-clocks
+   highlighted-entries
    tooltip
    & [{:keys [height width]}]]
 
-  (rg/with-let [hovered-over-place (ratom nil)]
+  (rg/with-let [hovered-over-clock (ratom nil)]
     (let [heading-h 12
           n-days (count clock-minute-intervals-by-day)
           w-ea (/ width (* 60 24))
@@ -43,14 +43,14 @@
                               bounds (clock-bounds-on-canvas clock-intervals 0 heading-h w-ea row h-ea)]
                           (with-meta bounds {:row row})))
 
-          hovered-over @hovered-over-place
-          selected-clocks @highlighted-clocks]
+          hovered-over @hovered-over-clock
+          selected-clocks @highlighted-entries]
 
       [:canvas.activities-by-minute-canvas
        {:id "canvas"
         :width width
         :height height
-        :on-mouse-out (fn [evt] (reset! hovered-over-place nil))
+        :on-mouse-out (fn [evt] (reset! hovered-over-clock nil))
 
         :on-mouse-move (fn [evt]
                          (let [p (dom/mouse-position evt :relative? true)
@@ -59,8 +59,7 @@
                                            first)]
 
                            (when-let [[_ _ _ _ clocks] bounds]
-                             ;; (println (set (map :id clocks)))
-                             (reset! highlighted-clocks (set (map :id clocks)))
+                             (reset! highlighted-entries (->> clocks (map :location) set))
                              (when tooltip
                                (reset! tooltip
                                        (when-not (zero? (count clocks))
@@ -69,7 +68,7 @@
                                            [:div
                                             time
                                             (interpose [:br]
-                                                       (for [{:keys [id path name]} clocks]
+                                                       (for [{:keys [path name]} clocks]
                                                          ^{:key start}
                                                          [:div
                                                           "["
@@ -79,7 +78,7 @@
                                                           [:span.name (util/parse-all-org-links name)]]
                                                          ))])))))
 
-                           (reset! hovered-over-place bounds)))
+                           (reset! hovered-over-clock bounds)))
         :ref (fn [canvas]
                (when canvas
                  (let [ctx (. canvas (getContext "2d"))]
@@ -93,7 +92,7 @@
                            row-selected? (= row selected-row)
                            bounds-selected? (= hovered-over bounds)
                            no-clocks? (empty? clocks)
-                           highlighted-a-bit? (not (empty? (intersection selected-clocks (set (map :id clocks)))))
+                           highlighted-a-bit? (not (empty? (intersection selected-clocks (->> clocks (map :location) set))))
                            color (cond
                                    (and no-clocks? row-selected?) "#ddd"
                                    no-clocks? "#fff"

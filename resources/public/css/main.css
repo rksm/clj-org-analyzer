@@ -31,6 +31,22 @@ body {
   background-color: white;
   z-index: 1;
 }
+.search-bar {
+  padding: 10px;
+  display: flex;
+}
+.search-bar.panel {
+  flex-direction: row;
+  justify-content: center;
+}
+.search-bar .search-input {
+  flex-grow: 1;
+}
+@media (min-width: 1000px) {
+  .search-bar .search-input {
+    max-width: 60%;
+  }
+}
 .panel {
   margin: 10px;
   display: flex;
@@ -310,6 +326,14 @@ body {
 .day.selected.emph-10 {
   background-color: #ff6e0a;
 }
+.day.highlighted:after {
+  font-family: "Material Icons";
+  content: "star";
+  color: #999;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
 .day-detail {
   white-space: nowrap;
   width: 100%;
@@ -355,6 +379,11 @@ body {
 }
 .day-detail .clock-list .path {
   color: #666;
+}
+.day-detail .clock-list .name.highlighted,
+.day-detail .clock-list .path.highlighted,
+.day-detail .clock-list .duration.highlighted {
+  color: salmon;
 }
 @media (max-width: 860px) {
   .day-detail .clock-list {
