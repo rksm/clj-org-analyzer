@@ -37,14 +37,15 @@
       time/instant->sql-timestamp))
 
 (defn clock-data [{:keys [start end duration sections tags] :as clock}]
-  {:start (time/format "yyyy-MM-dd HH:mm" start)
-   :end (and (not (nil? end)) (time/format "yyyy-MM-dd HH:mm" end))
-   :duration (and (not (nil? duration)) (print-duration duration))
-   ;; :location (->> sections ((juxt last first)) (map :name) (apply format "%s > %s"))
-   :path (map :name (reverse (drop 1 sections)))
-   :name (:name (first sections))
-   :id (s/join "/" (map :name sections))
-   :tags tags})
+  (let [[name & path] (mapv :name sections)
+        path (vec (reverse path))]
+    {:start (time/format "yyyy-MM-dd HH:mm" start)
+     :end (and (not (nil? end)) (time/format "yyyy-MM-dd HH:mm" end))
+     :duration (and (not (nil? duration)) (print-duration duration))
+     :path path
+     :name name
+     :location (->> name (conj path) (s/join "/"))
+     :tags tags}))
 
 (defn time-string-to-local-date [time-string]
   (time/local-date-time (time/zoned-date-time time-string)))
@@ -54,7 +55,7 @@
     (edn/read-string {:readers readers} string)))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
+(last (sort-by :start (get-clocks)))
 (defn send-clocks-between [start end & {:keys [by-day?] :or {by-day? false}}]
   (let [clocks (clocks-between start end (get-clocks))
         ;; clocks (if by-day?
@@ -73,9 +74,9 @@
                                             (parse-timestamp from)
                                             (parse-timestamp to)
                                             :by-day? (edn/read-string by-day?))))
-  (GET "/calendar" [from to] (do (prn from)(pr-str (into [] (calendar
-                                                (parse-timestamp from)
-                                                (parse-timestamp to))))))
+  (GET "/calendar" [from to] (pr-str (into [] (calendar
+                                               (parse-timestamp from)
+                                               (parse-timestamp to)))))
   (route/resources "/" {:root "public"})
   (route/not-found "NOTFOUND "))
 

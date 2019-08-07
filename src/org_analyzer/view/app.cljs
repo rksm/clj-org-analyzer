@@ -75,6 +75,10 @@
             (close! result-chan))))
     result-chan))
 
+(defn fetch-and-update! [app-state]
+  (go (swap! app-state merge (<! (fetch-data)))))
+
+
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defn event-handlers [app-state dom-state]
@@ -107,8 +111,7 @@
   [:div.controls
    [:input {:type "button"
             :value "reload"
-            :on-click fetch-data
-            :class ["mdl-button" "mdl-js-button" "mdl-button--raised" "mdl-js-ripple-effect"]}]])
+            :on-click #(fetch-and-update! app-state)}]])
 
 
 (defn collapsible* [title key collapsed-atom comp-fn]

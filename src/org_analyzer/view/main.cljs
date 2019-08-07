@@ -1,8 +1,6 @@
 (ns org-analyzer.view.main
   (:require [org-analyzer.view.app :as app]
-            [reagent.core :as rg]
-            [cljs.core.async :refer [go <! chan]]
-            [org-analyzer.view.selection :as sel]))
+            [reagent.core :refer [render]]))
 
 (enable-console-print!)
 
@@ -11,9 +9,8 @@
 (defonce event-handlers (app/event-handlers app-state dom-state))
 
 (defn -main []
-  (rg/render [app/app app-state dom-state event-handlers]
-             (js/document.querySelector "#app"))
-  (go (swap! app-state merge (<! (app/fetch-data)))))
+  (render [app/app app-state dom-state event-handlers]
+          (js/document.querySelector "#app"))
+  (app/fetch-and-update! app-state))
 
 (-main)
-

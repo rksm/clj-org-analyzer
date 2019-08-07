@@ -74,7 +74,7 @@
   (let [[_ keyword text-no-kw] (re-find section-keyword-re text)
         text (or text-no-kw text)
         [_ text-no-tags raw-tags] (re-find #"(.*)\s+:([^ ]+):$" text)
-        text (or text-no-tags text)
+        text (s/trim (or text-no-tags text))
         result {:name text}]
     (merge {:name text}
            (when keyword {:keyword keyword})
