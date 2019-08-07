@@ -341,33 +341,8 @@ body {
 .day-detail .clock-list .activity.highlighted {
   color: salmon;
 }
-@media (max-width: 1000px) {
-  .day-detail .by-minute {
-    margin-top: 10px;
-  }
-}
-.day-detail .clocks {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  width: 100%;
-}
-@media (min-width: 1000px) {
-  .day-detail .clocks {
-    flex-direction: row;
-    position: relative;
-  }
-  .day-detail .clocks .clock-list {
-    margin-right: 20px;
-    max-width: 50%;
-  }
-  .day-detail .clocks .by-minute {
-    margin-top: -12px;
-  }
-  .day-detail .clocks .by-minute.sticky {
-    position: relative;
-    margin-top: 0px;
-  }
+.by-minute {
+  height: 100%;
 }
 .md-chip {
   display: inline-block;

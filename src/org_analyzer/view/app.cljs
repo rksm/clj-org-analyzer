@@ -25,14 +25,17 @@
           :hovered-over-date nil
           :selected-days #{}
           :selected-days-preview #{}
-          :selecting? false}))
+          :selecting? false
+          :calendar-collapsed? false
+          :clocks-collapsed? false
+          :by-minute-collapsed? false
+          :clock-details-collapsed? false}))
 
 (defn empty-dom-state []
   (atom {:sel-rect (atom sel/empty-rectangle-selection-state)
          :keys {:shift-down? false
                 :alt-down? false}
-         :day-bounding-boxes {}
-         :scrolled-window-bounds (ratom [0 0 0 0])}))
+         :day-bounding-boxes {}}))
 
 (defn fetch-data
   [& {:keys [from to]
@@ -76,22 +79,17 @@
             (set-key-down! evt "Alt" :alt-down? false)
             (set-key-down! evt "Shift" :shift-down? false))
 
-          (on-window-resize [evt] nil)
-          (on-window-scroll [evt] (-> @dom-state
-                                      :scrolled-window-bounds
-                                      (reset! (dom/scrolled-window-bounds))))]
+          (on-window-resize [evt] nil)]
 
     (.addEventListener js/document "keydown" on-key-down-global)
     (.addEventListener js/document "keyup" on-key-up-global)
     (.addEventListener js/window "resize" on-window-resize)
-    (.addEventListener js/window "scroll" on-window-scroll #js {"passive" true})
     (println "registering global event handlers")
 
     (merge (calendar/event-handlers app-state dom-state)
            {:on-key-down-global on-key-down-global
             :on-key-up-global on-key-up-global
-            :on-window-resize on-window-resize
-            :on-window-scroll on-window-scroll})))
+            :on-window-resize on-window-resize})))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -102,46 +100,65 @@
             :on-click fetch-data
             :class ["mdl-button" "mdl-js-button" "mdl-button--raised" "mdl-js-ripple-effect"]}]])
 
+(defn collapsible [app-state key title comp-fn]
+  (let [collapsed? (key @app-state)]
+    [:div.panel.elev-2
+     [:button.material-button
+      {:on-click #(swap! app-state update key not)}
+      title
+      [:i.material-icons (if collapsed? "expand_less" "expand_more")]]
+     (when-not collapsed?
+       (comp-fn))]))
+
+
 (defn app [app-state dom-state event-handlers]
   [:div.app.noselect
    [controls]
 
    ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
    ;; calendar
-   [:div.panel.elev-2
-    [:button.calendar-expand-button.material-button "Calendar"
-     [:i.material-icons "expand_more"]]
-    [calendar/calendar-view app-state dom-state event-handlers]]
 
+   (collapsible app-state :calendar-collapsed? "Calendar"
+                (fn [] [calendar/calendar-view app-state dom-state event-handlers]))
 
    ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
    ;; clocks
-   [:div.clock-list.panel.elev-2
-    [:button.calendar-expand-button.material-button "Clocks"
-     [:i.material-icons "expand_more"]]
+   (collapsible app-state :clocks-collapsed? "Clocks"
+                (fn [] (let [{:keys [hovered-over-date
+                                     selected-days
+                                     clocks-by-day
+                                     calendar]} @app-state
+                             hovered-over-day (get calendar hovered-over-date)
+                             n-selected (count selected-days)
+                             selected-days (cond
+                                             (> (count selected-days) 0) (vals (select-keys calendar selected-days))
+                                             hovered-over-date [(get calendar hovered-over-date)]
+                                             :else nil)]
+                         (when selected-days
+                           [selected-day/selected-days-view
+                            selected-days
+                            clocks-by-day
+                            calendar]))))
 
-    (let [{:keys [hovered-over-date
-                  selected-days
-                  clocks-by-day
-                  clock-minute-intervals-by-day
-                  calendar]} @app-state
-          hovered-over-day (get calendar hovered-over-date)
-          n-selected (count selected-days)
-          selected-days (vals (select-keys calendar selected-days))]
-
-      (cond
-        (= n-selected 1) [selected-day/selected-day-view (first selected-days) clocks-by-day]
-        (> n-selected 1) [selected-day/selected-days-view
-                          selected-days
-                          clocks-by-day
-                          clock-minute-intervals-by-day
-                          calendar
-                          (:scrolled-window-bounds @dom-state)]
-        hovered-over-date [selected-day/selected-day-view hovered-over-day clocks-by-day]
-        :else nil))]
+   ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+   ;; by-minute
+   (collapsible app-state :by-minute-collapsed? "Per Day"
+                (fn [] [:div.by-minute
+                        (let [{:keys [selected-days
+                                      clock-minute-intervals-by-day
+                                      calendar]} @app-state
+                              n-selected (count selected-days)
+                              selected-days (vals (select-keys calendar selected-days))
+                              dates (map :date selected-days)
+                              clock-minute-intervals-by-day (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day dates))]
+                          (when (> n-selected 0)
+                            [org-analyzer.view.day-by-minute-view/activities-by-minute-view
+                             clock-minute-intervals-by-day
+                             (ratom #{}) ;; highlighted-clocks
+                             nil
+                             {:width (- js/document.documentElement.clientWidth 60)}]))]))
 
    ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
    ;; clock
-   [:div.clock.panel.elev-2
-    [:button.calendar-expand-button.material-button "Clock"
-     [:i.material-icons "expand_more"]]]])
+   (collapsible app-state :clock-details-collapsed? "Clock"
+                (fn [] "details"))])

@@ -236,49 +236,14 @@ body { overflow: scroll; }
         }
     }
 
-    .by-minute {
-        @media (max-width: 1000px) {
-            margin-top: 10px;
-        }
-    }
-
-    .by-minute.sticky {
-    }
-
-
-    // display by-minute underneath clocks by default...
-    .clocks {
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        width: 100%;
-    }
-
-    // ... but if we have enough room, display them side-by-side
-    @media (min-width: 1000px) {
-        .clocks {
-            flex-direction: row;
-            position: relative;
-
-            .clock-list {
-                margin-right: 20px;
-                max-width: 50%;
-            }
-
-            .by-minute {
-                margin-top: -12px;
-            }
-
-            .by-minute.sticky {
-                position: relative;
-                margin-top: 0px;
-            }
-
-        }
-    }
 }
 
+.by-minute {
+    height: 100%;
+    .activities-by-minute-canvas {
 
+    }
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // chips

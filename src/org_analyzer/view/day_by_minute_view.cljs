@@ -21,8 +21,7 @@
    tooltip
    & [{:keys [height width]}]]
 
-  (rg/with-let [moused-over (ratom nil)
-                ideal-width (ratom (or width js/document.body.clientWidth))]
+  (rg/with-let [moused-over (ratom nil)]
     (let [heading-h 12
           height (min js/document.documentElement.clientHeight
                       (let [n-days (count clock-minute-intervals-by-day)]
@@ -31,8 +30,7 @@
                           (< n-days 20) (* 12 (count clock-minute-intervals-by-day))
                           (< n-days 35) (* 10 (count clock-minute-intervals-by-day))
                           :else (* 8 (count clock-minute-intervals-by-day)))))
-          ;; height (max (+ 20 heading-h) height)
-          ;; width @ideal-width
+          height (max (+ 20 heading-h) height)
           w-ea (/ width (* 60 24))
           h-ea (/ (- height heading-h) (count clock-minute-intervals-by-day))
           clock-bounds (doall
@@ -44,7 +42,7 @@
           selected @moused-over
           selected-clocks @highlighted-clocks]
 
-      [:canvas.activities-by-minute
+      [:canvas.activities-by-minute-canvas
        {:id "canvas"
         :width width
         :height height
@@ -66,8 +64,6 @@
                            (reset! moused-over bounds)))
         :ref (fn [canvas]
                (when canvas
-                 (let [[_ _ w _] (dom/screen-relative-bounds (.-parentElement canvas))]
-                   (reset! ideal-width w))
                  (let [ctx (. canvas (getContext "2d"))]
                    (doto ctx
                      (.clearRect 0 0 width height)
