@@ -31,7 +31,10 @@
                (LocalDateTime/ofInstant (time/instant #inst "2019-07-08T00:00:00.000-00:00") (ZoneId/of "UTC"))
                (LocalDateTime/ofInstant (time/instant #inst "2019-07-10T00:00:00.000-00:00") (ZoneId/of "UTC"))))
 
-  clocks
+  (for [{:keys [sections] :as clock} clocks
+        {:keys [name]} sections
+        :when (s/includes? name "org-mode")]
+    clock)
 
 
   (count (mapcat org-time/clock->each-day-clocks clocks))

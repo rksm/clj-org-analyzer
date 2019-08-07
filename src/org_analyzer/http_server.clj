@@ -36,12 +36,15 @@
       (time/offset-date-time (java.util.TimeZone/getDefault))
       time/instant->sql-timestamp))
 
-(defn clock-data [{:keys [start end duration sections] :as clock}]
+(defn clock-data [{:keys [start end duration sections tags] :as clock}]
   {:start (time/format "yyyy-MM-dd HH:mm" start)
    :end (and (not (nil? end)) (time/format "yyyy-MM-dd HH:mm" end))
    :duration (and (not (nil? duration)) (print-duration duration))
-   ;; :tags (all-tags TODO!!!)
-   :location (->> sections ((juxt first last)) (map :name) (apply format "%s > %s"))})
+   ;; :location (->> sections ((juxt last first)) (map :name) (apply format "%s > %s"))
+   :path (map :name (reverse (drop 1 sections)))
+   :name (:name (first sections))
+   :id (s/join "/" (map :name sections))
+   :tags tags})
 
 (defn time-string-to-local-date [time-string]
   (time/local-date-time (time/zoned-date-time time-string)))

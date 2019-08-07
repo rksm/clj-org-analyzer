@@ -1,3 +1,9 @@
+* {
+  --mdc-theme-primary: black;
+}
+body {
+  overflow: scroll;
+}
 .app {
   font-family: sans-serif;
   display: flex;
@@ -25,15 +31,31 @@
   background-color: white;
   z-index: 1;
 }
+.panel {
+  margin: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
 .calendar {
   position: relative;
-  overflow: auto;
-  outline: 1px solid gray;
+  overflow: hidden;
   padding: 10px 10px 25px;
   display: grid;
-  grid-template-columns: repeat(12, min-content);
+  grid-template-columns: repeat(3, min-content);
   grid-row-gap: 20px;
   grid-column-gap: 12px;
+}
+@media (min-width: calc(6*6*15px + 14*6px + 4*10px)) {
+  .calendar {
+    grid-template-columns: repeat(6, min-content);
+  }
+}
+@media (min-width: calc(12*6*15px + 14*12px + 4*10px)) {
+  .calendar {
+    grid-template-columns: repeat(12, min-content);
+  }
 }
 .month {
   display: flex;
@@ -58,40 +80,140 @@
   grid-column-end: 4;
 }
 .month.april {
-  grid-column-start: 4;
-  grid-column-end: 5;
+  grid-column-start: 1;
+  grid-column-end: 2;
 }
 .month.may {
-  grid-column-start: 5;
-  grid-column-end: 6;
+  grid-column-start: 2;
+  grid-column-end: 3;
 }
 .month.june {
-  grid-column-start: 6;
-  grid-column-end: 7;
+  grid-column-start: 3;
+  grid-column-end: 4;
 }
 .month.july {
-  grid-column-start: 7;
-  grid-column-end: 8;
+  grid-column-start: 1;
+  grid-column-end: 2;
 }
 .month.august {
-  grid-column-start: 8;
-  grid-column-end: 9;
+  grid-column-start: 2;
+  grid-column-end: 3;
 }
 .month.september {
-  grid-column-start: 9;
-  grid-column-end: 10;
+  grid-column-start: 3;
+  grid-column-end: 4;
 }
 .month.october {
-  grid-column-start: 10;
-  grid-column-end: 11;
+  grid-column-start: 1;
+  grid-column-end: 2;
 }
 .month.november {
-  grid-column-start: 11;
-  grid-column-end: 12;
+  grid-column-start: 2;
+  grid-column-end: 3;
 }
 .month.december {
-  grid-column-start: 12;
-  grid-column-end: 13;
+  grid-column-start: 3;
+  grid-column-end: 4;
+}
+@media (min-width: calc(6*6*15px + 14*6px + 4*10px)) {
+  .month.january {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.february {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.march {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.april {
+    grid-column-start: 4;
+    grid-column-end: 5;
+  }
+  .month.may {
+    grid-column-start: 5;
+    grid-column-end: 6;
+  }
+  .month.june {
+    grid-column-start: 6;
+    grid-column-end: 7;
+  }
+  .month.july {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.august {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.september {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.october {
+    grid-column-start: 4;
+    grid-column-end: 5;
+  }
+  .month.november {
+    grid-column-start: 5;
+    grid-column-end: 6;
+  }
+  .month.december {
+    grid-column-start: 6;
+    grid-column-end: 7;
+  }
+}
+@media (min-width: calc(12*6*15px + 14*12px + 4*10px)) {
+  .month.january {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.february {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.march {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.april {
+    grid-column-start: 4;
+    grid-column-end: 5;
+  }
+  .month.may {
+    grid-column-start: 5;
+    grid-column-end: 6;
+  }
+  .month.june {
+    grid-column-start: 6;
+    grid-column-end: 7;
+  }
+  .month.july {
+    grid-column-start: 7;
+    grid-column-end: 8;
+  }
+  .month.august {
+    grid-column-start: 8;
+    grid-column-end: 9;
+  }
+  .month.september {
+    grid-column-start: 9;
+    grid-column-end: 10;
+  }
+  .month.october {
+    grid-column-start: 10;
+    grid-column-end: 11;
+  }
+  .month.november {
+    grid-column-start: 11;
+    grid-column-end: 12;
+  }
+  .month.december {
+    grid-column-start: 12;
+    grid-column-end: 13;
+  }
 }
 .weeks {
   display: flex;
@@ -189,8 +311,8 @@
   background-color: #ff6e0a;
 }
 .day-detail {
-  overflow: hidden;
   white-space: nowrap;
+  width: 100%;
 }
 .day-detail > div {
   margin: 10px;
@@ -201,24 +323,169 @@
 .day-detail .duration {
   margin-right: 1ex;
 }
-.day-detail .clocks {
-  display: flex;
-  flex-direction: row;
-  position: relative;
+.day-detail .clock-list {
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: min-content minmax(20ex, min-content) minmax(250px, min-content) min-content;
+  justify-items: start;
+  grid-column-gap: 3px;
 }
-.day-detail .clocks .clock-list {
-  margin-right: 20px;
-  min-width: 100px;
-  max-width: 35%;
+.day-detail .clock-list * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 1.5em;
 }
-.day-detail .clocks .clock-list .activity.highlighted {
+.day-detail .clock-list .path {
+  color: #AAA;
+}
+.day-detail .clock-list .activity.highlighted {
   color: salmon;
 }
-.day-detail .clocks .by-minute {
-  overflow: hidden;
-  margin-top: -12px;
+@media (max-width: 1000px) {
+  .day-detail .by-minute {
+    margin-top: 10px;
+  }
 }
-.day-detail .clocks .by-minute.sticky {
+.day-detail .clocks {
+  display: flex;
+  flex-direction: column;
   position: relative;
-  margin-top: 0px;
+  width: 100%;
+}
+@media (min-width: 1000px) {
+  .day-detail .clocks {
+    flex-direction: row;
+    position: relative;
+  }
+  .day-detail .clocks .clock-list {
+    margin-right: 20px;
+    max-width: 50%;
+  }
+  .day-detail .clocks .by-minute {
+    margin-top: -12px;
+  }
+  .day-detail .clocks .by-minute.sticky {
+    position: relative;
+    margin-top: 0px;
+  }
+}
+.md-chip {
+  display: inline-block;
+  background: #e0e0e0;
+  padding: 0 12px;
+  border-radius: 32px;
+  font-size: 0.9em;
+}
+.md-chip.md-chip-hover:hover {
+  background: #ccc;
+}
+.md-chip-clickable {
+  cursor: pointer;
+}
+.md-chip,
+.md-chip-icon {
+  height: 16px;
+  line-height: 16px;
+}
+.md-chip-icon {
+  display: block;
+  float: left;
+  background: #009587;
+  width: 16px;
+  border-radius: 50%;
+  text-align: center;
+  color: white;
+  margin: 0 8px 0 -12px;
+}
+.md-chip-remove {
+  display: inline-block;
+  background: #aaa;
+  border: 0;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  padding: 0;
+  margin: 0 -4px 0 4px;
+  cursor: pointer;
+  font: inherit;
+  line-height: 20px;
+}
+.md-chip-remove:after {
+  color: #e0e0e0;
+  content: 'x';
+}
+.md-chip-remove:hover {
+  background: #999;
+}
+.md-chip-remove:active {
+  background: #777;
+}
+.md-chips {
+  padding: 2px 0 0;
+}
+.md-chips .md-chip {
+  margin: 0 2px 3px 0;
+}
+.md-chip-raised {
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+}
+.material-button {
+  font-family: Roboto, sans-serif;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-size: .875rem;
+  line-height: 2.25rem;
+  font-weight: 500;
+  letter-spacing: .0892857143em;
+  text-decoration: none;
+  text-transform: uppercase;
+  padding: 0 8px 0 8px;
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 64px;
+  height: 36px;
+  border: none;
+  outline: none;
+  line-height: inherit;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-appearance: none;
+  overflow: hidden;
+  vertical-align: middle;
+  border-radius: 4px;
+}
+.material-button:not(:disabled) {
+  background-color: transparent;
+  color: #000000;
+}
+.material-button:hover {
+  cursor: pointer;
+}
+.material-button:hover::before {
+  opacity: .04;
+}
+.material-button::before,
+.material-button::after {
+  background-color: #000000;
+  top: calc(-50%);
+  left: calc(-50%);
+  width: 200%;
+  height: 200%;
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  content: "";
+}
+.material-button::before {
+  transition: opacity 15ms linear, background-color 15ms linear;
+  z-index: 1;
+}
+.elev-2 {
+  box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
 }

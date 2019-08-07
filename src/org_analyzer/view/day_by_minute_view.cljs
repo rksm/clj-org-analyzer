@@ -19,15 +19,20 @@
   [clock-minute-intervals-by-day
    highlighted-clocks
    tooltip
-   & [{:keys [height]}]]
+   & [{:keys [height width]}]]
 
   (rg/with-let [moused-over (ratom nil)
-                ideal-width (ratom js/document.body.clientWidth)]
+                ideal-width (ratom (or width js/document.body.clientWidth))]
     (let [heading-h 12
-          height (or height (min js/document.documentElement.clientHeight
-                                 (* 12 (count clock-minute-intervals-by-day))))
-          height (max (+ 20 heading-h) height)
-          width @ideal-width
+          height (min js/document.documentElement.clientHeight
+                      (let [n-days (count clock-minute-intervals-by-day)]
+                        (cond
+                          (< n-days 10) (* 15 (count clock-minute-intervals-by-day))
+                          (< n-days 20) (* 12 (count clock-minute-intervals-by-day))
+                          (< n-days 35) (* 10 (count clock-minute-intervals-by-day))
+                          :else (* 8 (count clock-minute-intervals-by-day)))))
+          ;; height (max (+ 20 heading-h) height)
+          ;; width @ideal-width
           w-ea (/ width (* 60 24))
           h-ea (/ (- height heading-h) (count clock-minute-intervals-by-day))
           clock-bounds (doall
@@ -51,7 +56,7 @@
                                            (filter #(geo/contains-point? % p))
                                            first)]
                            (when-let [[_ _ _ _ clocks] bounds]
-                             (reset! highlighted-clocks (set (map :location clocks)))
+                             (reset! highlighted-clocks (set (map :id clocks)))
                              (when tooltip
                                (reset! tooltip [:div (interpose
                                                       [:br]
@@ -74,7 +79,7 @@
                            row-selected? (= row selected-row)
                            bounds-selected? (= selected bounds)
                            no-clocks? (empty? clocks)
-                           highlighted-a-bit? (not (empty? (intersection selected-clocks (set (map :location clocks)))))
+                           highlighted-a-bit? (not (empty? (intersection selected-clocks (set (map :id clocks)))))
                            color (cond
                                    (and no-clocks? row-selected?) "#ddd"
                                    no-clocks? "#fff"

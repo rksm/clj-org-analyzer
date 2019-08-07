@@ -97,28 +97,51 @@
 
 (defn controls []
   [:div.controls
-   [:input {:type "button" :value "reload" :on-click fetch-data}]])
+   [:input {:type "button"
+            :value "reload"
+            :on-click fetch-data
+            :class ["mdl-button" "mdl-js-button" "mdl-button--raised" "mdl-js-ripple-effect"]}]])
 
 (defn app [app-state dom-state event-handlers]
   [:div.app.noselect
    [controls]
-   [:div [calendar/calendar-view app-state dom-state event-handlers]]
-   [:div (let [{:keys [hovered-over-date
-                       selected-days
-                       clocks-by-day
-                       clock-minute-intervals-by-day
-                       calendar]} @app-state
-               hovered-over-day (get calendar hovered-over-date)
-               n-selected (count selected-days)
-               selected-days (vals (select-keys calendar selected-days))]
 
-           (cond
-             hovered-over-date [selected-day/selected-day-view hovered-over-day clocks-by-day]
-             (= n-selected 1) [selected-day/selected-day-view (first selected-days) clocks-by-day]
-             (> n-selected 1) [selected-day/selected-days-view
-                               selected-days
-                               clocks-by-day
-                               clock-minute-intervals-by-day
-                               calendar
-                               (:scrolled-window-bounds @dom-state)]
-             :else nil))]])
+   ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+   ;; calendar
+   [:div.panel.elev-2
+    [:button.calendar-expand-button.material-button "Calendar"
+     [:i.material-icons "expand_more"]]
+    [calendar/calendar-view app-state dom-state event-handlers]]
+
+
+   ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+   ;; clocks
+   [:div.clock-list.panel.elev-2
+    [:button.calendar-expand-button.material-button "Clocks"
+     [:i.material-icons "expand_more"]]
+
+    (let [{:keys [hovered-over-date
+                  selected-days
+                  clocks-by-day
+                  clock-minute-intervals-by-day
+                  calendar]} @app-state
+          hovered-over-day (get calendar hovered-over-date)
+          n-selected (count selected-days)
+          selected-days (vals (select-keys calendar selected-days))]
+
+      (cond
+        (= n-selected 1) [selected-day/selected-day-view (first selected-days) clocks-by-day]
+        (> n-selected 1) [selected-day/selected-days-view
+                          selected-days
+                          clocks-by-day
+                          clock-minute-intervals-by-day
+                          calendar
+                          (:scrolled-window-bounds @dom-state)]
+        hovered-over-date [selected-day/selected-day-view hovered-over-day clocks-by-day]
+        :else nil))]
+
+   ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+   ;; clock
+   [:div.clock.panel.elev-2
+    [:button.calendar-expand-button.material-button "Clock"
+     [:i.material-icons "expand_more"]]]])
