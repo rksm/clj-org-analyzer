@@ -32,12 +32,12 @@
                  10 15
                  20 12
                  28 11
-                 8)
+                 100 8
+                 4)
 
-          height (min (- js/document.documentElement.clientHeight 50)
-                      (-> h-ea
-                          (* (count clock-minute-intervals-by-day))
-                          (+ heading-h)))
+          height (-> h-ea
+                     (* (count clock-minute-intervals-by-day))
+                     (+ heading-h))
           clock-bounds (doall
                         (for [[row [date clock-intervals]] (map-indexed vector clock-minute-intervals-by-day)
                               bounds (clock-bounds-on-canvas clock-intervals 0 heading-h w-ea row h-ea)]

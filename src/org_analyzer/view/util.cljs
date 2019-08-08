@@ -105,4 +105,3 @@
   (into (sorted-map-by <) (map
                            (fn [[key clocks]] [key (clock-minute-intervals clocks)])
                            clocks-by-day)))
-

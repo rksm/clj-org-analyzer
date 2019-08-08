@@ -47,16 +47,13 @@
   ;; FIXME!!!
   (swap! app-state
          assoc :clock-minute-intervals-by-day-filtered
-         (into (sorted-map-by <) (map
-                                  (fn [[key clocks]] [key (util/clock-minute-intervals clocks)])
-                                  (:clocks-by-day-filtered @app-state)))))
+         (util/clock-minute-intervals-by-day (:clocks-by-day-filtered @app-state))))
 
 
 
 
 (defn search-bar [app-state]
-  (rg/with-let [
-                loading? (ratom false)
+  (rg/with-let [loading? (ratom false)
                 apply-search-input-debounced! (util/debounce #(do (apply-search-input! %1 %2)
                                                                   (reset! loading? false)) 500)]
     (let [search-input (-> @app-state :search-input)
@@ -70,9 +67,7 @@
          :on-change (fn [evt] (let [input (-> evt .-target .-value)]
                                 (reset! loading? true)
                                 (swap! app-state assoc :search-input input)
-                                ;; (apply-search-input! app-state input)
-                                (apply-search-input-debounced! app-state input)
-                                ))}]
+                                (apply-search-input-debounced! app-state input)))}]
        [:div.loading {:class (if @loading? "visible" "")}]])))
 
 

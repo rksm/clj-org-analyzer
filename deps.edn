@@ -1,4 +1,5 @@
-{:deps {org.clojure/clojurescript {:mvn/version "1.10.520"}
+{:deps {org.clojure/clojure {:mvn/version "1.10.1"}
+        org.clojure/clojurescript {:mvn/version "1.10.520"}
         clojure.java-time {:mvn/version "0.3.2"}
         reagent {:mvn/version "0.8.1"}
         ring {:mvn/version "1.7.1"}
@@ -18,8 +19,18 @@
            :fig
            {:extra-paths ["resources" "target"]
             :extra-deps {com.bhauman/figwheel-main {:mvn/version "RELEASE"}}
-            :main-opts ["-m cljs.main -co dev.cljs.edn -c org-analyzer.view.app"]}
+            ;; :main-opts ["-m cljs.main -co dev.cljs.edn -c org-analyzer.view.app"]
+            :main-opts ["-m" "figwheel.main" "-bo" "dev"]}
 
            :fig-prod
            {:extra-paths ["resources" "target"]
-            :main-opts ["-m cljs.main -co prod.cljs.edn -c org-analyzer.view.app"]}}}
+                                        ;:main-opts ["-m cljs.main -co prod.cljs.edn -c org-analyzer.view.app"]
+            :main-opts ["-m" "figwheel.main" "-bo" "prod"]
+            }
+
+           :depstar {:extra-deps
+                     {seancorfield/depstar {:mvn/version "0.3.1"}}}
+
+           :aot
+           {:extra-paths ["classes"]
+            :main-opts ["-e" "(compile,'org-analyzer.http-server)"]}}}

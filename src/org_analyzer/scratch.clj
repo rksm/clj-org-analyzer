@@ -238,7 +238,6 @@
   (->> (io/file "/home/robert/org/") file-seq (filter #(s/ends-with? (.getName %) ".org")))
 
 
-  (sc.api/defsc 57)
   (first clocks)
 
   (map (comp last :sections) (take 3 clocks))

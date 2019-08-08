@@ -55,7 +55,7 @@
     (edn/read-string {:readers readers} string)))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-(last (sort-by :start (get-clocks)))
+
 (defn send-clocks-between [start end & {:keys [by-day?] :or {by-day? false}}]
   (let [clocks (clocks-between start end (get-clocks))
         ;; clocks (if by-day?
@@ -95,7 +95,7 @@
   (when @server (stop-server))
   (reset! server (run-jetty app {:port 8080 :join? false})))
 
-(start-server)
+;; (start-server)
 ;; (stop-server)
 
 (defn -main [& args]

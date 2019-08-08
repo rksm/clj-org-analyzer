@@ -26,12 +26,13 @@
 (defnp parse-timestamp
   "`string` like \"[2019-06-19 Wed 14:11]\". Returns LocalDateTime."
   [string]
-  (let [sanitized (s/replace string brackets-re "")]
-    (first
-     (filter some?
-             (for [locale locales
-                   {:keys [parse pattern]} date-time-patterns]
-               (try (parse sanitized pattern locale) (catch Exception e nil)))))))
+  (when string
+    (let [sanitized (s/replace string brackets-re "")]
+      (first
+       (filter some?
+               (for [locale locales
+                     {:keys [parse pattern]} date-time-patterns]
+                 (try (parse sanitized pattern locale) (catch Exception e nil))))))))
 
 (defnp parse-duration
   "`duration-string` like \"3:22\"."

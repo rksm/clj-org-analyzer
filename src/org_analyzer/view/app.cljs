@@ -12,7 +12,6 @@
             [org-analyzer.view.geo :as geo]
             [org-analyzer.view.selection :as sel]
             [clojure.set :refer [union difference]]
-            [sc.api]
             [clojure.string :as s]
             [org-analyzer.view.tooltip :as tooltip]
             [org-analyzer.view.search-view :as search-view]
