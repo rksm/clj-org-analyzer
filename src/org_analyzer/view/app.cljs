@@ -36,7 +36,8 @@
           :highlighted-calendar-dates #{}
           :highlighted-entries #{} ;; uses clock :locations for id'ing
           :search-input ""
-          :search-focused? false}))
+          :search-focused? false
+          :loading? true}))
 
 (defn empty-dom-state []
   (atom {:sel-rect (atom sel/empty-rectangle-selection-state)
@@ -77,7 +78,7 @@
     result-chan))
 
 (defn fetch-and-update! [app-state]
-  (go (swap! app-state merge (<! (fetch-data)))))
+  (go (swap! app-state merge (<! (fetch-data)) {:loading? false})))
 
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -153,7 +154,14 @@
         highlighted-entries-cursor (r/cursor app-state [:highlighted-entries])]
 
     [:div.app
-     [controls app-state]
+     (when (:loading? @app-state)
+       [:div.loading-indicator
+        [:div.loading-spinner
+         [:div] [:div] [:div] [:div]
+         [:div] [:div] [:div] [:div]
+         [:div] [:div] [:div] [:div]]])
+
+     #_[controls app-state]
 
      [search-view/search-bar app-state]
 
@@ -189,5 +197,5 @@
 
      ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
      ;; clock
-     (collapsible* "Clock" :clock-details-collapsed? (r/cursor app-state [:clock-details-collapsed?])
+     #_(collapsible* "Clock" :clock-details-collapsed? (r/cursor app-state [:clock-details-collapsed?])
                    (fn [] "details"))]))
