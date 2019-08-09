@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.rksm</groupId>
+  <artifactId>org-analyzer</artifactId>
+  <packaging>jar</packaging>
+  <version>0.1.0</version>
+  <name>org-analyzer</name>
+  <description>An app that creates an interactive visualization of org-mode time-tracking data (org clockin).</description>
+  <url>http://github.com/rksm/clj-org-analyzer</url>
+
+  <licenses>
+    <license>
+      <name>MIT</name>
+    </license>
+  </licenses>
+
+  <scm>
+    <url>https://github.com/rksm/clj-org-analyzer</url>
+    <connection>scm:git:git://github.com/rksm/clj-org-analyzer.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/rksm/clj-org-analyzer.git</developerConnection>
+    <tag>aeaef4c84cceb3e5466641c33bd6641f5395aae7</tag>
+  </scm>
+
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+    <testSourceDirectory>test</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>resources</directory>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>resources</directory>
+      </testResource>
+    </testResources>
+    <directory>target</directory>
+    <outputDirectory>target/classes</outputDirectory>
+    <plugins/>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>central</id>
+      <url>https://repo1.maven.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>clojars</id>
+      <url>https://repo.clojars.org/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+  </repositories>
+
+  <dependencyManagement>
+    <dependencies/>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>clojure</artifactId>
+      <version>1.9.0</version>
+    </dependency>
+    <dependency>
+      <groupId>clojure.java-time</groupId>
+      <artifactId>clojure.java-time</artifactId>
+      <version>0.3.2</version>
+    </dependency>
+    <dependency>
+      <groupId>http-kit</groupId>
+      <artifactId>http-kit</artifactId>
+      <version>2.3.0</version>
+    </dependency>
+    <dependency>
+      <groupId>ring</groupId>
+      <artifactId>ring</artifactId>
+      <version>1.7.1</version>
+    </dependency>
+    <dependency>
+      <groupId>ring-logger</groupId>
+      <artifactId>ring-logger</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+    <dependency>
+      <groupId>compojure</groupId>
+      <artifactId>compojure</artifactId>
+      <version>1.6.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.taoensso</groupId>
+      <artifactId>tufte</artifactId>
+      <version>2.1.0-RC4</version>
+    </dependency>
+  </dependencies>
+
+</project>
