@@ -14,8 +14,9 @@
               minus
               plus
               truncate-to
-              weeks]])
-  (:import java.time.Duration
+              weeks]]
+            org-analyzer.processing)
+  (:import [java.time Duration LocalDate LocalDateTime]
            org_analyzer.processing.Clock))
 
 ;; http://dm3.github.io/clojure.java-time/java-time.html
@@ -78,13 +79,14 @@ Example:
           (cons start (take-while #(before? % iter-end) (time/iterate plus iter-start (weeks 1))))
           [end]))))
 
-(defn days-between [start end]
+(defn days-between
+  [^LocalDateTime start ^LocalDateTime end]
   (lazy-cat
    (take-while #(time/before? % end)
-               (time/iterate (comp #(local-date-time % 0 0) plus)
-                             start (days 1)))
+               (time/iterate (comp (fn [^LocalDateTime t] (-> t (.withHour 0) (.withMinute 0)))
+                                   time/plus)
+                            start (time/days 1)))
    [end]))
-
 
 (defn weeks-of-year [year]
   "Returns a non-lazy collection of week start dates of the given year."
@@ -116,32 +118,39 @@ Example:
     (when end (duration start end))))
 
 (defn sum-clock-duration [clocks]
-  (->> (filter :duration clocks)
-       (reduce (fn [^Duration sum ^Clock clock] (.plus sum (:duration clock)))
-               (duration 0))))
+  ^Duration (->> (filter :duration clocks)
+                 (reduce (fn [^Duration sum ^Clock clock] (.plus sum (:duration clock)))
+                         (duration 0))))
 
 (defn clocks-since [start-day clocks]
   (->> clocks
        (filter #(before? start-day (:start %)))
        (sort-by :start)))
 
-(defn clocks-between [from-date to-date clocks]
+(defn clocks-between
+  [^LocalDateTime from-date ^LocalDateTime to-date clocks]
   (->> clocks
-       (filter #(let [{:keys [start]} %]
-                  (and (time/after? start from-date)
-                       (not= from-date start)
-                       (time/before? start to-date))))
+       (filter (fn [{:keys [^LocalDateTime start]}]
+                 (and start
+                      (time/after? start from-date)
+                      (not= from-date start)
+                      (time/before? start to-date))))
        (sort-by :start)))
 
-(defn clock->each-day-clocks [{:keys [start end] :as clock}]
+(defn clock->each-day-clocks
+  [{:keys [^LocalDateTime start ^LocalDateTime end] :as clock}]
   "Given a single clock, splits it into multiple clocks, all with the same
   section but with :start :end times adapted so that each clock fits into a
   single day."
-  (if (or (not end) (= (local-date start) (local-date end)))
-    [clock] ; start / end on same day
+  (if (or (not end) (= (LocalDate/from start) (LocalDate/from end)))
+    [clock]                             ; start / end on same day
     (let [days (days-between start end)
           paired (map vector days (drop 1 days))]
-      (map (fn [[start end]] (assoc clock :start start :end end :duration (duration start end))) paired))))
+      (map (fn [[^LocalDateTime start ^LocalDateTime end]]
+             (assoc clock
+                    :start start
+                    :end end
+                    :duration (Duration/between start end))) paired))))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

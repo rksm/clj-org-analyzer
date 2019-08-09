@@ -58,12 +58,13 @@ run-uberjar: uber.jar
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 RESOURCE_CONFIG := target/graal-resource-config.json
+
 $(RESOURCE_CONFIG): $(CLJS_FILES)
 	clojure -A:graal-prep
 
 BIN := bin/run
 
-$(BIN): $(AOT) cljs-prod $(CLJS_FILES) $(CLJ_FILES)
+$(BIN): $(AOT) cljs-prod $(CLJS_FILES) $(CLJ_FILES) $(RESOURCE_CONFIG)
 	mkdir -p bin
 	native-image \
 		--report-unsupported-elements-at-runtime \
@@ -78,7 +79,7 @@ $(BIN): $(AOT) cljs-prod $(CLJS_FILES) $(CLJ_FILES)
 		-H:Log=registerResource \
 		org_analyzer.http_server \
 		$(BIN)
-	cp -r resources/public/ $(dir $(BIN))/public
+	cp -r resources/public $(dir $(BIN))/public
 
 bin: $(BIN)
 

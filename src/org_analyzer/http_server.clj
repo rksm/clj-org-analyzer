@@ -1,4 +1,5 @@
 (ns org-analyzer.http-server
+  (:gen-class)
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as s]
@@ -7,25 +8,28 @@
             [compojure.route :as route]
             [java-time :as time]
             [org-analyzer.printing :refer [print-duration]]
-            [org-analyzer.processing :refer [find-clocks parse-org-file parse-timestamp]]
+            [org-analyzer.processing
+             :refer
+             [find-clocks parse-org-file parse-timestamp]]
             [org-analyzer.time
              :refer
              [calendar clock->each-day-clocks clocks-between]]
-            [ring.adapter.jetty :refer [run-jetty]]
+            [org.httpkit.server :refer [run-server]]
+            [ring.logger :as logger]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [ring.util.response :as response])
-  (:import [java.time LocalDateTime ZoneId]))
+  (:import java.io.File
+           [java.time LocalDateTime ZoneId]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defn get-clocks []
-  (let [org-files (let [dir (io/file "/home/robert/org/")]
+  (let [org-files (let [^File dir (io/file "/home/robert/org/")]
                     (->> dir
                          file-seq
-                         (filter #(and
-                                   ;; (= dir (.getPaarentFile %))
-                                   (s/ends-with? (.getName %) ".org")))))
-
+                         (filter (fn [^File f] (and
+                                                (not (.isDirectory f))
+                                                (s/ends-with? (.getPath f) ".org"))))))
         clocks (mapcat (comp find-clocks parse-org-file) org-files)
         clocks (mapcat clock->each-day-clocks clocks)]
     clocks))
@@ -80,26 +84,34 @@
   (route/resources "/" {:root "public"})
   (route/not-found "NOTFOUND "))
 
-(def app (-> (handler/site main-routes)
-             (wrap-stacktrace)))
-
-;; ring-logger {:mvn/version "1.0.1"}
-;; (require 'ring.logger)
+(def app (-> (handler/api main-routes)
+             logger/wrap-with-logger
+             wrap-stacktrace))
 
 (defonce server (atom nil))
 
 (defn stop-server []
-  (when @server (.stop @server) (reset! server nil)))
+  (when @server (@server) (reset! server nil)))
 
 (defn start-server []
   (when @server (stop-server))
-  (reset! server (run-jetty app {:port 8080 :join? false})))
-
-;; (start-server)
-;; (stop-server)
+  (reset! server (run-server app {:port 8080 :join? false})))
 
 (defn -main [& args]
   (start-server))
 
-;; (sc.api.logging/register-cs-logger :sc.api.logging/log-spy-cs (fn [cs] nil))
 
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+;; FIXME 2019-08-09
+;; when running as native-image resources get the protocol "resources:" which
+;; isn't handled by the ring middleware. This hack here will allow us to get
+;; resource file infos + send the contents
+
+(def bin-path "bin/")
+
+(defn registered-resource-to-file [url]
+  (io/file bin-path (s/replace (str url) #"^[^:]+:" "")))
+
+(defmethod ring.util.response/resource-data :resource
+  [url]
+  (response/resource-data (io/as-url (registered-resource-to-file url))))

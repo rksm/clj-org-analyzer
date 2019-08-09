@@ -2,8 +2,10 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as s]
             [java-time :as time :refer [duration]]
-            [taoensso.tufte :refer [p defnp]])
-  (:import [java.time LocalDate LocalDateTime]
+            [taoensso.tufte :refer [defnp p]])
+  (:import java.io.File
+           java.lang.String
+           [java.time Duration LocalDate LocalDateTime]
            java.time.format.DateTimeFormatter
            java.util.Locale))
 
@@ -23,7 +25,14 @@
 
 (def locales [Locale/ENGLISH Locale/GERMAN])
 
-(defnp parse-timestamp
+(def timestamp-re #"([0-9]{4})-([0-9]{2})-([0-9]{2})\s+(?:[a-zA-Z]+\s+)?([0-9]{1,2}):([0-9]{1,2})")
+
+(defn parse-timestamp-manually [string]
+  (let [[_ & year-month-day-hour-min] (re-find timestamp-re string)
+      year-month-day-hour-min (map #(Integer/parseInt %) year-month-day-hour-min)]
+  (apply time/local-date-time year-month-day-hour-min)))
+
+#_(defnp parse-timestamp
   "`string` like \"[2019-06-19 Wed 14:11]\". Returns LocalDateTime."
   [string]
   (when string
@@ -32,15 +41,22 @@
        (filter some?
                (for [locale locales
                      {:keys [parse pattern]} date-time-patterns]
-                 (try (parse sanitized pattern locale) (catch Exception e nil))))))))
+                 (or (try (parse sanitized pattern locale) (catch Exception e nil))
+                     (parse-timestamp-manually sanitized))))))))
+
+(defnp parse-timestamp
+  "`string` like \"[2019-06-19 Wed 14:11]\". Returns LocalDateTime."
+  [string]
+  (when string
+    (parse-timestamp-manually string)))
 
 (defnp parse-duration
   "`duration-string` like \"3:22\"."
   [duration-string]
-  (as-> duration-string it
-    (s/replace it colon-re "H")
-    (str "PT" it "M")
-    (duration it)))
+  ^Duration (as-> duration-string it
+              (s/replace it colon-re "H")
+              (str "PT" it "M")
+              (Duration/parse it)))
 
 (defnp parse-clock [clock-string]
   (let [[_ start end duration] (re-find clock-re clock-string)]
@@ -161,7 +177,7 @@
 
 (defnp parse-org-file
   "The main function to turn org-content into a flat sequence of entry maps, each having at least :type, :line, and :index fields."
-  ([org-file]
+  ([^File org-file]
    (let [org-file (if (string? org-file) (io/file org-file) org-file)]
      (parse-org-file (.getName org-file) org-file)))
   ([name org-file]
