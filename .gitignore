@@ -4,3 +4,5 @@
 /target/
 chrome-user-profile/
 classes/
+resources/public/cljs-out/
+/bin/
