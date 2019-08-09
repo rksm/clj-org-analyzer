@@ -22,15 +22,18 @@ http-server:
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-cljs: $(CLJS_FILES) deps.edn dev.cljs.edn
+JS_FILES := resources/public/cljs-out/main.js resources/public/cljs-out/dev/
+JS_PROD_FILES := resources/public/cljs-out/main.js resources/public/cljs-out/prod/
+
+$(JS_FILES): $(CLJS_FILES) deps.edn dev.cljs.edn
 	clojure -A:cljs
 
-CLJS_PROD_FILES := resources/public/cljs-out/main.js resources/public/cljs-out/prod/
-
-$(CLJS_PROD_FILES): $(CLJS_FILES) deps.edn prod.cljs.edn
+$(JS_PROD_FILES): $(CLJS_FILES) deps.edn prod.cljs.edn
 	clojure -R:cljs -A:cljs-prod
 
-cljs-prod: $(CLJS_PROD_FILES)
+cljs: $(JS_FILES)
+
+cljs-prod: $(JS_PROD_FILES)
 
 pom.xml: deps.edn
 	clojure -Spom
@@ -41,7 +44,7 @@ $(AOT): $(CLJ_FILES) $(CLJS_FILES)
 	mkdir -p $(AOT)
 	clojure -A:aot
 
-org-analyzer.jar: cljs-prod $(AOT) pom.xml
+org-analyzer.jar: cljs $(AOT) pom.xml
 	clojure -C:http-server:aot -A:depstar -m hf.depstar.uberjar org-analyzer.jar  -m org_analyzer.http_server
 
 run-uberjar: org-analyzer.jar
@@ -57,7 +60,7 @@ $(RESOURCE_CONFIG): $(CLJS_FILES)
 
 BIN := bin/run
 
-$(BIN): $(AOT) cljs-prod $(CLJS_FILES) $(CLJ_FILES) $(RESOURCE_CONFIG)
+$(BIN): $(AOT) cljs $(CLJS_FILES) $(CLJ_FILES) $(RESOURCE_CONFIG)
 	mkdir -p bin
 	native-image \
 		--report-unsupported-elements-at-runtime \
@@ -69,7 +72,6 @@ $(BIN): $(AOT) cljs-prod $(CLJS_FILES) $(CLJ_FILES) $(RESOURCE_CONFIG)
 		--enable-http --enable-https --allow-incomplete-classpath \
 		-H:+ReportExceptionStackTraces \
 		-H:ResourceConfigurationFiles=$(RESOURCE_CONFIG) \
-		-H:Log=registerResource \
 		org_analyzer.http_server \
 		$(BIN)
 	cp -r resources/public $(dir $(BIN))/public
