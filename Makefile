@@ -9,7 +9,7 @@ CLJS_FILES := $(shell find . -type f \
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 nrepl:
-	clojure -R:deps:fig:nrepl -C:fig -C:nrepl -m org-analyzer.nrepl-server
+	clojure -R:deps:cljs:nrepl -C:cljs -C:nrepl -m org-analyzer.nrepl-server
 
 chrome:
 	chromium \
@@ -23,12 +23,12 @@ http-server:
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 cljs: $(CLJS_FILES) deps.edn dev.cljs.edn
-	clojure -A:fig
+	clojure -A:cljs
 
 CLJS_PROD_FILES := resources/public/cljs-out/main.js resources/public/cljs-out/prod/
 
 $(CLJS_PROD_FILES): $(CLJS_FILES) deps.edn prod.cljs.edn
-	clojure -R:fig -A:fig-prod
+	clojure -R:cljs -A:cljs-prod
 
 cljs-prod: $(CLJS_PROD_FILES)
 
@@ -39,7 +39,7 @@ AOT := classes
 
 $(AOT): $(CLJ_FILES) $(CLJS_FILES)
 	mkdir -p classes
-	clojure -C:fig -A:aot
+	clojure -C:cljs -A:aot
 
 org-analyzer.jar: cljs-prod $(AOT) pom.xml
 	clojure -C:http-server:aot -A:depstar -m hf.depstar.uberjar org-analyzer.jar  -m org_analyzer.http_server

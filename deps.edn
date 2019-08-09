@@ -1,5 +1,4 @@
 {:deps {org.clojure/clojure {:mvn/version "1.9.0"}
-        org.clojure/clojurescript {:mvn/version "1.10.520"}
         clojure.java-time {:mvn/version "0.3.2"}
         http-kit {:mvn/version "2.3.0"}
         ring {:mvn/version "1.7.1"}
@@ -16,14 +15,14 @@
            :http-server
            {:main-opts ["-m" "org-analyzer.http-server"]}
 
-           ;; for starting nrepl clj & cljs servers for live development
-           :fig
-           {:extra-deps {com.bhauman/figwheel-main {:mvn/version "RELEASE"}
+           :cljs
+           {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.520"}
+                         com.bhauman/figwheel-main {:mvn/version "RELEASE"}
                          cljs-http {:mvn/version "0.1.46"}
                          reagent {:mvn/version "0.8.1"}}
             :main-opts ["-m" "figwheel.main" "-bo" "dev"]}
 
-           :fig-prod
+           :cljs-prod
            {:main-opts ["-m" "figwheel.main" "-bo" "prod"]}
 
            :depstar {:extra-deps
