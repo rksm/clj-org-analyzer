@@ -41,18 +41,11 @@ $(AOT): $(CLJ_FILES) $(CLJS_FILES)
 	mkdir -p classes
 	clojure -C:fig -A:aot
 
-aot_uber.jar: cljs-prod aot pom.xml
-	clojure -C:http-server:aot -A:depstar -m hf.depstar.uberjar aot_uber.jar -v
+org-analyzer.jar: cljs-prod $(AOT) pom.xml
+	clojure -C:http-server:aot -A:depstar -m hf.depstar.uberjar org-analyzer.jar  -m org_analyzer.http_server
 
-#	clojure -A:uberjar --aliases http-server:aot --target aot_uber.jar
-
-uber.jar: cljs-prod pom.xml
-	clojure -C:http-server -A:depstar -m hf.depstar.uberjar uber.jar -v -m org_analyzer.http_server
-
-#	clojure -A:uberjar --aliases http-server --target uber.jar
-
-run-uberjar: uber.jar
-	java -jar uber.jar -m org-analyzer.http-server
+run-uberjar: org-analyzer.jar
+	java -jar org-analyzer.jar -m org-analyzer.http-server
 
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -121,17 +114,17 @@ run-bin: bin
 # 	wget $(LINUX64_JDK_URL) -O - | tar xfvz - -C $(LINUX64_JDK) --strip-components=1
 # 	cp -r $(LINUX64_JRE)/ $(LINUX64_JDK)/jre/
 
-# # $(LINUX64_BIN): uber.jar $(PACKR) $(LINUX64_JDK)
+# # $(LINUX64_BIN): org-analyzer.jar $(PACKR) $(LINUX64_JDK)
 # $(LINUX64_BIN): $(PACKR) $(LINUX64_JDK)
 # 	java -jar $(PACKR) \
 # 	     --platform linux64 \
 # 	     --jdk $(LINUX64_JDK) \
 # 	     --executable $(notdir $(LINUX64_BIN)) \
-# 	     --classpath uber.jar \
+# 	     --classpath org-analyzer.jar \
 # 	     --mainclass org_analyzer.http_server \
 # 	     --vmargs Xmx1G \
 # 	     --minimizejre hard \
-# 	     --removelibs uber.jar \
+# 	     --removelibs org-analyzer.jar \
 # 	     --output $(dir $(LINUX64_BIN))
 
 # $(MACOSX_JRE):
@@ -144,17 +137,17 @@ run-bin: bin
 
 # #	cp -r $(MACOSX_JRE)/ $(MACOSX_JDK)/jre/
 
-# # $(MACOSX_BIN): uber.jar $(PACKR) $(MACOSX_JDK)
+# # $(MACOSX_BIN): org-analyzer.jar $(PACKR) $(MACOSX_JDK)
 # $(MACOSX_BIN): $(PACKR) $(MACOSX_JDK)
 # 	java -jar $(PACKR) \
 # 	     --platform mac \
 # 	     --jdk $(MACOSX_JDK) \
 # 	     --executable $(notdir $(MACOSX_BIN)) \
-# 	     --classpath uber.jar \
+# 	     --classpath org-analyzer.jar \
 # 	     --mainclass org_analyzer.http_server \
 # 	     --vmargs Xmx1G \
 # 	     --minimizejre hard \
-# 	     --removelibs uber.jar \
+# 	     --removelibs org-analyzer.jar \
 # 	     --output $(dir $(MACOSX_BIN))
 
 # $(WIN64_JRE):
@@ -172,17 +165,17 @@ run-bin: bin
 
 # #	cp -r $(WIN64_JRE)/ $(WIN64_JDK)/jre/
 
-# # $(WIN64_BIN): uber.jar $(PACKR) $(WIN64_JDK)
+# # $(WIN64_BIN): org-analyzer.jar $(PACKR) $(WIN64_JDK)
 # $(WIN64_BIN): $(PACKR) $(WIN64_JDK)
 # 	java -jar $(PACKR) \
 # 	     --platform windows64 \
 # 	     --jdk $(WIN64_JDK) \
 # 	     --executable $(notdir $(WIN64_BIN)) \
-# 	     --classpath uber.jar \
+# 	     --classpath org-analyzer.jar \
 # 	     --mainclass org_analyzer.http_server \
 # 	     --vmargs Xmx1G \
 # 	     --minimizejre hard \
-# 	     --removelibs uber.jar \
+# 	     --removelibs org-analyzer.jar \
 # 	     --output $(dir $(WIN64_BIN))
 
 
@@ -195,7 +188,7 @@ run-bin: bin
 
 clean:
 	rm -rf target .cpcache classes \
-		uber.jar bin
+		org-analyzer.jar bin
 
 .PHONY: nrepl chrome clean run-uberjar cljs cljs-prod http-server
 
