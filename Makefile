@@ -35,11 +35,11 @@ cljs-prod: $(CLJS_PROD_FILES)
 pom.xml: deps.edn
 	clojure -Spom
 
-AOT := classes
+AOT := target/classes
 
 $(AOT): $(CLJ_FILES) $(CLJS_FILES)
-	mkdir -p classes
-	clojure -C:cljs -A:aot
+	mkdir -p $(AOT)
+	clojure -A:aot
 
 org-analyzer.jar: cljs-prod $(AOT) pom.xml
 	clojure -C:http-server:aot -A:depstar -m hf.depstar.uberjar org-analyzer.jar  -m org_analyzer.http_server
@@ -187,7 +187,7 @@ run-bin: bin
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 clean:
-	rm -rf target .cpcache classes \
+	rm -rf target .cpcache $(AOT) \
 		org-analyzer.jar bin
 
 .PHONY: nrepl chrome clean run-uberjar cljs cljs-prod http-server

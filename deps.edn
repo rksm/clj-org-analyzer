@@ -29,5 +29,5 @@
                      {seancorfield/depstar {:mvn/version "0.3.1"}}}
 
            :aot
-           {:extra-paths ["classes"]
-            :main-opts ["-e" "(compile,'org-analyzer.http-server)"]}}}
+           {:extra-paths ["target/classes"]
+            :main-opts ["-e" "(binding[*compile-path*\"target/classes\"](compile,'org-analyzer.http-server))"]}}}
