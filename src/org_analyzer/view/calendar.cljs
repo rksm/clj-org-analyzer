@@ -6,23 +6,26 @@
             [clojure.string :refer [split lower-case join replace]]
             [reagent.core :as r :refer [cursor]]
             [reagent.ratom :refer [atom reaction] :rename {atom ratom}]
-            [clojure.set :refer [union]]))
+            [clojure.set :refer [union subset? difference]]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defn event-handlers [app-state dom-state]
-  (letfn [(shift-down? [] (-> @dom-state :keys :shift-down?))
+  (letfn [(add-selection? [] (-> @dom-state :keys :shift-down?))
+          (remove-from-selection? [] (-> @dom-state :keys :alt-down?))
 
           (on-click-month [evt days]
             (let [dates (into #{} (map :date days))]
               (swap! app-state update :selected-days #(cond
-                                                        (shift-down?) (union % dates)
+                                                        (add-selection?) (union % dates)
+                                                        (remove-from-selection?) (difference % dates)
                                                         :else dates))))
 
           (on-click-week [evt week-no days]
             (let [dates (into #{} (map :date days))]
               (swap! app-state update :selected-days #(cond
-                                                        (shift-down?) (union % dates)
+                                                        (add-selection?) (union % dates)
+                                                        (remove-from-selection?) (difference % dates)
                                                         :else dates))))
 
           (on-mouse-over-day [date]
@@ -33,16 +36,18 @@
             (swap! app-state assoc :hovered-over-date nil))
 
           (on-click-day [evt date]
-            (let [add-selection? (shift-down?)]
-              (swap! app-state update :selected-days #(cond
-                                                        (and add-selection? (% date)) (disj % date)
-                                                        add-selection? (conj % date)
-                                                        :else #{date}))))]
+            (swap! app-state update :selected-days #(cond
+                                                      (add-selection?) (conj % date)
+                                                      (remove-from-selection?) (difference % #{date})
+                                                      (= % #{date}) #{}
+                                                      :else #{date})))]
+
     {:on-click-month on-click-month
      :on-click-week on-click-week
      :on-mouse-over-day on-mouse-over-day
      :on-mouse-out-day on-mouse-out-day
      :on-click-day on-click-day}))
+
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; rectangle selection helpers
@@ -55,13 +60,21 @@
     (swap! app-state assoc :selected-days-preview contained)))
 
 (defn- commit-potentially-selected!
-  [selected-days selected-days-preview dom-state]
-  (let [selected (if (-> @dom-state :keys :shift-down?)
-                   (union @selected-days-preview
-                          @selected-days)
-                   @selected-days-preview)]
+  [selected-days selected-days-preview valid-selection? dom-state]
+
+  (let [add-selection? (-> @dom-state :keys :shift-down?)
+        remove-from-selection? (-> @dom-state :keys :alt-down?)
+        selected (cond
+                   remove-from-selection?
+                   (difference @selected-days
+                               @selected-days-preview)
+
+                   add-selection? (union @selected-days-preview
+                                         @selected-days)
+                   :else @selected-days-preview)]
     (reset! selected-days-preview #{})
-    (reset! selected-days selected)))
+    (when valid-selection?
+      (reset! selected-days selected))))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -140,16 +153,22 @@
                                             :when (first (filter #(highlighted-locations (:location %)) clocks))]
                                         date))))]
 
-    [:div.calendar.noselect
+    [:div.calendar-selection.noselect
      (sel/drag-mouse-handlers (:sel-rect @dom-state)
                               :on-selection-start #(reset! selecting? true)
                               :on-selection-end #(do
                                                    (reset! selecting? false)
-                                                   (commit-potentially-selected! selected-days selected-days-preview dom-state))
+                                                   (let [valid-selection? (> (geo/area (:global-bounds %)) 25)]
+                                                     (commit-potentially-selected!
+                                                      selected-days
+                                                      selected-days-preview
+                                                      valid-selection?
+                                                      dom-state)))
                               :on-selection-change #(when @selecting?
                                                       (mark-days-as-potentially-selected app-state dom-state %)))
      (when @selecting?
        [:div.selection {:style
                         (let [[x y w h] (:relative-bounds @(:sel-rect @dom-state))]
                           {:left x :top y :width w :height h})}])
-     (doall (map #(month-view dom-state event-handlers % calendar-state highlighted-days) by-month))]))
+     [:div.calendar
+      (doall (map #(month-view dom-state event-handlers % calendar-state highlighted-days) by-month))]]))
