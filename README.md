@@ -1,11 +1,11 @@
 # org-analyzer
 
 org-analyzer creates an interactive visualization of org-mode time-tracking
-data. Org allows to add start/end timestamps to org items (via `org-clock-in`).
-This makes it possible to create workflows that capture the times spend working
-on particular things. Unfortunately the reporting features built into org are
-rather limited. This tool remedies that fact by providing a visual and
-interactive presentation of time capture data.
+data. org-mode allows to add start/end timestamps to org-mode items (via
+`org-clock-in`). This makes it possible to create workflows that capture the
+times spend working on particular things. Unfortunately the reporting features
+built into org-mode are rather limited. This tool remedies that fact by
+providing a visual and interactive presentation of time-tracking data.
 
 ![](doc/2019-08-10_org-analyzer.png)
 
@@ -63,7 +63,8 @@ Interactive visualization of timetracking data (org clocks).
 This command starts an HTTP server that serves a web page that visualizes the
 time data found in org files. Org files can be specified individually or, when
 passing a directory, a recursive search for .org files is done. If nothing is
-specified, defaults to ~/org/ and doing a recursive search in that directory.
+specified, defaults to the current directory, recursively searching it for any
+.org file.
 
 opts:
      --host hostname	Sets hostname, default is 0.0.0.0

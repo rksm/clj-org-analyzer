@@ -188,7 +188,8 @@ Interactive visualization of timetracking data (org clocks).
 This command starts an HTTP server that serves a web page that visualizes the
 time data found in org files. Org files can be specified individually or, when
 passing a directory, a recursive search for .org files is done. If nothing is
-specified, defaults to ~/org/ and doing a recursive search in that directory.
+specified, defaults to the current directory, recursively searching it for any
+.org file.
 
 opts:
      --host hostname	Sets hostname, default is 0.0.0.0
