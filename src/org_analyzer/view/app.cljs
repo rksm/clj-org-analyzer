@@ -23,6 +23,11 @@
 
 (defn empty-app-state []
   (ratom {:calendar nil
+          :info {:clock-count 0
+                 :org-files []
+                 :input-files []}
+          :org-files []
+          :input-files []
           :clocks-by-day {}
           :clocks-by-day-filtered {}
           :clock-minute-intervals-by-day {}
@@ -57,7 +62,7 @@
     (go (let [response (<! (http/get "/clocks"
                                      {:query-params {:from from :to to :by-day? true}
                                       :headers {"Cache-Control" "no-cache"}}))
-              clocks (reader/read-string (:body response))]
+              {:keys [clocks info]} (reader/read-string (:body response))]
           (println "got clocks")
 
           (let [from (:start (first clocks))
@@ -72,6 +77,7 @@
                                                                               (set (keys clocks-by-day)))))
                                  clocks-by-day)]
               (>! result-chan {:calendar calendar
+                               :info info
                                :clocks-by-day clocks-by-day
                                :clock-minute-intervals-by-day (util/clock-minute-intervals-by-day clocks-by-day)
                                :clocks-by-day-filtered clocks-by-day
@@ -182,6 +188,29 @@
 
      #_[controls app-state]
 
+     (r/with-let [expand-info? (ratom false)]
+       (let [{{:keys [clock-count input-files org-files]} :info} @app-state]
+         [:div.info
+          [:div.clock-count
+           (cl-format nil "~a clock~:*~P" clock-count)
+           [:button.material-button
+            {:on-click #(swap! expand-info? not)}
+            [:i.material-icons "info"]]
+           ]
+
+          (when @expand-info?
+            (let [{{:keys [clock-count input-files org-files]} :info} @app-state]
+              [:div.file-statistics
+               [:ul [:h4 "file arguments passed to clj-analyzer"]
+                (doall (for [f input-files]
+                         [:li [:span f]]))]
+
+               [:ul [:h4 "org files found"]
+                (doall (for [f org-files]
+                         [:li [:span f]]))]])
+            )
+          ]))
+
      [search-view/search-bar app-state]
 
      ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -217,4 +246,4 @@
      ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
      ;; clock
      #_(collapsible* "Clock" :clock-details-collapsed? (r/cursor app-state [:clock-details-collapsed?])
-                   (fn [] "details"))]))
+                     (fn [] "details"))]))

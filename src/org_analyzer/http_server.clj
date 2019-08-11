@@ -36,6 +36,12 @@
                (s/ends-with? (.getPath file) ".org"))]
     file))
 
+(defn file-path
+  [^File f]
+  ^String (let [p (.getCanonicalPath f)
+                dir? (.isDirectory f)]
+            (if dir? (str p "/") p)))
+
 (defn get-clocks []
   (let [org-files (apply concat
                          (for [^File f (:files @app-state)
@@ -44,8 +50,9 @@
                              (find-org-files-in f)
                              [f])))
         clocks (mapcat (comp find-clocks parse-org-file) org-files)
+        clock-count (count clocks)
         clocks (mapcat clock->each-day-clocks clocks)]
-    clocks))
+    {:clocks clocks :org-files org-files :clock-count clock-count}))
 
 
 (defn- as-instant [time]
@@ -74,13 +81,12 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defn send-clocks-between [start end & {:keys [by-day?] :or {by-day? false}}]
-  (let [clocks (clocks-between start end (get-clocks))
-        ;; clocks (if by-day?
-        ;;          (apply concat (map clock->each-day-clocks clocks))
-        ;;          clocks)
-        ]
-    (map clock-data clocks)))
-
+  (let [{:keys [clocks org-files clock-count]} (get-clocks)
+        clocks (clocks-between start end clocks)]
+    {:info {:clock-count clock-count
+            :org-files (map file-path org-files)
+            :input-files (map file-path (:files @app-state))}
+     :clocks (map clock-data clocks)}))
 
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -97,20 +103,30 @@
   (response/resource-data (io/as-url (registered-resource-to-file url))))
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+
 (def i-will-kill-myself! (atom false) )
+
+(defn start-kill-countdown! []
+  (println "Client requested kill. Will stop server in 5 seconds.")
+  (reset! i-will-kill-myself! true)
+  (future
+    (Thread/sleep (* 5 1000))
+    (if @i-will-kill-myself!
+      (System/exit 0)
+      (println "kill cancelled")))
+  "OK")
+
+(defn stop-kill-countdown! []
+  (reset! i-will-kill-myself! false) "OK")
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
 (defroutes main-routes
   (GET "/" [] (response/resource-response "public/index.html"))
   (GET "/index.html" [] (response/redirect "/"))
-  (POST "/kill" [] (do (println "Client requested kill. Will stop server in 5 seconds.")
-                       (reset! i-will-kill-myself! true)
-                       (future
-                         (Thread/sleep (* 5 1000))
-                         (if @i-will-kill-myself!
-                           (System/exit 0)
-                           (println "kill cancelled")))
-                       "OK"))
-  (POST "/cancel-kill" [] (do (reset! i-will-kill-myself! false) "OK"))
+  (POST "/kill" [] (start-kill-countdown!))
+  (POST "/cancel-kill" [] (stop-kill-countdown!))
   (GET "/clocks" [from to by-day?] (pr-str (send-clocks-between
                                             (parse-timestamp from)
                                             (parse-timestamp to)

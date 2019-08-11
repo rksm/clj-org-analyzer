@@ -4,6 +4,10 @@
 
 body { overflow: scroll; margin: 0!important; }
 
+a {
+    color: inherit !important;
+}
+
 .app {
     margin: 0;
     font-family: roboto, sans-serif;
@@ -96,6 +100,32 @@ body { overflow: scroll; margin: 0!important; }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+.info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+
+    ul {
+        list-style-position: inside;
+        span { margin-left: -10px; }
+    }
+
+    .clock-count {
+        display:flex;
+        align-items: center;
+    }
+
+    button {
+        &::before { width: 20px; }
+        &::after { width: 20px; }
+        margin-left: -20px;
+        i.material-icons { font-size: 1.2em; }
+    }
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 .search-bar {
     padding: 10px;
     display: flex;
@@ -156,7 +186,7 @@ button.help {
 .help-view {
     z-index: 2;
     position: absolute;
-    background-color: rgba(0,0,0,.55);
+    background-color: rgba(0,0,0,.70);
     // height: 100%;
     width: 100%;
     color: white;

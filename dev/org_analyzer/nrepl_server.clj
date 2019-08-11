@@ -13,11 +13,6 @@
 
 (defonce clj-nrepl-server (atom nil))
 
-[cider.nrepl/cider-middleware
-cider.piggieback/wrap-cljs-repl
-refactor-nrepl.middleware/wrap-refactor
-suitable.middleware/wrap-complete]
-
 (defn start-clj-nrepl-server []
   (let [middlewares (map resolve cider.nrepl/cider-middleware)
         middlewares (conj middlewares (resolve 'refactor-nrepl.middleware/wrap-refactor))
@@ -71,6 +66,8 @@ suitable.middleware/wrap-complete]
 (defn -main [& args]
   (start-clj-nrepl-server)
   (start-cljs-nrepl-server)
+  (swap! http-server/app-state assoc
+         :files [(clojure.java.io/file (System/getProperty "user.home") "org/")])
   (http-server/start-server)
 
   ;; (start-cljs-nrepl-client)

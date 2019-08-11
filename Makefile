@@ -22,7 +22,7 @@ chrome:
 	  --user-data-dir=chrome-user-profile
 
 http-server:
-	clojure -A:http-server
+	clojure -A:http-server ~/org
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # emacs
