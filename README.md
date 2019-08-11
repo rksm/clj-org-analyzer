@@ -52,6 +52,21 @@ located and double click it or start from a terminal via
 Command line options from `java -jar org-analyzer-0.1.0.jar --help`:
 
 ```
+Usage: org-analyzer [opt*] [org-file-or-dir*]
+
+Interactive visualization of timetracking data (org clocks).
+
+This command starts an HTTP server that serves a web page that visualizes the
+time data found in org files. Org files can be specified individually or, when
+passing a directory, a recursive search for .org files is done. If nothing is
+specified, defaults to ~/org/ and doing a recursive search in that directory.
+
+opts:
+     --host hostname	Sets hostname, default is 0.0.0.0
+ -p, --port portnumber	Sets port, default is 8090
+     --dontopen		Don't automatically open a web browser window
+
+For more info see https://github.com/rksm/cljs-org-analyzer.
 ```
 
 
