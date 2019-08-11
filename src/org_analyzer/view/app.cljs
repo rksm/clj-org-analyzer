@@ -49,7 +49,7 @@
 
 (defn fetch-data
   [& {:keys [from to]
-      :or {from (js/Date. "2000-01-01")
+      :or {from (js/Date. "1900-01-01")
            to (js/Date.)}}]
   (let [result-chan (chan 1)
         from (util/format-date-time from)
