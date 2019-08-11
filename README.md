@@ -7,8 +7,23 @@ times spend working on particular things. Unfortunately the reporting features
 built into org-mode are rather limited. This tool remedies that fact by
 providing a visual and interactive presentation of time-tracking data.
 
-![](doc/2019-08-10_org-analyzer.png)
+In other words, org-analyzer converts
 
+```org
+* current projects
+** org clockin visualization
+*** ui - improvements (tags, filter, day viz)
+:LOGBOOK:
+CLOCK: [2019-08-04 Sun 23:35]--[2019-08-04 Sun 23:49] =>  0:14
+CLOCK: [2019-08-04 Sun 13:51]--[2019-08-04 Sun 15:06] =>  1:15
+CLOCK: [2019-08-04 Sun 04:25]--[2019-08-04 Sun 05:16] =>  0:51
+...
+:END:
+```
+
+into something like this:
+
+![](doc/2019-08-10_org-analyzer.png)
 
 
 
