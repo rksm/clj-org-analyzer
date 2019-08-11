@@ -1,6 +1,7 @@
 (ns org-analyzer.http-server
   (:gen-class)
   (:require [clojure.edn :as edn]
+            [clojure.java.browse :as browse]
             [clojure.java.io :as io]
             [clojure.string :as s]
             [compojure.core :refer [defroutes GET]]
@@ -22,13 +23,25 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+;; (def app-state (atom {:files [(io/file (System/getProperty "user.home") "org")]}))
+
+(def app-state (atom {:files [(io/file ".")]}))
+
+(defn find-org-files-in [^File dir]
+  (for [^File
+        file (file-seq dir)
+        :when (and
+               (not (.isDirectory file))
+               (s/ends-with? (.getPath file) ".org"))]
+    file))
+
 (defn get-clocks []
-  (let [org-files (let [^File dir (io/file "/home/robert/org/")]
-                    (->> dir
-                         file-seq
-                         (filter (fn [^File f] (and
-                                                (not (.isDirectory f))
-                                                (s/ends-with? (.getPath f) ".org"))))))
+  (let [org-files (apply concat
+                         (for [^File f (:files @app-state)
+                               :when (.exists f)]
+                           (if (.isDirectory f)
+                             (find-org-files-in f)
+                             [f])))
         clocks (mapcat (comp find-clocks parse-org-file) org-files)
         clocks (mapcat clock->each-day-clocks clocks)]
     clocks))
@@ -88,28 +101,74 @@
 
 (defonce server (atom nil))
 
+(def default-host "localhost")
+(def default-port 8090)
+
 (defn stop-server []
   (when @server (@server) (reset! server nil)))
 
-(defn start-server []
-  (when @server (stop-server))
-  (reset! server (run-server app {:port 8080 :join? false})))
+(defn start-server
+  ([]
+   (start-server default-host default-port))
+  ([^String host ^Integer port]
+   (when @server (stop-server))
+   (reset! server (run-server app {:ip host :port port :join? false}))))
 
-(defn -main [& args]
-  (start-server))
-
+;; (@server)
+;; (start-server)
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-;; FIXME 2019-08-09
-;; when running as native-image resources get the protocol "resources:" which
-;; isn't handled by the ring middleware. This hack here will allow us to get
-;; resource file infos + send the contents
 
-(def bin-path "bin/")
+(def args ["--port" "8090" "--host" "localhost" ""])
+(def args ["--port" "8090" "foo.org"])
 
-(defn registered-resource-to-file [url]
-  (io/file bin-path (s/replace (str url) #"^[^:]+:" "")))
 
-(defmethod ring.util.response/resource-data :resource
-  [url]
-  (response/resource-data (io/as-url (registered-resource-to-file url))))
+(defn parse-args [args]
+  (loop [opts {:host default-host :port (str default-port) :openbrowser true :files []}
+         [arg & rest] args]
+    (case arg
+      nil opts
+      ("-p" "--port") (let [[port & rest] rest]
+                        (recur
+                         (if port (assoc opts :port port) opts)
+                         rest))
+      "--host" (let [[host & rest] rest]
+                 (recur
+                  (if host (assoc opts :host host) opts)
+                  rest))
+      "--dontopen" (recur (assoc opts :openbrowser false) rest)
+      (recur (update opts :files conj arg) rest))))
+
+
+(def usage "Usage: org-analyzer [opt*] [org-file-or-dir*]
+
+Interactive visualization of timetracking data (org clocks).
+
+This command starts an HTTP server that serves a web page that visualizes the
+time data found in org files. Org files can be specified individually or, when
+passing a directory, a recursive search for .org files is done. If nothing is
+specified, defaults to ~/org/ and doing a recursive search in that directory.
+
+opts:
+     --host hostname	Sets hostname, default is 0.0.0.0
+ -p, --port portnumber	Sets port, default is 8090
+     --dontopen		Don't automatically open a web browser window
+
+For more info see https://github.com/rksm/cljs-org-analyzer.")
+
+
+(defn -main [& args]
+  (let [args-set (set args)
+        help? (or (args-set "--help") (args-set "-h"))]
+    (when help?
+      (println usage)
+      (System/exit 0)))
+
+  (let [{:keys [host port openbrowser files]} (parse-args args)]
+    (start-server host (Integer/parseInt port))
+
+    (when openbrowser
+      (browse/browse-url (str "http://" host ":" port)))
+
+    (when (seq files)
+      (swap! app-state assoc :files (map io/file files)))))
