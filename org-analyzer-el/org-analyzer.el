@@ -91,10 +91,15 @@ When nil, defaults to `org-directory'. When that is nil defaults to ~/org."
 (defun org-analyzer-ensure-jar-exists ()
   "Will download the org-analyzer jar and store it into `org-analyzer-jar-path'."
   (unless (file-exists-p (org-analyzer-jar-path))
-    (message "Installing org-analyzer jar (%s)" (org-analyzer-jar-path))
-    (unless (file-directory-p org-analyzer-emacs-dir)
-      (make-directory org-analyzer-emacs-dir))
-    (url-copy-file org-analyzer-jar-url (org-analyzer-jar-path) t)))
+    (if (y-or-n-p
+         (format "Org-analyzer needs a jar file to run. Is it OK to download %s? "
+                 org-analyzer-jar-url))
+        (progn
+          (message "Installing org-analyzer jar (%s)" (org-analyzer-jar-path))
+          (unless (file-directory-p org-analyzer-emacs-dir)
+            (make-directory org-analyzer-emacs-dir))
+          (url-copy-file org-analyzer-jar-url (org-analyzer-jar-path) t))
+      (message "org-analyzer cannot be started"))))
 
 (defun org-analyzer-warn-no-java ()
   "Check if java is available.
