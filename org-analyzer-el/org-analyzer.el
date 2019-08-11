@@ -40,46 +40,45 @@
 
 (require 'org)
 
-(defvar org-analyzer-process-buffer nil "")
+(defvar org-analyzer-process-buffer nil "The buffer for running the jar.")
 
 (defvar org-analyzer-emacs-version "0.1.0" "Version to sync with jar.")
 
 (defcustom org-analyzer-emacs-dir
   (replace-regexp-in-string "/+" "/" (concat user-emacs-directory "/org-analyzer/") t t)
-  "The directory where org-analyzer stores data it needs to run -
-  currently a jar file."
+  "The directory where org-analyzer stores data it needs to run - currently a jar file."
+  :type 'string
   :group 'org-analyzer)
 
 (defcustom org-analyzer-http-port
   8090
   "The port org-analyzer starts it's http server."
+  :type 'int
   :group 'org-analyzer)
 
 (defcustom org-analyzer-org-directory nil
-  "The org-directory to use. When nil, defaults to
-  `org-directory'. When that is nil defaults to ~/org"
+  "The `org-directory' to use.
+When nil, defaults to `org-directory'. When that is nil defaults to ~/org."
+  :type 'string
   :group 'org-analyzer)
 
 (defcustom org-analyzer-java-program "java"
   "What is java called on this system? Can be a full path."
+  :type 'string
   :group 'org-analyzer)
 
 (defun org-analyzer-effective-org-dir ()
-  ""
   (or org-analyzer-org-directory
       org-directory
       (expand-file-name "~/org")))
 
 (defun org-analyzer-jar-name ()
-  ""
   (format "org-analyzer-%s.jar" org-analyzer-emacs-version))
 
 (defun org-analyzer-jar-path ()
-  ""
   (expand-file-name (org-analyzer-jar-name) org-analyzer-emacs-dir))
 
 (defun org-analyzer-ensure-jar-exists ()
-  ""
   (unless (file-exists-p (org-analyzer-jar-path))
     (message "Installing org-analyzer jar (%s)" (org-analyzer-jar-path))
     (unless (file-directory-p org-analyzer-emacs-dir)
@@ -89,7 +88,6 @@
                    t)))
 
 (defun org-analyzer-warn-no-java ()
-  ""
   (if (executable-find org-analyzer-java-program)
       nil
     (warn "org-analyzer could not find java.
@@ -98,13 +96,11 @@ If it is not installed please install it, e.g. via
     t))
 
 (defun org-analyzer-cleanup-process-state ()
-  ""
   (when (buffer-live-p org-analyzer-process-buffer)
     (kill-buffer org-analyzer-process-buffer))
   (setq org-analyzer-process-buffer nil))
 
 (defun org-analyzer-start-process (org-dir)
-  ""
   (org-analyzer-cleanup-process-state)
   (let* ((full-java-command (executable-find "java"))
          (name (format " *org-analyzer [org-dir:%s]*" org-dir))
@@ -134,7 +130,6 @@ If it is not installed please install it, e.g. via
     proc-buffer))
 
 (defun org-analyzer-process-filter (process output)
-  ""
   (let ((buffer (process-buffer process)))
     (when (and buffer
                (buffer-live-p buffer))
@@ -146,7 +141,7 @@ If it is not installed please install it, e.g. via
 
 ;;;###autoload
 (defun org-analyzer-start ()
-  ""
+  "Starts org-analyzer."
   (interactive)
   (unless (org-analyzer-warn-no-java)
     (org-analyzer-ensure-jar-exists)
@@ -155,7 +150,6 @@ If it is not installed please install it, e.g. via
 ;; (pop-to-buffer org-analyzer-process-buffer)
 
 (defun org-analyzer-stop ()
-  ""
   (interactive)
   (org-analyzer-cleanup-process-state))
 
