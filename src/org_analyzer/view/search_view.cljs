@@ -37,9 +37,10 @@
              (prn [words included-tags excluded-tags])
              (into (sorted-map-by <)
                    (for [[date clocks] (-> @app-state :clocks-by-day)]
-                     [date (for [{:keys [name tags] :as clock} clocks
+                     [date (for [{:keys [path tags name] :as clock} clocks
+                                 :let [strings (concat [name] tags path)]
                                  :when (and
-                                        (every? #(s/includes? name %) words)
+                                        (every? (fn [w] (some (fn [s] (s/includes? s w)) strings)) words)
                                         (set/subset? included-tags tags)
                                         (empty? (set/intersection excluded-tags tags)))]
                              clock)])))))
