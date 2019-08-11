@@ -15,7 +15,6 @@
              :refer
              [calendar clock->each-day-clocks clocks-between]]
             [org.httpkit.server :refer [run-server]]
-            [ring.logger :as logger]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [ring.util.response :as response])
   (:import java.io.File
@@ -85,7 +84,6 @@
   (route/not-found "NOTFOUND "))
 
 (def app (-> (handler/api main-routes)
-             logger/wrap-with-logger
              wrap-stacktrace))
 
 (defonce server (atom nil))
