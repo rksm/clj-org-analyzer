@@ -42,7 +42,13 @@
 
 (defvar org-analyzer-process-buffer nil "The buffer for running the jar.")
 
-(defvar org-analyzer-emacs-version "0.1.0" "Version to sync with jar.")
+(defvar org-analyzer-version "0.1.0" "Version to sync with jar.")
+
+(defvar org-analyzer-jar-url
+  (format "https://github.com/rksm/clj-org-analyzer/releases/download/%s/org-analyzer-%s.jar"
+          org-analyzer-version
+          org-analyzer-version)
+  "The URL of the jar of the org-analyzer server.")
 
 (defcustom org-analyzer-emacs-dir
   (replace-regexp-in-string "/+" "/" (concat user-emacs-directory "/org-analyzer/") t t)
@@ -75,7 +81,7 @@ When nil, defaults to `org-directory'. When that is nil defaults to ~/org."
 
 (defun org-analyzer-jar-name ()
   "The thing to run."
-  (format "org-analyzer-%s.jar" org-analyzer-emacs-version))
+  (format "org-analyzer-%s.jar" org-analyzer-version))
 
 (defun org-analyzer-jar-path ()
   "The path to the thing to run."
@@ -87,9 +93,7 @@ When nil, defaults to `org-directory'. When that is nil defaults to ~/org."
     (message "Installing org-analyzer jar (%s)" (org-analyzer-jar-path))
     (unless (file-directory-p org-analyzer-emacs-dir)
       (make-directory org-analyzer-emacs-dir))
-    (url-copy-file "https://github.com/rksm/clj-org-analyzer/releases/download/untagged-66a2a1cdb1b7dd7971ae/org-analyzer.jar"
-                   (org-analyzer-jar-path)
-                   t)))
+    (url-copy-file org-analyzer-jar-url (org-analyzer-jar-path) t)))
 
 (defun org-analyzer-warn-no-java ()
   "Check if java is available.
