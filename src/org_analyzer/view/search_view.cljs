@@ -68,7 +68,10 @@
                                 (reset! loading? true)
                                 (swap! app-state assoc :search-input input)
                                 (apply-search-input-debounced! app-state input)))}]
-       [:div.loading {:class (if @loading? "visible" "")}]])))
+       [:div.loading {:class (if @loading? "visible" "")}]
+       [:button.help.material-button
+        {:on-click #(swap! app-state assoc :show-help? true)}
+        [:i.material-icons "help"]]])))
 
 
 (comment

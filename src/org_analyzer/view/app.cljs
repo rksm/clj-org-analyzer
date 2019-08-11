@@ -15,7 +15,8 @@
             [clojure.string :as s]
             [org-analyzer.view.tooltip :as tooltip]
             [org-analyzer.view.search-view :as search-view]
-            [cljs.reader :as reader]))
+            [cljs.reader :as reader]
+            [org-analyzer.view.help-view :as help-view]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
@@ -37,7 +38,8 @@
           :highlighted-entries #{} ;; uses clock :locations for id'ing
           :search-input ""
           :search-focused? false
-          :loading? true}))
+          :loading? true
+          :show-help? false}))
 
 (defn empty-dom-state []
   (atom {:sel-rect (atom sel/empty-rectangle-selection-state)
@@ -161,12 +163,18 @@
         highlighted-entries-cursor (r/cursor app-state [:highlighted-entries])]
 
     [:div.app
+
      (when (:loading? @app-state)
        [:div.loading-indicator
         [:div.loading-spinner
          [:div] [:div] [:div] [:div]
          [:div] [:div] [:div] [:div]
          [:div] [:div] [:div] [:div]]])
+
+
+     (when (:show-help? @app-state)
+       [help-view/help-view
+        #(swap! app-state assoc :show-help? false)])
 
      #_[controls app-state]
 
