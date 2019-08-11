@@ -7,7 +7,7 @@ times spend working on particular things. Unfortunately the reporting features
 built into org-mode are rather limited. This tool remedies that fact by
 providing a visual and interactive presentation of time-tracking data.
 
-In other words, org-analyzer converts
+In other words, org-analyzer converts something like this
 
 ```org
 * current projects
