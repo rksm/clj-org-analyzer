@@ -3,8 +3,10 @@
 }
 body {
   overflow: scroll;
+  margin: 0!important;
 }
 .app {
+  margin: 0;
   font-family: roboto, sans-serif;
   display: flex;
   flex-direction: column;
@@ -24,6 +26,7 @@ body {
   background-color: rgba(100, 100, 100, 0.3);
 }
 .loading-indicator {
+  z-index: 1;
   position: absolute;
   background-color: rgba(0, 0, 0, 0.5);
   height: 100%;
@@ -118,7 +121,6 @@ body {
   margin-bottom: 20px;
   top: 20px;
   background-color: white;
-  z-index: 1;
 }
 .search-bar {
   padding: 10px;
@@ -127,9 +129,11 @@ body {
 .search-bar.panel {
   flex-direction: row;
   justify-content: center;
+  position: relative;
 }
 .search-bar .search-input {
   flex-grow: 1;
+  max-width: 82%;
 }
 @media (min-width: 1000px) {
   .search-bar .search-input {
@@ -167,6 +171,35 @@ body {
     transform: rotate(360deg);
   }
 }
+button.help {
+  position: absolute;
+  right: 5px;
+}
+.help-view {
+  z-index: 2;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.55);
+  width: 100%;
+  color: white;
+  padding: 1.5em 0;
+  font-size: 1.5em;
+}
+.help-view .content {
+  padding: 0 30px;
+}
+.help-view button.close {
+  color: white;
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin-top: -10px;
+  margin-right: 10px;
+  height: unset;
+}
+.help-view button.close i.material-icons {
+  font-size: 48px;
+  line-height: 2;
+}
 .panel {
   margin: 10px;
   display: flex;
@@ -174,9 +207,16 @@ body {
   align-items: center;
   overflow: hidden;
 }
-.calendar {
-  position: relative;
+.calendar-selection {
   overflow: hidden;
+  position: relative;
+  width: 100%;
+  display: flex;
+  padding: 20px;
+}
+.calendar {
+  margin-left: auto;
+  margin-right: auto;
   padding: 10px 10px 25px;
   display: grid;
   grid-template-columns: repeat(3, min-content);
