@@ -115,12 +115,16 @@
             (set-key-down! evt "Alt" :alt-down? false)
             (set-key-down! evt "Shift" :shift-down? false))
 
-          (on-window-resize [evt] nil)]
+          (on-window-resize [evt] nil)
 
+          (on-exit [evt] (send-kill-server-request!) nil)]
+
+    (set! (.-onbeforeunload js/window) on-exit)
     (.addEventListener js/document "keydown" on-key-down-global)
     (.addEventListener js/document "keyup" on-key-up-global)
     (.addEventListener js/window "resize" on-window-resize)
-    (println "registering global event handlers")
+
+    (println "global event handlers registered")
 
     (merge (calendar/event-handlers app-state dom-state)
            {:on-key-down-global on-key-down-global
