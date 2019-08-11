@@ -18,8 +18,8 @@ You will need to have java installed to run org-analyzer.
 
 ### Standalone
 
-Download the [latest jar file]() and run it (double click or from command line,
-see [Usage](#Usage) below).
+Download the [latest jar file](TODO), place it in the directory with your org
+fles and run it (double click or from command line, see [Usage](#Usage) below).
 
 ### Emacs
 
@@ -38,21 +38,25 @@ via `M-x org-analyzer-start`.
 
 ## Usage
 
-You start org-analyzer either directly via [a jar file you can download here](TODO)
-or by starting the tool from within emacs. It will bring up a page in your
-default web browser that displays the clock data found in your org files.
+You start org-analyzer either directly via [a jar file you can download
+here](TODO). Place the jar file in the directory that contains your org files.
+Then double click it or start from the command line with `java -jar org-analyzer-0.1.0.jar`.
+It will bring up a page in your default web browser that displays the clock data
+found in all the org files.
 
 When using the jar file, place it in the directory where your org files are
 located and double click it or start from a terminal via 
 `java -jar org-analyzer-0.1.0.jar`.
 
+You can also start the tool from within emacs, see the install instructions
+above.
 
 ### Command line options
 
 Command line options from `java -jar org-analyzer-0.1.0.jar --help`:
 
 ```
-Usage: org-analyzer [opt*] [org-file-or-dir*]
+Usage: java -jar org-analyzer-0.1.0.jar [opt*] [org-file-or-dir*]
 
 Interactive visualization of timetracking data (org clocks).
 
