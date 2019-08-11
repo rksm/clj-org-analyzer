@@ -4,7 +4,7 @@
             [clojure.java.browse :as browse]
             [clojure.java.io :as io]
             [clojure.string :as s]
-            [compojure.core :refer [defroutes GET]]
+            [compojure.core :refer [defroutes GET POST]]
             [compojure.handler :as handler]
             [compojure.route :as route]
             [java-time :as time]
@@ -19,6 +19,7 @@
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [ring.util.response :as response])
   (:import java.io.File
+           java.lang.Thread
            [java.time LocalDateTime ZoneId]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -85,7 +86,15 @@
 (defroutes main-routes
   (GET "/" [] (response/resource-response "public/index.html"))
   (GET "/index.html" [] (response/redirect "/"))
-  (GET "/bar" [] (/ 1 0))
+  (POST "/kill" [] (do (println "Client requested kill. Will stop server in 5 seconds.")
+                       (reset! i-will-kill-myself! true)
+                       (future
+                         (Thread/sleep (* 5 1000))
+                         (if @i-will-kill-myself!
+                           (System/exit 0)
+                           (println "kill cancelled")))
+                       "OK"))
+  (POST "/cancel-kill" [] (do (reset! i-will-kill-myself! false) "OK"))
   (GET "/clocks" [from to by-day?] (pr-str (send-clocks-between
                                             (parse-timestamp from)
                                             (parse-timestamp to)
