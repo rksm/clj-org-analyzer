@@ -80,6 +80,13 @@
 (defn fetch-and-update! [app-state]
   (go (swap! app-state merge (<! (fetch-data)) {:loading? false})))
 
+(defn send-cancel-kill-server-request! []
+  (println "sending server cancel kill request")
+  (http/post "/cancel-kill"))
+
+(defn send-kill-server-request! []
+  (println "sending server kill request")
+  (http/post "/kill"))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

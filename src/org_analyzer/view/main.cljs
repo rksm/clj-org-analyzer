@@ -9,6 +9,7 @@
 (defonce event-handlers (app/event-handlers app-state dom-state))
 
 (defn -main []
+  (app/send-cancel-kill-server-request!)
   (render [app/app app-state dom-state event-handlers]
           (js/document.querySelector "#app"))
   (app/fetch-and-update! app-state))
