@@ -81,7 +81,23 @@
         ]
     (map clock-data clocks)))
 
+
+
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+;; FIXME 2019-08-09
+;; when running as native-image resources get the protocol "resources:" which
+;; isn't handled by the ring middleware. This hack here will allow us to get
+;; resource file infos + send the contents
+(def bin-path "bin/")
+(defn registered-resource-to-file [url]
+  (io/file bin-path (s/replace (str url) #"^[^:]+:" "")))
+
+(defmethod ring.util.response/resource-data :resource
+  [url]
+  (response/resource-data (io/as-url (registered-resource-to-file url))))
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+(def i-will-kill-myself! (atom false) )
 
 (defroutes main-routes
   (GET "/" [] (response/resource-response "public/index.html"))
