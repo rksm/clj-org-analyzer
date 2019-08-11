@@ -1,9 +1,11 @@
-;;; org-analyzer.el --- Visualizes org-mode time tracking data.
+;;; org-analyzer.el --- Visualizes org-mode time tracking data.  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019  Robert Krahn
 
 ;; Author: Robert Krahn <robert@kra.hn>
-;; Keywords: org-mode, org, clockin, visualization
+;; URL: https://github.com/rksm/clj-org-analyzer
+;; Keywords: calendar
+;; Version: 0.1.0
 
 ;; Permission is hereby granted, free of charge, to any person obtaining a copy
 ;; of this software and associated documentation files (the "Software"), to
@@ -38,8 +40,6 @@
 
 ;;; Code:
 
-(require 'org)
-
 (defvar org-analyzer-process-buffer nil "The buffer for running the jar.")
 
 (defvar org-analyzer-emacs-version "0.1.0" "Version to sync with jar.")
@@ -70,7 +70,7 @@ When nil, defaults to `org-directory'. When that is nil defaults to ~/org."
 (defun org-analyzer-effective-org-dir ()
   "Get the directory where org files are located."
   (or org-analyzer-org-directory
-      org-directory
+      (and (boundp 'org-directory) org-directory)
       (expand-file-name "~/org")))
 
 (defun org-analyzer-jar-name ()
@@ -115,7 +115,7 @@ Argument ORG-DIR is where the org-files are located."
          (name (format " *org-analyzer [org-dir:%s]*" org-dir))
          (proc-buffer (generate-new-buffer name))
          (proc nil))
-    (when (not full-java-command)
+    (unless full-java-command
       (error "Can't find java — please install it!"))
     (setq org-analyzer-process-buffer proc-buffer)
     (with-current-buffer proc-buffer
