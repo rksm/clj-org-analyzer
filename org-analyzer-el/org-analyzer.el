@@ -6,6 +6,7 @@
 ;; URL: https://github.com/rksm/clj-org-analyzer
 ;; Keywords: calendar
 ;; Version: 0.1.0
+;; Package-Requires: ((emacs "24"))
 
 ;; Permission is hereby granted, free of charge, to any person obtaining a copy
 ;; of this software and associated documentation files (the "Software"), to
