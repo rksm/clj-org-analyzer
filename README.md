@@ -55,23 +55,23 @@ via `M-x org-analyzer-start`.
 
 You start org-analyzer either directly via [a jar file you can download
 here](TODO). Place the jar file in the directory that contains your org files.
-Then double click it or start from the command line with `java -jar org-analyzer-0.1.0.jar`.
+Then double click it or start from the command line with `java -jar org-analyzer-0.2.0.jar`.
 It will bring up a page in your default web browser that displays the clock data
 found in all the org files.
 
 When using the jar file, place it in the directory where your org files are
 located and double click it or start from a terminal via 
-`java -jar org-analyzer-0.1.0.jar`.
+`java -jar org-analyzer-0.2.0.jar`.
 
 You can also start the tool from within emacs, see the install instructions
 above.
 
 ### Command line options
 
-Command line options from `java -jar org-analyzer-0.1.0.jar --help`:
+Command line options from `java -jar org-analyzer-0.2.0.jar --help`:
 
 ```
-Usage: java -jar org-analyzer-0.1.0.jar [opt*] [org-file-or-dir*]
+Usage: java -jar org-analyzer-0.2.0.jar [opt*] [org-file-or-dir*]
 
 Interactive visualization of timetracking data (org clocks).
 

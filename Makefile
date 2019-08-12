@@ -1,4 +1,4 @@
-VERSION := 0.1.0
+VERSION := 0.2.0
 
 CLJ_FILES := $(shell find . -type f \
 		\( -path "./test/*" -o -path "./dev/*" -o -path "./src/*" \) \
@@ -23,24 +23,6 @@ chrome:
 
 http-server:
 	clojure -A:http-server ~/org
-
-# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# emacs
-
-EMACS_PACKAGE_NAME:=org-analyzer-$(VERSION)
-EMACS_PACKAGE_DIR:=/tmp/$(EMACS_PACKAGE_NAME)
-
-update-version:
-	sed -e "s/[0-9].[0-9].[0-9]/$(VERSION)/" -i org-analyzer-el/org-analyzer-pkg.el
-
-emacs-package: $(EMACS_PACKAGE_DIR)
-	mkdir -p target
-	tar cvf target/$(EMACS_PACKAGE_NAME).tar \
-		-C $(EMACS_PACKAGE_DIR)/.. $(EMACS_PACKAGE_NAME)
-
-$(EMACS_PACKAGE_DIR): update-version
-	@mkdir -p $@
-	cp -r org-analyzer-el/*el $@
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # cljs
@@ -70,8 +52,9 @@ $(AOT): $(CLJ_FILES) $(CLJS_FILES)
 	mkdir -p $(AOT)
 	clojure -A:aot
 
-JAR := org-analyzer-$(VERSION).jar
+JAR := target/org-analyzer-$(VERSION).jar
 $(JAR): cljs $(AOT) pom.xml
+	mkdir -p $(dir $(JAR))
 	clojure -C:http-server:aot -A:depstar -m hf.depstar.uberjar $(JAR) -m org_analyzer.http_server
 	chmod a+x $(JAR)
 
@@ -111,6 +94,25 @@ bin: $(BIN)
 run-bin: bin
 	$(BIN)
 
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# emacs
+
+EMACS_PACKAGE_NAME:=org-analyzer-$(VERSION)
+EMACS_PACKAGE_DIR:=/tmp/$(EMACS_PACKAGE_NAME)
+
+update-version:
+	sed -e "s/[0-9].[0-9].[0-9]/$(VERSION)/" -i org-analyzer-el/org-analyzer-pkg.el
+
+emacs-package: $(EMACS_PACKAGE_DIR)
+	mkdir -p target
+	tar cvf target/$(EMACS_PACKAGE_NAME).tar \
+		-C $(EMACS_PACKAGE_DIR)/.. $(EMACS_PACKAGE_NAME)
+
+$(EMACS_PACKAGE_DIR): update-version $(JAR)
+	cp $(JAR) org-analyzer-el/org-analyzer.jar
+	@mkdir -p $@
+	cp -r org-analyzer-el/*el org-analyzer-el/*jar $@
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

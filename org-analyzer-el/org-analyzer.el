@@ -5,7 +5,7 @@
 ;; Author: Robert Krahn <robert@kra.hn>
 ;; URL: https://github.com/rksm/clj-org-analyzer
 ;; Keywords: calendar
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;; Package-Requires: ((emacs "24"))
 
 ;; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -43,13 +43,9 @@
 
 (defvar org-analyzer-process-buffer nil "The buffer for running the jar.")
 
-(defvar org-analyzer-version "0.1.0" "Version to sync with jar.")
+(defvar org-analyzer-version "0.2.0" "Version to sync with jar.")
 
-(defvar org-analyzer-jar-url
-  (format "https://github.com/rksm/clj-org-analyzer/releases/download/%s/org-analyzer-%s.jar"
-          org-analyzer-version
-          org-analyzer-version)
-  "The URL of the jar of the org-analyzer server.")
+(defvar org-analyzer-jar-file-name "org-analyzer.jar" "The name of the jar of the org-analyzer server.")
 
 (defcustom org-analyzer-emacs-dir
   (replace-regexp-in-string "/+" "/" (concat user-emacs-directory "/org-analyzer/") t t)
@@ -80,36 +76,9 @@ When nil, defaults to `org-directory'. When that is nil defaults to ~/org."
       (and (boundp 'org-directory) org-directory)
       (expand-file-name "~/org")))
 
-(defun org-analyzer-jar-name ()
-  "The thing to run."
-  (format "org-analyzer-%s.jar" org-analyzer-version))
-
-(defun org-analyzer-jar-path ()
-  "The path to the thing to run."
-  (expand-file-name (org-analyzer-jar-name) org-analyzer-emacs-dir))
-
-(defun org-analyzer-ensure-jar-exists ()
-  "Will download the org-analyzer jar and store it into `org-analyzer-jar-path'."
-  (unless (file-exists-p (org-analyzer-jar-path))
-    (if (y-or-n-p
-         (format "Org-analyzer needs a jar file to run. Is it OK to download %s? "
-                 org-analyzer-jar-url))
-        (progn
-          (message "Installing org-analyzer jar (%s)" (org-analyzer-jar-path))
-          (unless (file-directory-p org-analyzer-emacs-dir)
-            (make-directory org-analyzer-emacs-dir))
-          (url-copy-file org-analyzer-jar-url (org-analyzer-jar-path) t))
-      (message "org-analyzer cannot be started"))))
-
-(defun org-analyzer-warn-no-java ()
-  "Check if java is available.
-If it is returns nil. If it isn't will put up a warning and return t."
-  (if (executable-find org-analyzer-java-program)
-      nil
-    (warn "org-analyzer could not find java.
-If it is not installed please install it, e.g. via
-  https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=hotspot")
-    t))
+(defun org-analyzer-locate-jar ()
+  "Will try to find `org-analyzer-jar-file-name' on `load-path'."
+  (locate-file org-analyzer-jar-file-name load-path))
 
 (defun org-analyzer-cleanup-process-state ()
   "Kill the org-analyzer process + buffer."
@@ -121,32 +90,36 @@ If it is not installed please install it, e.g. via
   "Start the org analyzer process .
 Argument ORG-DIR is where the org-files are located."
   (org-analyzer-cleanup-process-state)
-  (let* ((full-java-command (executable-find "java"))
-         (name (format " *org-analyzer [org-dir:%s]*" org-dir))
-         (proc-buffer (generate-new-buffer name))
-         (proc nil))
+  (let ((jar-file (org-analyzer-locate-jar))
+        (full-java-command (executable-find org-analyzer-java-program)))
+    (unless jar-file
+      (error "Can't find %s. Is the package correctly installed?"
+             org-analyzer-jar-file-name))
     (unless full-java-command
       (error "Can't find java — please install it!"))
-    (setq org-analyzer-process-buffer proc-buffer)
-    (with-current-buffer proc-buffer
-      (setq default-directory org-dir
-            proc (condition-case err
-                     (let ((process-connection-type nil)
-                           (process-environment process-environment))
-                       (start-process name
-                                      (current-buffer)
-                                      full-java-command
-                                      "-jar"
-                                      (concat org-analyzer-emacs-dir "org-analyzer.jar")
-                                      "--port"
-                                      (format "%d" org-analyzer-http-port)
-				      org-dir))
-                   (error
-                    (concat "Can't start org-analyzer (%s: %s)"
-			    (car err) (cadr err)))))
-      (set-process-query-on-exit-flag proc nil)
-      (set-process-filter proc #'org-analyzer-process-filter))
-    proc-buffer))
+    (let* ((name (format " *org-analyzer [org-dir:%s]*" org-dir))
+           (proc-buffer (generate-new-buffer name))
+           (proc nil))
+      (setq org-analyzer-process-buffer proc-buffer)
+      (with-current-buffer proc-buffer
+        (setq default-directory org-dir
+              proc (condition-case err
+                       (let ((process-connection-type nil)
+                             (process-environment process-environment))
+                         (start-process name
+                                        (current-buffer)
+                                        full-java-command
+                                        "-jar"
+                                        jar-file
+                                        "--port"
+                                        (format "%d" org-analyzer-http-port)
+				        org-dir))
+                     (error
+                      (concat "Can't start org-analyzer (%s: %s)"
+			      (car err) (cadr err)))))
+        (set-process-query-on-exit-flag proc nil)
+        (set-process-filter proc #'org-analyzer-process-filter))
+      proc-buffer)))
 
 (defun org-analyzer-process-filter (process output)
   "Filter to detect port collisons.
@@ -165,9 +138,7 @@ Argument OUTPUT is the process output received."
 (defun org-analyzer-start ()
   "Start org-analyzer."
   (interactive)
-  (unless (org-analyzer-warn-no-java)
-    (org-analyzer-ensure-jar-exists)
-    (org-analyzer-start-process (org-analyzer-effective-org-dir))))
+  (org-analyzer-start-process (org-analyzer-effective-org-dir)))
 
 ;; (pop-to-buffer org-analyzer-process-buffer)
 
