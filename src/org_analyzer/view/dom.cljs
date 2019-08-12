@@ -39,8 +39,8 @@
                                       (recur (.-offsetParent target)
                                              (+ offset-x (.-offsetLeft target))
                                              (+ offset-y (.-offsetTop target))))))]
-        [(+ client-x (- scroll-left client-left) offset-x)
-         (+ client-y (- scroll-top client-top) offset-y)])
+        [(+ client-x scroll-left offset-x)
+         (+ client-y scroll-top offset-y)])
       [0 0])))
 
 (defn align-element!
