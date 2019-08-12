@@ -2,6 +2,8 @@
   --mdc-theme-primary: black;
 }
 body {
+  min-height: 300vh;
+  position: relative;
   overflow: scroll;
   margin: 0!important;
   font-family: Roboto, sans-serif;

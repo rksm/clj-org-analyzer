@@ -17,19 +17,3 @@
   (app/fetch-org-files! (r/cursor app-state [:known-org-files])))
 
 (-main)
-
-
-(comment
-  (-> @app-state :known-org-files)
-  (-> @app-state :non-existing-org-files)
-  (swap! @app-state dissoc :known-org-files)
-123
-
-(cljs.reader/read-string (js/localStorage.getItem "org-analyzer-files"))
-(cljs.reader/read-string (js/localStorage.getItem "org-analyzer-files"))
-(js/localStorage.setItem "org-analyzer-files" (pr-str (-> @app-state :known-org-files)))
-
-
-
-
-  )
