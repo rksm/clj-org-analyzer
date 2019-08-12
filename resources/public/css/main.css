@@ -4,6 +4,7 @@
 body {
   overflow: scroll;
   margin: 0!important;
+  font-family: Roboto, sans-serif;
 }
 a {
   color: inherit !important;
@@ -27,6 +28,43 @@ a {
   pointer-events: none;
   position: absolute;
   background-color: rgba(100, 100, 100, 0.3);
+}
+.file-chooser {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.file-chooser input {
+  width: 95%;
+}
+@media (min-width: 650px) {
+  .file-chooser input {
+    width: 600px;
+  }
+}
+.file-chooser button.add,
+.file-chooser button.remove {
+  font-size: .7em;
+}
+.file-chooser button.add .material-icons,
+.file-chooser button.remove .material-icons {
+  font-size: 1.3em;
+}
+.file-chooser button.remove {
+  min-width: 20px;
+  padding: 0;
+}
+.file-chooser button.confirm {
+  margin-top: 30px;
+}
+.file-chooser button.confirm .material-icons {
+  margin-right: 0.5ex;
+}
+.file-chooser .warning {
+  font-size: small;
+  color: #e33;
+  padding: 12px;
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
 }
 .loading-indicator {
   z-index: 1;

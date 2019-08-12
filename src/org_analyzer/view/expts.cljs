@@ -1,5 +1,5 @@
 (ns org-analyzer.view.expts
-  (:require [org-analyzer.view.app :as app :refer [fetch-data]]
+  (:require [org-analyzer.view.app :as app :refer [fetch-clocks]]
             [org-analyzer.view.geo :as geo]
             [org-analyzer.view.dom :as dom]
             [org-analyzer.view.util :as util]
@@ -27,8 +27,8 @@
 
     ;; fetch data
     (go (swap! app-state merge
-               (<! (fetch-data :from (js/Date. "2019-07-01")
-                               :to (js/Date. "2019-08-06")))))
+               (<! (fetch-clocks :from (js/Date. "2019-07-01")
+                                 :to (js/Date. "2019-08-06")))))
 
     {:app-state app-state
      :dom-state dom-state

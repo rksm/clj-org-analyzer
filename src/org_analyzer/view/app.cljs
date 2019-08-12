@@ -6,6 +6,8 @@
             [cljs.pprint :refer [cl-format]]
             [clojure.string :refer [split lower-case join replace]]
             [org-analyzer.view.dom :as dom]
+            [org-analyzer.view.info :as info]
+            [org-analyzer.view.file-chooser :as file-chooser]
             [org-analyzer.view.calendar :as calendar]
             [org-analyzer.view.util :as util]
             [org-analyzer.view.selected-day :as selected-day]
@@ -21,30 +23,33 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
 
-(defn empty-app-state []
-  (ratom {:calendar nil
-          :info {:clock-count 0
-                 :org-files []
-                 :input-files []}
-          :org-files []
-          :input-files []
-          :clocks-by-day {}
-          :clocks-by-day-filtered {}
-          :clock-minute-intervals-by-day {}
-          :hovered-over-date nil
-          :selected-days #{}
-          :selected-days-preview #{}
-          :selecting? false
-          :calendar-collapsed? false
-          :clocks-collapsed? false
-          :by-minute-collapsed? false
-          :clock-details-collapsed? false
-          :highlighted-calendar-dates #{}
-          :highlighted-entries #{} ;; uses clock :locations for id'ing
-          :search-input ""
-          :search-focused? false
-          :loading? true
-          :show-help? false}))
+(defn empty-app-state
+  ([]
+   (empty-app-state nil))
+  ([stored-known-org-files]
+   (ratom {:calendar nil
+           :known-org-files nil
+           :stored-known-org-files stored-known-org-files
+           :non-existing-org-files nil
+           :info {:clock-count 0
+                  :org-files []}
+           :clocks-by-day {}
+           :clocks-by-day-filtered {}
+           :clock-minute-intervals-by-day {}
+           :hovered-over-date nil
+           :selected-days #{}
+           :selected-days-preview #{}
+           :selecting? false
+           :calendar-collapsed? false
+           :clocks-collapsed? false
+           :by-minute-collapsed? false
+           :clock-details-collapsed? false
+           :highlighted-calendar-dates #{}
+           :highlighted-entries #{} ;; uses clock :locations for id'ing
+           :search-input ""
+           :search-focused? false
+           :loading? true
+           :show-help? false})))
 
 (defn empty-dom-state []
   (atom {:sel-rect (atom sel/empty-rectangle-selection-state)
@@ -52,7 +57,31 @@
                 :alt-down? false}
          :day-bounding-boxes {}}))
 
-(defn fetch-data
+(defn fetch-org-files! [result-atom]
+  (go (let [response (<! (http/get "/known-org-files"
+                                   {:headers {"Cache-Control" "no-cache"}}))
+            known-org-files (:body response)]
+        (reset! result-atom (cond
+                              (empty? known-org-files) nil
+                              (string? known-org-files) (vector known-org-files)
+                              :else known-org-files)))))
+
+;; (go (prn "done" (<! (post-org-files ["/home/robert/org"]))))
+
+;; (go  (prn "done" (<! (http/get "/known-org-files"))))
+;; (go  (prn "done" (<! (http/post "/known-org-files"))))
+
+(defn post-org-files [org-files-and-dirs]
+  (let [result-chan (chan 1)]
+    (pr {:form-params {:files (pr-str org-files-and-dirs)}})
+    (go (let [response (<! (http/post "/known-org-files"
+                                      {:form-params {:files (pr-str org-files-and-dirs)}}))
+              files (cljs.reader/read-string (:body response))]
+          (>! result-chan files)))
+    result-chan))
+
+
+(defn fetch-clocks
   [& {:keys [from to]
       :or {from (js/Date. "1900-01-01")
            to (js/Date.)}}]
@@ -86,7 +115,8 @@
     result-chan))
 
 (defn fetch-and-update! [app-state]
-  (go (swap! app-state merge (<! (fetch-data)) {:loading? false})))
+  (swap! app-state assoc :loading? true)
+  (go (swap! app-state merge (<! (fetch-clocks)) {:loading? false})))
 
 (defn send-cancel-kill-server-request! []
   (println "sending server cancel kill request")
@@ -159,91 +189,87 @@
 
 (defn app [app-state dom-state event-handlers]
 
-  (let [{:keys [hovered-over-date
-                selected-days
-                clocks-by-day-filtered
-                clock-minute-intervals-by-day-filtered
-                calendar]} @app-state
-        n-selected (count selected-days)
-        selected-days (cond
-                        (> n-selected 0) (vals (select-keys calendar selected-days))
-                        hovered-over-date [(get calendar hovered-over-date)]
-                        :else nil)
+  (if-not (:known-org-files @app-state)
 
-        highlighted-entries-cursor (r/cursor app-state [:highlighted-entries])]
+    [file-chooser/file-chooser
+     [:div {:style {:text-align "center"}}
+      [:span "Currently no org files or directories are known."]
+      [:br]
+      [:span "Please add org files and directories below, then click the confirm button."]]
+     (concat (:known-org-files @app-state) (:stored-known-org-files @app-state))
+     (:non-existing-org-files @app-state)
+     (fn [files] (go (let [{:keys [existing non-existing]} (<! (post-org-files files))]
+                       (swap! app-state assoc
+                              :known-org-files existing
+                              :non-existing-org-files non-existing)
+                       (when (not-empty existing)
+                         (js/localStorage.setItem "org-analyzer-files" (pr-str existing))
+                         (fetch-and-update! app-state)))))]
 
-    [:div.app
+    (let [{:keys [hovered-over-date
+                  selected-days
+                  clocks-by-day-filtered
+                  clock-minute-intervals-by-day-filtered
+                  calendar]} @app-state
+          n-selected (count selected-days)
+          selected-days (cond
+                          (> n-selected 0) (vals (select-keys calendar selected-days))
+                          hovered-over-date [(get calendar hovered-over-date)]
+                          :else nil)
 
-     (when (:loading? @app-state)
-       [:div.loading-indicator
-        [:div.loading-spinner
-         [:div] [:div] [:div] [:div]
-         [:div] [:div] [:div] [:div]
-         [:div] [:div] [:div] [:div]]])
+          highlighted-entries-cursor (r/cursor app-state [:highlighted-entries])]
+
+      [:div.app
+
+       (when (:loading? @app-state)
+         [:div.loading-indicator
+          [:div.loading-spinner
+           [:div] [:div] [:div] [:div]
+           [:div] [:div] [:div] [:div]
+           [:div] [:div] [:div] [:div]]])
 
 
-     (when (:show-help? @app-state)
-       [help-view/help-view
-        #(swap! app-state assoc :show-help? false)])
+       (when (:show-help? @app-state)
+         [help-view/help-view
+          #(swap! app-state assoc :show-help? false)])
 
-     #_[controls app-state]
+       #_[controls app-state]
 
-     (r/with-let [expand-info? (ratom false)]
-       (let [{{:keys [clock-count input-files org-files]} :info} @app-state]
-         [:div.info
-          [:div.clock-count
-           (cl-format nil "~a clock~:*~P" clock-count)
-           [:button.material-button
-            {:on-click #(swap! expand-info? not)}
-            [:i.material-icons "info"]]
-           ]
+       [info/info app-state]
 
-          (when @expand-info?
-            (let [{{:keys [clock-count input-files org-files]} :info} @app-state]
-              [:div.file-statistics
-               [:ul [:h4 "file arguments passed to clj-analyzer"]
-                (doall (for [f input-files]
-                         [:li [:span f]]))]
+       [search-view/search-bar app-state]
 
-               [:ul [:h4 "org files found"]
-                (doall (for [f org-files]
-                         [:li [:span f]]))]])
-            )
-          ]))
+       ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+       ;; calendar
+       (collapsible* "Calendar" :calendar-collapsed? (r/cursor app-state [:calendar-collapsed?])
+                     (fn [] [calendar/calendar-view app-state dom-state event-handlers]))
 
-     [search-view/search-bar app-state]
+       ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+       ;; clocks
+       (collapsible* "Clocks" :clocks-collapsed? (r/cursor app-state [:clocks-collapsed?])
+                     (fn [] (when selected-days
+                              [selected-day/selected-days-view
+                               selected-days
+                               clocks-by-day-filtered
+                               calendar
+                               highlighted-entries-cursor])))
 
-     ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-     ;; calendar
-     (collapsible* "Calendar" :calendar-collapsed? (r/cursor app-state [:calendar-collapsed?])
-                   (fn [] [calendar/calendar-view app-state dom-state event-handlers]))
+       ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+       ;; by-minute
+       (collapsible* "Per Day" :by-minute-collapsed? (r/cursor app-state [:by-minute-collapsed?])
+                     (fn [] (r/with-let [tooltip (ratom nil)]
+                              (tooltip/with-tooltip-following-mouse tooltip
+                                [:div.by-minute
+                                 (let [dates (map :date selected-days)
+                                       clock-minute-intervals-by-day-filtered (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day-filtered dates))]
+                                   (when (> (count dates) 0)
+                                     [org-analyzer.view.day-by-minute-view/activities-by-minute-view
+                                      clock-minute-intervals-by-day-filtered
+                                      highlighted-entries-cursor
+                                      tooltip
+                                      {:width (- js/document.documentElement.clientWidth 60)}]))]))))
 
-     ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-     ;; clocks
-     (collapsible* "Clocks" :clocks-collapsed? (r/cursor app-state [:clocks-collapsed?])
-                   (fn [] (when selected-days
-                            [selected-day/selected-days-view
-                             selected-days
-                             clocks-by-day-filtered
-                             calendar
-                             highlighted-entries-cursor])))
-
-     ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-     ;; by-minute
-     (collapsible* "Per Day" :by-minute-collapsed? (r/cursor app-state [:by-minute-collapsed?])
-                   (fn [] (r/with-let [tooltip (ratom nil)]
-                            (tooltip/with-tooltip-following-mouse tooltip
-                              [:div.by-minute
-                               (let [dates (map :date selected-days)
-                                     clock-minute-intervals-by-day-filtered (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day-filtered dates))]
-                                 (when (> (count dates) 0)
-                                   [org-analyzer.view.day-by-minute-view/activities-by-minute-view
-                                    clock-minute-intervals-by-day-filtered
-                                    highlighted-entries-cursor
-                                    tooltip
-                                    {:width (- js/document.documentElement.clientWidth 60)}]))]))))
-
-     ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-     ;; clock
-     #_(collapsible* "Clock" :clock-details-collapsed? (r/cursor app-state [:clock-details-collapsed?])
-                     (fn [] "details"))]))
+       ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+       ;; clock
+       #_(collapsible* "Clock" :clock-details-collapsed? (r/cursor app-state [:clock-details-collapsed?])
+                       (fn [] "details"))])))

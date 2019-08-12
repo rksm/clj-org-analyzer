@@ -3,6 +3,7 @@
   (:require [clojure.edn :as edn]
             [clojure.java.browse :as browse]
             [clojure.java.io :as io]
+            [clojure.set :as set :refer [rename-keys]]
             [clojure.string :as s]
             [compojure.core :refer [defroutes GET POST]]
             [compojure.handler :as handler]
@@ -24,9 +25,7 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-;; (def app-state (atom {:files [(io/file (System/getProperty "user.home") "org")]}))
-
-(def app-state (atom {:files [(io/file ".")]}))
+(def org-files-and-dirs (atom nil))
 
 (defn find-org-files-in [^File dir]
   (for [^File
@@ -42,9 +41,13 @@
                 dir? (.isDirectory f)]
             (if dir? (str p "/") p)))
 
+(defn replace-tilde-with-home-dir [path]
+  (s/replace path #"~" (System/getProperty "user.home")))
+
+
 (defn get-clocks []
   (let [org-files (apply concat
-                         (for [^File f (:files @app-state)
+                         (for [^File f @org-files-and-dirs
                                :when (.exists f)]
                            (if (.isDirectory f)
                              (find-org-files-in f)
@@ -84,8 +87,7 @@
   (let [{:keys [clocks org-files clock-count]} (get-clocks)
         clocks (clocks-between start end clocks)]
     {:info {:clock-count clock-count
-            :org-files (map file-path org-files)
-            :input-files (map file-path (:files @app-state))}
+            :org-files (map file-path org-files)}
      :clocks (map clock-data clocks)}))
 
 
@@ -113,11 +115,12 @@
     (Thread/sleep (* 5 1000))
     (if @i-will-kill-myself!
       (System/exit 0)
-      (println "kill cancelled")))
+      (println "kill canceled")))
   "OK")
 
 (defn stop-kill-countdown! []
   (reset! i-will-kill-myself! false) "OK")
+
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -125,6 +128,18 @@
 (defroutes main-routes
   (GET "/" [] (response/resource-response "public/index.html"))
   (GET "/index.html" [] (response/redirect "/"))
+  (GET "/known-org-files" [] (map file-path (filter #(.exists %) @org-files-and-dirs)))
+  (POST "/known-org-files" [files]
+        (let [files (map (comp io/file replace-tilde-with-home-dir) (edn/read-string files))
+              files (rename-keys (group-by #(.exists %) files) {false :non-existing true :existing})
+              response (into {} (map (fn [[key files]] [key (seq (map #(.getCanonicalPath %) files))]) files))]
+          (reset! org-files-and-dirs (:existing files))
+          (prn response)
+          (pr-str response)))
+
+  ;; (start-server)
+  ;; org-files-and-dirs
+
   (POST "/kill" [] (start-kill-countdown!))
   (POST "/cancel-kill" [] (stop-kill-countdown!))
   (GET "/clocks" [from to by-day?] (pr-str (send-clocks-between
@@ -213,4 +228,4 @@ For more info see https://github.com/rksm/cljs-org-analyzer.")
       (browse/browse-url (str "http://" host ":" port)))
 
     (when (seq files)
-      (swap! app-state assoc :files (map io/file files)))))
+      (reset! org-files-and-dirs (map io/file files)))))
