@@ -66,7 +66,7 @@
 (defn -main [& args]
   (start-clj-nrepl-server)
   (start-cljs-nrepl-server)
-  (reset! http-server/app-state [(clojure.java.io/file (System/getProperty "user.home") "org/")])
+  (reset! http-server/org-files-and-dirs [(clojure.java.io/file (System/getProperty "user.home") "org/")])
   (http-server/start-server)
 
   ;; (start-cljs-nrepl-client)
