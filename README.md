@@ -25,50 +25,39 @@ into something like this:
 
 ![](doc/2019-08-10_org-analyzer.png)
 
+## Demo
 
+https://www.youtube.com/watch?v=qBgvGDOxmUw
 
-## Installation
+## Usage
 
 You will need to have java installed to run org-analyzer.
 
 ### Standalone
 
-Download the [latest jar file](TODO), place it in the directory with your org
-fles and run it (double click or from command line, see [Usage](#Usage) below).
+Download the [latest jar file](https://github.com/rksm/clj-org-analyzer/releases/latest)
+and run it! (double click or from command line, see below).
 
 ### Emacs
 
-org-analyzer is on MELPA. Make sure MELPA is in your `package-archives`:
+*2019-08-13: MELPA package is pending, see [the melpa pull request](https://github.com/melpa/melpa/pull/6365)*
 
-```elisp
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
-```
+<!-- org-analyzer is on MELPA. Make sure MELPA is in your `package-archives`: -->
 
-Then run `(package-install "org-analyzer")`. Afterwards, you can start the tool
-via `M-x org-analyzer-start`.
+<!-- ```elisp -->
+<!-- (require 'package) -->
+<!-- (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/")) -->
+<!-- ``` -->
+
+<!-- Then run `(package-install "org-analyzer")`. Afterwards, you can start the tool -->
+<!-- via `M-x org-analyzer-start`. -->
 
 
+## Commandline
 
+Download the lates jar as described above and start it with `java -jar org-analyzer-0.2.0.jar`.
 
-## Usage
-
-You start org-analyzer either directly via [a jar file you can download
-here](TODO). Place the jar file in the directory that contains your org files.
-Then double click it or start from the command line with `java -jar org-analyzer-0.2.0.jar`.
-It will bring up a page in your default web browser that displays the clock data
-found in all the org files.
-
-When using the jar file, place it in the directory where your org files are
-located and double click it or start from a terminal via 
-`java -jar org-analyzer-0.2.0.jar`.
-
-You can also start the tool from within emacs, see the install instructions
-above.
-
-### Command line options
-
-Command line options from `java -jar org-analyzer-0.2.0.jar --help`:
+The following command line options are available, as per `java -jar org-analyzer-0.2.0.jar --help`:
 
 ```
 Usage: java -jar org-analyzer-0.2.0.jar [opt*] [org-file-or-dir*]
