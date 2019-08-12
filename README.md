@@ -31,7 +31,8 @@ https://www.youtube.com/watch?v=qBgvGDOxmUw
 
 ## Usage
 
-You will need to have java installed to run org-analyzer.
+org-analyzer should run on all platforms that can run JAVA — but you will need
+to have that installed.
 
 ### Standalone
 
