@@ -1,4 +1,4 @@
-VERSION := 0.2.0
+VERSION := 0.3.0
 
 CLJ_FILES := $(shell find . -type f \
 		\( -path "./test/*" -o -path "./dev/*" -o -path "./src/*" \) \
@@ -61,6 +61,7 @@ $(JAR): cljs $(AOT) pom.xml
 jar: $(JAR)
 
 run-jar: jar
+	cp $(JAR) org-analyzer-el/org-analyzer.jar
 	java -jar $(JAR) -m org-analyzer.http-server
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -110,7 +111,6 @@ emacs-package: $(EMACS_PACKAGE_DIR)
 		-C $(EMACS_PACKAGE_DIR)/.. $(EMACS_PACKAGE_NAME)
 
 $(EMACS_PACKAGE_DIR): update-version $(JAR)
-	cp $(JAR) org-analyzer-el/org-analyzer.jar
 	@mkdir -p $@
 	cp -r org-analyzer-el/*el org-analyzer-el/*jar $@
 

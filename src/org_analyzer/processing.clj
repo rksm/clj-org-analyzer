@@ -101,6 +101,7 @@
   (for [[i line] (map-indexed vector lines)
         :let [[_ stars text] (re-find headline-re line)
               [metadata] (re-find metadata-re line)
+              metadata (and metadata (s/trim metadata))
               clock (when (and metadata (s/starts-with? metadata "CLOCK:")) metadata)
               [_ file-prop-name prop-value] (re-find file-props-re line)
               line-no (inc i)]
