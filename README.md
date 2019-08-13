@@ -2,10 +2,10 @@
 
 org-analyzer creates an interactive visualization of org-mode time-tracking
 data. org-mode allows to add start/end timestamps to org-mode items (via
-`org-clock-in`). This makes it possible to create workflows that capture the
-times spend working on particular things. Unfortunately the reporting features
-built into org-mode are rather limited. This tool remedies that fact by
-providing a visual and interactive presentation of time-tracking data.
+`org-clock-in`) to capture the times spend working on particular things.
+Unfortunately the reporting features built into org-mode are rather limited.
+This tool remedies that by providing a visual and interactive presentation
+of time tracking data.
 
 In other words, org-analyzer converts something like this
 
@@ -64,7 +64,7 @@ Afterwards, you can start the tool via `M-x org-analyzer-start`.
 
 ## Commandline
 
-Download the lates jar as described above and start it with `java -jar org-analyzer-0.3.0.jar`.
+Download the latest jar as described above and start it with `java -jar org-analyzer-0.3.0.jar`.
 
 The following command line options are available, as per `java -jar org-analyzer-0.3.0.jar --help`:
 
