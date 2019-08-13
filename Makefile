@@ -106,7 +106,7 @@ update-version:
 
 emacs-package: $(EMACS_PACKAGE_DIR)
 	mkdir -p target
-	tar cvf target/$(EMACS_PACKAGE_NAME).tar \
+	tar czvf target/$(EMACS_PACKAGE_NAME).tar.gz \
 		-C $(EMACS_PACKAGE_DIR)/.. $(EMACS_PACKAGE_NAME)
 
 $(EMACS_PACKAGE_DIR): update-version $(JAR)
@@ -117,7 +117,7 @@ $(EMACS_PACKAGE_DIR): update-version $(JAR)
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 clean:
-	rm -rf target/$(EMACS_PACKAGE_NAME).tar \
+	rm -rf target/$(EMACS_PACKAGE_NAME).tar.gz \
 		$(EMACS_PACKAGE_DIR) \
 		target .cpcache $(AOT) \
 		$(JAR) bin \

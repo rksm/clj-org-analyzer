@@ -41,7 +41,18 @@ and run it! (double click or from command line, see below).
 
 ### Emacs
 
-*2019-08-13: MELPA package is pending, see [the melpa pull request](https://github.com/melpa/melpa/pull/6365)*
+*2019-08-13: MELPA package is pending, see [the melpa pull request](https://github.com/melpa/melpa/pull/6365).*
+
+For the time being, emacs support can be enabled by downloading the [emacs package](https://github.com/rksm/clj-org-analyzer/releases/download/0.2.0/org-analyzer-for-emacs-0.2.0.tar.gz) directly, extracting it and adding it to your load path and require it:
+
+```elisp
+(add-to-list 'load-path "/path/to/org-analyzer-0.2.0/")
+(require 'org-analyzer)
+```
+
+Afterwards, you can start the tool via `M-x org-analyzer-start`.
+
+
 
 <!-- org-analyzer is on MELPA. Make sure MELPA is in your `package-archives`: -->
 
