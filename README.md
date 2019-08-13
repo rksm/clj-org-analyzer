@@ -80,7 +80,7 @@ specified, defaults to the current directory, recursively searching it for any
 .org file.
 
 opts:
-     --host hostname	Sets hostname, default is 0.0.0.0
+     --host hostname	Sets hostname, default is localhost
  -p, --port portnumber	Sets port, default is 8090
      --dontopen		Don't automatically open a web browser window
 

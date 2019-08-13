@@ -99,7 +99,7 @@ run-bin: bin
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # emacs
 
-EMACS_PACKAGE_NAME:=org-analyzer-$(VERSION)
+EMACS_PACKAGE_NAME:=org-analyzer-for-emacs-$(VERSION)
 EMACS_PACKAGE_DIR:=/tmp/$(EMACS_PACKAGE_NAME)
 
 update-version:
