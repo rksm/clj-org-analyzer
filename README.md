@@ -23,11 +23,8 @@ CLOCK: [2019-08-04 Sun 04:25]--[2019-08-04 Sun 05:16] =>  0:51
 
 into something like this:
 
-![](doc/2019-08-10_org-analyzer.png)
+[![](doc/2019-08-10_org-analyzer_yt_link.png)](https://www.youtube.com/watch?v=qBgvGDOxmUw)
 
-## Demo
-
-https://www.youtube.com/watch?v=qBgvGDOxmUw
 
 ## Usage
 
