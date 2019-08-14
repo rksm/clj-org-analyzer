@@ -25,7 +25,7 @@
 
 (def locales [Locale/ENGLISH Locale/GERMAN])
 
-(def timestamp-re #"([0-9]{4})-([0-9]{2})-([0-9]{2})\s+(?:[a-zA-Z]+\s+)?([0-9]{1,2}):([0-9]{1,2})")
+(def timestamp-re #"([0-9]{4})-([0-9]{2})-([0-9]{2})\s+(?:\S+\s+)?([0-9]{1,2}):([0-9]{1,2})")
 
 (defn parse-timestamp-manually [string]
   (let [[_ & year-month-day-hour-min] (re-find timestamp-re string)
