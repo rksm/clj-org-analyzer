@@ -34,7 +34,7 @@ to have that installed.
 ### Standalone
 
 Download the [latest jar file](https://github.com/rksm/clj-org-analyzer/releases/latest)
-and run it! (double click or from command line, see below).
+and run it! (double click or from command line, see below). It will open a new browser window, if you close it the server will stop in a few seconds.
 
 ### Emacs
 
