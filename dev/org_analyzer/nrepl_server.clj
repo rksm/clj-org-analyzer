@@ -6,16 +6,15 @@
             nrepl.core
             nrepl.server
             [org-analyzer.http-server :as http-server]
-            refactor-nrepl.middleware
-            [suitable.middleware :refer [wrap-complete]]))
+            [refactor-nrepl.middleware :refer [wrap-refactor]]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defonce clj-nrepl-server (atom nil))
 
 (defn start-clj-nrepl-server []
-  (let [middlewares (map resolve cider.nrepl/cider-middleware)
-        middlewares (conj middlewares (resolve 'refactor-nrepl.middleware/wrap-refactor))
+  (let [middlewares (conj (map resolve cider.nrepl/cider-middleware)
+                          wrap-refactor)
         handler (apply nrepl.server/default-handler middlewares)]
     (pprint middlewares)
     (reset! clj-nrepl-server (nrepl.server/start-server :handler handler :port 7888)))
@@ -31,11 +30,12 @@
 (defn start-cljs-nrepl-server []
   (let [middlewares (conj
                      (map resolve cider.nrepl/cider-middleware)
-                     #'cider.piggieback/wrap-cljs-repl
-                     #'wrap-complete)
+                     #'cider.piggieback/wrap-cljs-repl)
         handler (apply nrepl.server/default-handler middlewares)]
     (reset! cljs-nrepl-server (nrepl.server/start-server :handler handler :port 7889)))
   (cl-format true "cljs nrepl server started~%"))
+
+
 
 (defn start-cljs-nrepl-client []
   (let [conn (nrepl.core/connect :port 7889)
@@ -46,8 +46,8 @@
     (cl-format true "nrepl client started~%")
     (reset! cljs-send-msg
             (fn [msg] (let [response-seq (nrepl.core/message sess msg)]
-                         (cl-format true "nrepl msg send~%")
-                         (pprint (doall response-seq)))))))
+                        (cl-format true "nrepl msg send~%")
+                        (pprint (doall response-seq)))))))
 
 (defn cljs-send-eval [code]
   (@cljs-send-msg {:op :eval :code code}))

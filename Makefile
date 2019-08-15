@@ -1,4 +1,4 @@
-VERSION := 0.3.0
+VERSION := 0.3.1
 
 CLJ_FILES := $(shell find . -type f \
 		\( -path "./test/*" -o -path "./dev/*" -o -path "./src/*" \) \
@@ -55,14 +55,15 @@ $(AOT): $(CLJ_FILES) $(CLJS_FILES)
 JAR := target/org-analyzer-$(VERSION).jar
 $(JAR): cljs $(AOT) pom.xml
 	mkdir -p $(dir $(JAR))
-	clojure -C:http-server:aot -A:depstar -m hf.depstar.uberjar $(JAR) -m org_analyzer.http_server
+	clojure -C:http-server:aot -A:depstar -m hf.depstar.uberjar $(JAR) -m org_analyzer.main
 	chmod a+x $(JAR)
+	cp $(JAR) org-analyzer-el/org-analyzer.jar
 
 jar: $(JAR)
 
 run-jar: jar
 	cp $(JAR) org-analyzer-el/org-analyzer.jar
-	java -jar $(JAR) -m org-analyzer.http-server
+	java -jar $(JAR) -m org-analyzer.main
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # graal
@@ -86,7 +87,7 @@ $(BIN): $(AOT) cljs $(CLJS_FILES) $(CLJ_FILES) $(RESOURCE_CONFIG)
 		--enable-http --enable-https --allow-incomplete-classpath \
 		-H:+ReportExceptionStackTraces \
 		-H:ResourceConfigurationFiles=$(RESOURCE_CONFIG) \
-		org_analyzer.http_server \
+		org_analyzer.main \
 		$(BIN)
 	cp -r resources/public $(dir $(BIN))/public
 
@@ -105,14 +106,14 @@ EMACS_PACKAGE_DIR:=/tmp/$(EMACS_PACKAGE_NAME)
 update-version:
 	sed -e "s/[0-9].[0-9].[0-9]/$(VERSION)/" -i org-analyzer-el/org-analyzer-pkg.el
 
+$(EMACS_PACKAGE_DIR): update-version $(JAR)
+	@mkdir -p $@
+	cp -r org-analyzer-el/*el org-analyzer-el/*jar $@
+
 emacs-package: $(EMACS_PACKAGE_DIR)
 	mkdir -p target
 	tar czvf target/$(EMACS_PACKAGE_NAME).tar.gz \
 		-C $(EMACS_PACKAGE_DIR)/.. $(EMACS_PACKAGE_NAME)
-
-$(EMACS_PACKAGE_DIR): update-version $(JAR)
-	@mkdir -p $@
-	cp -r org-analyzer-el/*el org-analyzer-el/*jar $@
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

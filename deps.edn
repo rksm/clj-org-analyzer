@@ -12,10 +12,11 @@
             :main-opts ["-m" "org-analyzer.graal-resource-indexer"]}
 
            :http-server
-           {:main-opts ["-m" "org-analyzer.http-server"]}
+           {:main-opts ["-m" "org-analyzer.main"]}
 
            :cljs
-           {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.520"}
+           {:extra-deps {cider/cider-nrepl {:mvn/version "0.22.0-beta10"}
+                         org.clojure/clojurescript {:mvn/version "1.10.520"}
                          com.bhauman/figwheel-main {:mvn/version "RELEASE"}
                          cljs-http {:mvn/version "0.1.46"}
                          reagent {:mvn/version "0.8.1"}}
@@ -29,4 +30,4 @@
 
            :aot
            {:extra-paths ["target/classes"]
-            :main-opts ["-e" "(binding[*compile-path*\"target/classes\"](compile,'org-analyzer.http-server))"]}}}
+            :main-opts ["-e" "(binding[*compile-path*\"target/classes\"](compile,'org-analyzer.main))"]}}}
