@@ -1,3 +1,7 @@
+# 0.3.2
+## bugfixes
+- Fix regexp to match non-english timestamps (Thanks @hso!)
+
 # 0.3.1
 ## minor changes
 - toggle between selecting all days and none with ctrl-a
