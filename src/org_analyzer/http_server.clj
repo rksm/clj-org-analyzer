@@ -1,10 +1,9 @@
 (ns org-analyzer.http-server
-  (:gen-class)
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.set :as set :refer [rename-keys]]
             [clojure.string :as s]
-            [compojure.core :refer [defroutes GET POST]]
+            [compojure.core :refer [routes GET POST]]
             [compojure.handler :as handler]
             [compojure.route :as route]
             [java-time :as time]
@@ -24,7 +23,7 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(def org-files-and-dirs (atom nil))
+;; (def org-files-and-dirs (atom nil))
 
 (defn find-org-files-in
   ([^File dir]
@@ -51,9 +50,10 @@
   (s/replace path #"~" (System/getProperty "user.home")))
 
 
-(defn get-clocks []
+(defn get-clocks
+  [org-files-and-dirs]
   (let [org-files (apply concat
-                         (for [^File f @org-files-and-dirs
+                         (for [^File f org-files-and-dirs
                                :when (.exists f)]
                            (if (.isDirectory f)
                              (find-org-files-in f)
@@ -89,8 +89,9 @@
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-(defn send-clocks-between [start end & {:keys [by-day?] :or {by-day? false}}]
-  (let [{:keys [clocks org-files clock-count]} (get-clocks)
+(defn send-clocks-between
+  [org-files-and-dirs start end]
+  (let [{:keys [clocks org-files clock-count]} (get-clocks org-files-and-dirs)
         clocks (clocks-between start end clocks)]
     {:info {:clock-count clock-count
             :org-files (map file-path org-files)}
@@ -111,67 +112,85 @@
   (response/resource-data (io/as-url (registered-resource-to-file url))))
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+(defn start-kill-countdown!
+  [app-state]
+  (let [{{:keys [kill-when-client-disconnects? kill-remorse-period]} :opts} @app-state]
+    (if-not kill-when-client-disconnects?
+      "Server kill is disabled"
+      (do (println "Client requested kill. Will stop server in 5 seconds.")
+          (swap! app-state assoc :am-i-about-to-kill-myself? true)
+          (future
+            (Thread/sleep (-> @app-state :opts :kill-when-client-disconnects?))
+            (if (-> @app-state  :am-i-about-to-kill-myself?)
+              (System/exit 0)
+              (println "kill canceled")))
+          "OK"))))
 
-(def i-will-kill-myself! (atom false) )
-
-(defn start-kill-countdown! []
-  (println "Client requested kill. Will stop server in 5 seconds.")
-  (reset! i-will-kill-myself! true)
-  (future
-    (Thread/sleep (* 5 1000))
-    (if @i-will-kill-myself!
-      (System/exit 0)
-      (println "kill canceled")))
+(defn stop-kill-countdown!
+  [app-state]
+  (swap! app-state assoc :am-i-about-to-kill-myself? false)
   "OK")
-
-(defn stop-kill-countdown! []
-  (reset! i-will-kill-myself! false) "OK")
 
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+(defn http-get-known-org-files
+  [app-state]
+  (->> @app-state
+       :org-files-and-dirs
+       (filter #(.exists %))
+       (map file-path)))
 
-(defroutes main-routes
-  (GET "/" [] (response/resource-response "public/index.html"))
-  (GET "/index.html" [] (response/redirect "/"))
-  (GET "/known-org-files" [] (map file-path (filter #(.exists %) @org-files-and-dirs)))
-  (POST "/known-org-files" [files]
-        (let [files (map (comp io/file replace-tilde-with-home-dir) (edn/read-string files))
-              files (rename-keys (group-by #(.exists %) files) {false :non-existing true :existing})
-              response (into {} (map (fn [[key files]] [key (seq (map #(.getCanonicalPath %) files))]) files))]
-          (reset! org-files-and-dirs (:existing files))
-          (prn response)
-          (pr-str response)))
+(defn http-set-known-org-files!
+  [app-state files]
+  (let [files (map (comp io/file replace-tilde-with-home-dir) (edn/read-string files))
+        files (rename-keys (group-by #(.exists %) files) {false :non-existing true :existing})
+        response (into {} (map (fn [[key files]] [key (seq (map #(.getCanonicalPath %) files))]) files))]
+    (swap! app-state assoc :org-files-and-dirs (:existing files))
+    (prn response)
+    (pr-str response)))
 
-  (POST "/kill" [] (start-kill-countdown!))
-  (POST "/cancel-kill" [] (stop-kill-countdown!))
-  (GET "/clocks" [from to by-day?] (pr-str (send-clocks-between
-                                            (parse-timestamp from)
-                                            (parse-timestamp to)
-                                            :by-day? (edn/read-string by-day?))))
-  (GET "/calendar" [from to] (pr-str (into [] (calendar
-                                               (parse-timestamp from)
-                                               (parse-timestamp to)))))
-  (route/resources "/" {:root "public"})
-  (route/not-found "NOTFOUND "))
+(defn http-get-clocks [app-state from to]
+  (pr-str (send-clocks-between
+           (-> @app-state :org-files-and-dirs)
+           (parse-timestamp from)
+           (parse-timestamp to))))
 
-(def app (-> (handler/api main-routes)
-             wrap-stacktrace))
+(defn http-get-calender
+  [app-state from to]
+  (pr-str (into [] (calendar
+                    (parse-timestamp from)
+                    (parse-timestamp to)))))
 
-(defonce server (atom nil))
+(defn make-http-app [app-state]
+  (let [main-routes
+        (routes
+         (GET "/" [] (response/resource-response "public/index.html"))
+         (GET "/index.html" [] (response/redirect "/"))
+         (GET "/known-org-files" [] (http-get-known-org-files app-state))
+         (POST "/known-org-files" [files] (http-set-known-org-files! app-state files))
+         (POST "/kill" [] (start-kill-countdown! app-state))
+         (POST "/cancel-kill" [] (stop-kill-countdown! app-state))
+         (GET "/clocks" [from to] (http-get-clocks app-state from to))
+         (GET "/calendar" [from to] (http-get-calender app-state from to))
+         (route/resources "/" {:root "public"})
+         (route/not-found "NOTFOUND "))]
+    (-> (handler/api main-routes)
+        wrap-stacktrace)))
 
-(def default-host "localhost")
-(def default-port 8090)
+(defn stop-server!
+  [app-state]
+  (let [{:keys [server]} @app-state]
+    (when server (server))
+    (swap! app-state assoc :server nil)))
 
-(defn stop-server []
-  (when @server (@server) (reset! server nil)))
+(defn start-server!
+  ([app-state]
+   (let [{:keys [server] {:keys [host port]} :opts} @app-state]
+     (when server (server))
+     (swap! app-state assoc
+            :server (run-server (make-http-app app-state)
+                                {:ip host :port port :join? false})))))
 
-(defn start-server
-  ([]
-   (start-server default-host default-port))
-  ([^String host ^Integer port]
-   (when @server (stop-server))
-   (reset! server (run-server app {:ip host :port port :join? false}))))
-
-;; (@server)
-;; (start-server)
+;; (stop-server! org-analyzer.main/app-state)
+;; (start-server! org-analyzer.main/app-state)

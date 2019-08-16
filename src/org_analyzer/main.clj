@@ -1,5 +1,6 @@
 (ns org-analyzer.main
-  (:require [org-analyzer.http-server :refer [start-server default-host default-port org-files-and-dirs]]
+  (:gen-class)
+  (:require [org-analyzer.http-server :refer [start-server!]]
             [clojure.java.browse :as browse]
             [clojure.java.io :as io]))
 
@@ -21,22 +22,27 @@ opts:
 
 For more info see https://github.com/rksm/cljs-org-analyzer.")
 
-(defn parse-args [args]
-  (loop [opts {:host default-host :port (str default-port) :openbrowser true :files []}
+(defn opts-from-args
+  [default-opts args]
+  (loop [opts default-opts
          [arg & rest] args]
     (case arg
       nil opts
-      ("-p" "--port") (let [[port & rest] rest]
-                        (recur
-                         (if port (assoc opts :port port) opts)
-                         rest))
-      "--host" (let [[host & rest] rest]
-                 (recur
-                  (if host (assoc opts :host host) opts)
-                  rest))
-      "--dontopen" (recur (assoc opts :openbrowser false) rest)
+      ("-p" "--port") (let [[val & rest] rest] (recur (assoc opts :port val) rest))
+      "--host"        (let [[val & rest] rest] (recur (assoc opts :host val) rest))
+      "--dontopen"    (recur (assoc opts :openbrowser? false) rest)
       (recur (update opts :files conj arg) rest))))
 
+(defonce app-state (atom {:opts {:include-archives? true
+                                 :openbrowser? true
+                                 :files []
+                                 :host "localhost"
+                                 :port 8090
+                                 :kill-when-client-disconnects? true
+                                 :kill-remorse-period 5000}
+                          :server nil
+                          :org-files-and-dirs nil
+                          :am-i-about-to-kill-myself? false}))
 
 (defn -main [& args]
   (let [args-set (set args)
@@ -45,11 +51,13 @@ For more info see https://github.com/rksm/cljs-org-analyzer.")
       (println usage)
       (System/exit 0)))
 
-  (let [{:keys [host port openbrowser files]} (parse-args args)]
-    (start-server host (Integer/parseInt port))
+  (let [{:keys [openbrowser? host port files] :as opts}
+        (opts-from-args (-> @app-state :opts) args)]
+    (swap! app-state assoc
+           :opts opts
+           :org-files-and-dirs (->> files (map io/file) seq))
 
-    (when openbrowser
-      (browse/browse-url (str "http://" host ":" port)))
+    (start-server! app-state)
 
-    (when (seq files)
-      (reset! org-files-and-dirs (map io/file files)))))
+    (when openbrowser?
+      (browse/browse-url (str "http://" host ":" port)))))
