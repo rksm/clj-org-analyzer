@@ -5,7 +5,7 @@
   <groupId>org.rksm</groupId>
   <artifactId>org-analyzer</artifactId>
   <packaging>jar</packaging>
-  <version>0.3.2</version>
+  <version>0.3.3</version>
   <name>org-analyzer</name>
   <description>An app that creates an interactive visualization of org-mode time-tracking data (org clockin).</description>
   <url>http://github.com/rksm/clj-org-analyzer</url>

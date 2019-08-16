@@ -1,3 +1,7 @@
+# 0.3.3
+## bugfixes
+- fix server shutdown issue
+
 # 0.3.2
 ## bugfixes
 - Fix regexp to match non-english timestamps (Thanks @hso!)

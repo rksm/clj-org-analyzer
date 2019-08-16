@@ -1,4 +1,4 @@
-VERSION := 0.3.2
+VERSION := 0.3.3
 
 CLJ_FILES := $(shell find . -type f \
 		\( -path "./test/*" -o -path "./dev/*" -o -path "./src/*" \) \

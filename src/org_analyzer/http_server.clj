@@ -1,9 +1,10 @@
 (ns org-analyzer.http-server
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [clojure.pprint :refer [cl-format]]
             [clojure.set :as set :refer [rename-keys]]
             [clojure.string :as s]
-            [compojure.core :refer [routes GET POST]]
+            [compojure.core :refer [GET POST routes]]
             [compojure.handler :as handler]
             [compojure.route :as route]
             [java-time :as time]
@@ -18,8 +19,7 @@
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [ring.util.response :as response])
   (:import java.io.File
-           java.lang.Thread
-           [java.time LocalDateTime ZoneId]))
+           java.lang.Thread))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -113,18 +113,32 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (defn start-kill-countdown!
+  "(:opts @app-state) has two fields kill-when-client-disconnects? and
+  kill-remorse-period. If kill-when-client-disconnects? option is truthy, will
+  set (:am-i-about-to-kill-myself? @app-state) to true and start a countdown for
+  kill-remorse-period milliseconds. If after the
+  timeout (:am-i-about-to-kill-myself? @app-state) is still true, it will exit
+  the program.
+
+  `start-kill-countdown!` will be triggered when a client exists. If a new
+  client is started, it will cancel the kill countdown. This allows us to stop
+  servers that were started via double click and not via a terminal or other
+  means that would control the java process."
   [app-state]
   (let [{{:keys [kill-when-client-disconnects? kill-remorse-period]} :opts} @app-state]
     (if-not kill-when-client-disconnects?
       "Server kill is disabled"
-      (do (println "Client requested kill. Will stop server in 5 seconds.")
-          (swap! app-state assoc :am-i-about-to-kill-myself? true)
-          (future
-            (Thread/sleep (-> @app-state :opts :kill-when-client-disconnects?))
-            (if (-> @app-state  :am-i-about-to-kill-myself?)
-              (System/exit 0)
-              (println "kill canceled")))
-          "OK"))))
+      (let [msg (cl-format nil
+                           "Client requested kill. Will stop server in ~d second~:*~P"
+                           (quot kill-remorse-period 1000))]
+        (println msg)
+        (swap! app-state assoc :am-i-about-to-kill-myself? true)
+        (future
+          (Thread/sleep kill-remorse-period)
+          (if (-> @app-state  :am-i-about-to-kill-myself?)
+            (System/exit 0)
+            (println "kill canceled")))
+        msg))))
 
 (defn stop-kill-countdown!
   [app-state]
@@ -147,7 +161,6 @@
         files (rename-keys (group-by #(.exists %) files) {false :non-existing true :existing})
         response (into {} (map (fn [[key files]] [key (seq (map #(.getCanonicalPath %) files))]) files))]
     (swap! app-state assoc :org-files-and-dirs (:existing files))
-    (prn response)
     (pr-str response)))
 
 (defn http-get-clocks [app-state from to]
