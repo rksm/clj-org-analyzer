@@ -3,10 +3,10 @@
             [org-analyzer.view.dom :as dom]
             [org-analyzer.view.selection :as sel]
             [org-analyzer.view.geo :as geo]
-            [clojure.string :refer [split lower-case join replace]]
+            [clojure.string :refer [lower-case replace]]
             [reagent.core :as r :refer [cursor]]
             [reagent.ratom :refer [atom reaction] :rename {atom ratom}]
-            [clojure.set :refer [union subset? difference]]))
+            [clojure.set :refer [union difference]]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -14,14 +14,14 @@
   (letfn [(add-selection? [] (-> @dom-state :keys :shift-down?))
           (remove-from-selection? [] (-> @dom-state :keys :alt-down?))
 
-          (on-click-month [evt days]
+          (on-click-month [_evt days]
             (let [dates (into #{} (map :date days))]
               (swap! app-state update :selected-days #(cond
                                                         (add-selection?) (union % dates)
                                                         (remove-from-selection?) (difference % dates)
                                                         :else dates))))
 
-          (on-click-week [evt week-no days]
+          (on-click-week [_evt _week-no days]
             (let [dates (into #{} (map :date days))]
               (swap! app-state update :selected-days #(cond
                                                         (add-selection?) (union % dates)
@@ -35,7 +35,7 @@
           (on-mouse-out-day []
             (swap! app-state assoc :hovered-over-date nil))
 
-          (on-click-day [evt date]
+          (on-click-day [_evt date]
             (swap! app-state update :selected-days #(cond
                                                       (add-selection?) (conj % date)
                                                       (remove-from-selection?) (difference % #{date})
@@ -87,8 +87,8 @@
 
 (defn day-view
   [dom-state event-handlers
-   {:keys [date] :as day}
-   {:keys [clocks-by-day selected-days max-weight] :as calendar-state}
+   {:keys [date] :as _day}
+   {:keys [clocks-by-day selected-days max-weight] :as _calendar-state}
    highlighted-days]
   (let [clocks (get @clocks-by-day date)
         selected? (@selected-days date)

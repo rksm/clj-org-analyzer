@@ -1,19 +1,15 @@
 (ns org-analyzer.view.app
-  (:require [reagent.core :as r :refer [cursor]]
-            [reagent.ratom :refer [atom reaction] :rename {atom ratom}]
+  (:require [reagent.core :as r]
+            [reagent.ratom :refer [atom] :rename {atom ratom}]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<! >! close! chan go]]
-            [cljs.pprint :refer [cl-format]]
-            [clojure.string :refer [split lower-case join replace]]
-            [org-analyzer.view.dom :as dom]
             [org-analyzer.view.info :as info]
             [org-analyzer.view.file-chooser :as file-chooser]
             [org-analyzer.view.calendar :as calendar]
             [org-analyzer.view.util :as util]
             [org-analyzer.view.selected-day :as selected-day]
-            [org-analyzer.view.geo :as geo]
             [org-analyzer.view.selection :as sel]
-            [clojure.set :refer [union difference]]
+            [clojure.set :refer [difference]]
             [clojure.string :as s]
             [org-analyzer.view.tooltip :as tooltip]
             [org-analyzer.view.search-view :as search-view]
@@ -152,9 +148,9 @@
             (set-key-down! evt "Alt" :alt-down? false)
             (set-key-down! evt "Shift" :shift-down? false))
 
-          (on-window-resize [evt] nil)
+          (on-window-resize [_evt] nil)
 
-          (on-exit [evt] (send-kill-server-request!) nil)]
+          (on-exit [_evt] (send-kill-server-request!) nil)]
 
     (set! (.-onbeforeunload js/window) on-exit)
     (.addEventListener js/document "keydown" on-key-down-global)
@@ -177,7 +173,7 @@
             :on-click #(fetch-and-update! app-state)}]])
 
 
-(defn collapsible* [title key collapsed-atom comp-fn]
+(defn collapsible* [title _key collapsed-atom comp-fn]
   (let [collapsed? @collapsed-atom]
     [:div.panel.elev-2
      [:button.material-button

@@ -88,8 +88,9 @@ Example:
                             start (time/days 1)))
    [end]))
 
-(defn weeks-of-year [year]
+(defn weeks-of-year
   "Returns a non-lazy collection of week start dates of the given year."
+  [year]
   (let [year (time/year year)
         max-week (max-week-of-year year)
         first-day (-> year time/local-date (adjust :first-day-of-year))

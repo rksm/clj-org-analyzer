@@ -2,8 +2,7 @@
   (:require [clojure.pprint :refer [cl-format]]
             [clojure.string :as s]
             [java-time :as time :refer [local-date-time]]
-            org-analyzer.processing
-            [org-analyzer.time :refer [compute-clock-duration]])
+            org-analyzer.processing)
   (:import java.util.Locale
            org_analyzer.processing.Clock))
 
@@ -27,13 +26,13 @@
 (comment
   (print-duration (duration (beginning-of-week (local-date-time)) (local-date-time))))
 
-(defn print-clock [{:keys [start end duration] :as clock}]
+(defn print-clock [{:keys [start end duration] :as _clock}]
   (cl-format nil "CLOCK: [~a]~:[~;--~:*[~a]~]~:[~; =>  ~:*~a~]"
              (print-timestamp start)
              (some-> end print-timestamp)
              (some-> duration print-duration)))
 
-(defn print-clock-location [{:keys [parents i] :as clock}]
+(defn print-clock-location [{:keys [parents] :as _clock}]
   ;; (->> parents (map :name) (interpose "|") (apply str))
   (->> parents first :name))
 

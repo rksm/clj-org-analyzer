@@ -1,7 +1,7 @@
 (ns org-analyzer.processing
   (:require [clojure.java.io :as io]
             [clojure.string :as s]
-            [java-time :as time :refer [duration]]
+            [java-time :as time]
             [taoensso.tufte :refer [defnp p]])
   (:import java.io.File
            java.lang.String
@@ -91,8 +91,7 @@
   (let [[_ keyword text-no-kw] (re-find section-keyword-re text)
         text (or text-no-kw text)
         [_ text-no-tags raw-tags] (re-find #"(.*)\s+:([^ ]+):$" text)
-        text (s/trim (or text-no-tags text))
-        result {:name text}]
+        text (s/trim (or text-no-tags text))]
     (merge {:name text}
            (when keyword {:keyword keyword})
            (when raw-tags {:tags (keep not-empty (s/split raw-tags #":"))}))))
