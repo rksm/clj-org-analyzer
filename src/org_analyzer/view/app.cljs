@@ -136,8 +136,9 @@
             (cond
               ;; select all
               (and (= "a" (.-key evt)) (.-ctrlKey evt))
-              (do (swap! app-state assoc :selected-days (set (keys (:calendar @app-state))))
-                  (.preventDefault evt))
+              (let [all-days (-> @app-state :calendar keys set)]
+                (swap! app-state update  :selected-days #(if (= % all-days) #{} all-days))
+                (.preventDefault evt))
 
               ;; focus search
               (and (= "s" (.-key evt)) (.-ctrlKey evt))
