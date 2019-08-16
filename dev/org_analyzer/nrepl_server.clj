@@ -5,7 +5,8 @@
             figwheel.main.api
             nrepl.core
             nrepl.server
-            [org-analyzer.http-server :as http-server]
+            [org-analyzer.http-server :refer [start-server!]]
+            [org-analyzer.main :refer [app-state]]
             [refactor-nrepl.middleware :refer [wrap-refactor]]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -66,8 +67,10 @@
 (defn -main [& args]
   (start-clj-nrepl-server)
   (start-cljs-nrepl-server)
-  (reset! http-server/org-files-and-dirs [(clojure.java.io/file (System/getProperty "user.home") "org/")])
-  (http-server/start-server)
+  (swap! app-state assoc
+         :org-files-and-dirs
+         [(clojure.java.io/file (System/getProperty "user.home") "org/")])
+  (start-server! app-state)
 
   ;; (start-cljs-nrepl-client)
   ;; (cljs-send-eval "(require 'figwheel.main) (figwheel.main/start :fig)")
