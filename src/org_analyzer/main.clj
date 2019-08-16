@@ -28,7 +28,7 @@ For more info see https://github.com/rksm/cljs-org-analyzer.")
          [arg & rest] args]
     (case arg
       nil opts
-      ("-p" "--port") (let [[val & rest] rest] (recur (assoc opts :port val) rest))
+      ("-p" "--port") (let [[val & rest] rest] (recur (assoc opts :port (Integer/parseInt val)) rest))
       "--host"        (let [[val & rest] rest] (recur (assoc opts :host val) rest))
       "--dontopen"    (recur (assoc opts :openbrowser? false) rest)
       (recur (update opts :files conj arg) rest))))

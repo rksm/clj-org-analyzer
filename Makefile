@@ -121,6 +121,6 @@ clean:
 	rm -rf target/$(EMACS_PACKAGE_NAME).tar.gz \
 		$(EMACS_PACKAGE_DIR) \
 		target .cpcache $(AOT) \
-		$(JAR) bin \
+		$(JAR) bin
 
 .PHONY: nrepl chrome clean run-jar cljs cljs-prod http-server
