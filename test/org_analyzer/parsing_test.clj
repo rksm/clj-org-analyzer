@@ -1,4 +1,4 @@
-(ns org-analyzer.test
+(ns org-analyzer.parsing-test
   (:require [clojure.pprint :refer [cl-format]]
             [clojure.test :as t :refer [deftest is]]
             [clojure.zip :as zip]
@@ -52,7 +52,7 @@ CLOCK: [2018-02-02 Fri 19:55]--[2018-02-02 Fri 20:20] =>  0:25
 CREATED: [2018-02-01 Thu 03:12]
 :END:
 Some more
-text here
+*bold text* here
 * section 2 :tag2_1:tag2_2:
 :LOGBOOK:
 CREATED: [2018-12-15 Sa 12:05]

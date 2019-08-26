@@ -81,7 +81,7 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; org-parsing
 
-(def headline-re #"^(\*+)\s*(.*)$")
+(def headline-re #"^(\*+)\s+(.*)$")
 (def file-props-re #"^\s*#\+([0-9A-Za-z_\-]+):\s*(.*)")
 (def metadata-re #"^\s*(CLOCK|DEADLINE|START|CLOSED|SCHEDULED|CREATED):.*")
 (def simple-clock-re #"^\s*(CLOCK):.*")

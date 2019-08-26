@@ -36,8 +36,6 @@
     (reset! cljs-nrepl-server (nrepl.server/start-server :handler handler :port 7889)))
   (cl-format true "cljs nrepl server started~%"))
 
-
-
 (defn start-cljs-nrepl-client []
   (let [conn (nrepl.core/connect :port 7889)
         c (nrepl.core/client conn 1000)
@@ -79,8 +77,9 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (comment
+  (sc.api.logging/register-cs-logger :sc.api.logging/log-spy-cs (fn [cs] nil))
+
   (restart-cljs-server)
 
   ;; to start a figwheel repl when build is already running
-  (send-eval "(require 'figwheel.main.api) (figwheel.main.api/cljs-repl \"fig\")")
-  )
+  (send-eval "(require 'figwheel.main.api) (figwheel.main.api/cljs-repl \"fig\")"))
