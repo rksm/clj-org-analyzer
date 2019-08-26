@@ -41,7 +41,9 @@
                                :class (if highlighted? "highlighted" "")}]]
               [^{:key (str location "-name")}     [:span.name          attrs (util/parse-all-org-links name)]
                ^{:key (str location "-duration")} [:span.duration      attrs (util/print-duration-mins duration)]
-               ^{:key (str location "-path")}     [:span.path          attrs (cl-format nil "[~{~a~^ > ~}]" (map s/trim path))]
+               ^{:key (str location "-path")}     [:span.path          attrs (->> path
+                                                                                  (map (comp util/parse-all-org-links s/trim))
+                                                                                  (interpose " > "))]
                ^{:key (str location "-tags")}     [:span.tags.md-chips attrs (for [tag tags]
                                                                                ^{:key (str location "-" tag)}
                                                                                [:span.tag.md-chip.md-chip-raised

@@ -20,12 +20,18 @@
             [org-analyzer.http-server :as http]
             [org-analyzer.printing :refer [print-duration]]
             [org-analyzer.processing :refer [find-clocks]]
-            [org-analyzer.time :as org-time :refer :all])
+            [org-analyzer.time :as org-time :refer :all]
+            [clojure.string :refer [starts-with?]])
   (:import [java.time LocalDateTime ZoneId]))
 
 (comment
 
-  (def clocks (map http/clock-data (http/get-clocks)))
+  (def clocks (:clocks (http/get-clocks (:org-files-and-dirs @org-analyzer.main/app-state))))
+
+  (def clock-data (map http/clock-data clocks))
+
+  (->> clock-data (filter #(starts-with? (:start %) "2019-08-19")) (sort-by :start))
+
   (def clocks (http/get-clocks))
   (def clocks (http/send-clocks-between
                (LocalDateTime/ofInstant (time/instant #inst "2019-07-08T00:00:00.000-00:00") (ZoneId/of "UTC"))
@@ -36,18 +42,15 @@
         :when (s/includes? name "org-mode")]
     clock)
 
-
   (count (mapcat org-time/clock->each-day-clocks clocks))
   (count clocks)
 
   (def clocks-by-day (group-by #(time/format "yyyy-MM-dd" (local-date (:start %))) clocks))
 
-
   (def clock (last (sort-by :start (get clocks-by-day "2019-07-04"))))
 
   (time/before? (local-date (:start clock))
                 (local-date (:end clock)))
-
 
   (time/format "yyyy-MM-dd" (local-date (:start (first clocks))))
 
@@ -86,7 +89,6 @@
                      (time-format "yyyy-MM-dd eee hh:mm" end)
                      (print-duration (sum-clock-duration clocks))))))
 
-
   (def some-clocks (take 5 clocks))
 
   (cl-format true "~{~a~^~%~}~%" some-clocks)
@@ -104,11 +106,10 @@
 
   start
   (time/adjust start plus (days 1))
-  (time/adjust start )
+  (time/adjust start)
 
   ;; (map (partial time/format "MM-dd eee") (take 3 (week-seq-from (now))))
   ;; pprint
-
 
 
   (max-week-of-year (as (now) :year))
@@ -119,7 +120,6 @@
   (def week-start first-day)
   (def week-end (adjust first-day (time/day-of-week :sunday)))
 
-
   (as (org-time/now) :week-of-week-based-year)
   (truncate-to (org-time/now) :days)
   (adjust (truncate-to (org-time/now) :days) :first-day-of-year)
@@ -129,13 +129,11 @@
       ;; (truncate-to :days)
       (adjust :last-day-of-year)
       (minus (days 1))
-      (as :week-of-week-based-year)
-      )
+      (as :week-of-week-based-year))
   (java.time.Year/now)
   (.getMaximum (.rangeRefinedBy java.time.temporal.IsoFields/WEEK_OF_WEEK_BASED_YEAR (now)))
   (.getMaximum (.rangeRefinedBy java.time.temporal.IsoFields/WEEK_OF_WEEK_BASED_YEAR (time/local-date (time/year 2018))))
   (.range java.time.temporal.IsoFields/WEEK_OF_WEEK_BASED_YEAR)
-
 
   (as (org-time/beginning-of-week (org-time/now)) :week-of-week-based-year)
   (as (minus (org-time/beginning-of-week (org-time/now)) (weeks 1)) :week-of-week-based-year)
@@ -156,7 +154,7 @@
   (time-as (parse-duration "5:33") :hours)
 
   (instant (days-ago 3))
-  (java.time.temporal.TemporalAdjusters/dayOfWeekInMonth )
+  (java.time.temporal.TemporalAdjusters/dayOfWeekInMonth)
   (adjust (local-date) :day-of-week-in-month 1 :monday)
   (adjust (local-date) time- (weeks 1))
   (adjust (local-date) time- :day-of-week)
@@ -166,7 +164,6 @@
 
   (-> (local-date) beginning-of-week)
   (def bow (-> (offset-date-time) beginning-of-week))
-
 
   (let [weeks (week-seq-from (local-date-time))]
     (pprint
@@ -191,8 +188,6 @@
   (adjust (local-date) java.time.DayOfWeek/MONDAY)
   (adjust (local-date-time) (day-of-week :monday))
 
-
-
   (.toInstant (days-ago 3) (java.time.ZoneOffset/systemDefault))
 
   ;; (pretty-print-duration (Duration/ofMinutes (+ (* 24 60) 65)))
@@ -214,15 +209,12 @@
 
   (map #(-> % :start) (take 2 clocks))
 
-
   (println (first clocks))
-
 
   (doseq [file org-files
           :let [clocks (-> file parse-and-zip find-clocks)]]
     (println (.getPath file))
     (check-clocks clocks))
-
 
   (check-clocks clocks)
   (doseq [c (take 1 (drop 10 (reverse clocks)))] (compute-clock-duration c))
@@ -230,13 +222,11 @@
   (compute-clock-duration (second clocks))
   (print-clock (second clocks))
 
-
   (def clock-string "CLOCK: [2019-06-19 Wed 13:44]--[2019-06-19 Wed 14:11] =>  0:27")
   (parse-clock clock-string)
 
   (-> (io/file "/home/robert/org/") file-seq (nth 3) .getParent)
   (->> (io/file "/home/robert/org/") file-seq (filter #(s/ends-with? (.getName %) ".org")))
-
 
   (first clocks)
 
@@ -248,7 +238,6 @@
   (-> clocks :start)
   (-> clocks :duration))
 
-
 (comment
 
   (require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
@@ -256,9 +245,6 @@
   ;; We'll request to send `profile` stats to `println`:
   (tufte/add-basic-println-handler! {})
 
-
   (do (profile {} (count (http/get-clocks))))
 
-(sc.api.logging/register-cs-logger :sc.api.logging/log-spy-cs (fn [cs] nil))
-
-)
+  (sc.api.logging/register-cs-logger :sc.api.logging/log-spy-cs (fn [cs] nil)))

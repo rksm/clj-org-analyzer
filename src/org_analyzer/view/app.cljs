@@ -14,7 +14,8 @@
             [org-analyzer.view.tooltip :as tooltip]
             [org-analyzer.view.search-view :as search-view]
             [cljs.reader :as reader]
-            [org-analyzer.view.help-view :as help-view]))
+            [org-analyzer.view.help-view :as help-view]
+            sc.api))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
@@ -76,6 +77,19 @@
           (>! result-chan files)))
     result-chan))
 
+(defn prepare-fetched-clocks [info clocks calendar]
+  (let [clocks-by-day (group-by #(-> % :start (s/split #" ") first) clocks)
+        clocks-by-day (merge
+                       (into (sorted-map-by <) (map #(vector % []) (difference
+                                                                    (set (keys calendar))
+                                                                    (set (keys clocks-by-day)))))
+                       clocks-by-day)]
+    {:calendar calendar
+     :info info
+     :clocks-by-day clocks-by-day
+     :clock-minute-intervals-by-day (util/clock-minute-intervals-by-day clocks-by-day)
+     :clocks-by-day-filtered clocks-by-day
+     :clock-minute-intervals-by-day-filtered (util/clock-minute-intervals-by-day clocks-by-day)}))
 
 (defn fetch-clocks
   [& {:keys [from to]
@@ -89,24 +103,11 @@
                                       :headers {"Cache-Control" "no-cache"}}))
               {:keys [clocks info]} (reader/read-string (:body response))]
           (println "got clocks")
-
           (let [from (:start (first clocks))
                 response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
                 calendar (into (sorted-map-by <) (map (juxt :date identity) (reader/read-string (:body response))))]
             (println "got calendar")
-
-            (let [clocks-by-day (group-by #(-> % :start (s/split #" ") first) clocks)
-                  clocks-by-day (merge
-                                 (into (sorted-map-by <) (map #(vector % []) (difference
-                                                                              (set (keys calendar))
-                                                                              (set (keys clocks-by-day)))))
-                                 clocks-by-day)]
-              (>! result-chan {:calendar calendar
-                               :info info
-                               :clocks-by-day clocks-by-day
-                               :clock-minute-intervals-by-day (util/clock-minute-intervals-by-day clocks-by-day)
-                               :clocks-by-day-filtered clocks-by-day
-                               :clock-minute-intervals-by-day-filtered (util/clock-minute-intervals-by-day clocks-by-day)}))
+            (>! result-chan (prepare-fetched-clocks info clocks calendar))
             (close! result-chan))))
     result-chan))
 
@@ -172,7 +173,6 @@
             :value "reload"
             :on-click #(fetch-and-update! app-state)}]])
 
-
 (defn collapsible* [title _key collapsed-atom comp-fn]
   (let [collapsed? @collapsed-atom]
     [:div.panel.elev-2
@@ -182,7 +182,6 @@
       [:i.material-icons (if collapsed? "expand_less" "expand_more")]]
      (when-not collapsed?
        (comp-fn))]))
-
 
 (defn app [app-state dom-state event-handlers]
 
@@ -224,7 +223,6 @@
            [:div] [:div] [:div] [:div]
            [:div] [:div] [:div] [:div]
            [:div] [:div] [:div] [:div]]])
-
 
        (when (:show-help? @app-state)
          [help-view/help-view

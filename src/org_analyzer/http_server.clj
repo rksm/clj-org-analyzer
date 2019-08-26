@@ -63,7 +63,6 @@
         clocks (mapcat clock->each-day-clocks clocks)]
     {:clocks clocks :org-files org-files :clock-count clock-count}))
 
-
 (defn- as-instant [time]
   (-> time
       (time/offset-date-time (java.util.TimeZone/getDefault))
