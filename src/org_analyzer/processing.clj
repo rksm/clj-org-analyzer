@@ -155,7 +155,7 @@
                                                     (conj (case (compare size depth)
                                                             1 (into [] (take depth parent-cache))
                                                             0 parent-cache
-                                                            -1 (concat parent-cache (map (constantly nil) (range (- depth (dec size))))))
+                                                            -1 (into [] (concat parent-cache (map (constantly nil) (range (- depth (dec size)))))))
                                                           index)
                                                     parent-cache)]
                                         [parent cache])
