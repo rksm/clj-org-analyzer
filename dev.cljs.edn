@@ -1,4 +1,4 @@
-^{:watch-dirs ["src"]
+^{:watch-dirs ["src" "dev"]
   :css-dirs ["resources/public/css"]
   :hot-reload-cljs true
   :open-url false

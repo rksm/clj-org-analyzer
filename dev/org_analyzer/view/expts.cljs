@@ -13,7 +13,7 @@
             [clojure.set :refer [union]]
             [cljs.pprint :refer [cl-format]]
             [org-analyzer.view.expts-helper :as e :refer [expts defexpt]]
-            [org-analyzer.devcards-test-data :refer [test-data]]
+            [org-analyzer.view.expt-test-data :refer [test-data]]
             [org-analyzer.view.selected-day :as selected-day]
             [org-analyzer.view.day-by-minute-view :as day-by-minute-view]))
 

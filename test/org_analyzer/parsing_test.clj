@@ -172,18 +172,18 @@ CREATED: [2018-12-15 Sa 12:05]
            (process/all-tags-for (last org-data) org-data)))))
 
 (deftest non-linear-ested-sections
-  [test-content "* A
+  (let [test-content "* A
 *** four below A
 this should not show the elements from BBBB as children
 * B"
-   expected [{:tags '() :index 0 :type :file :name "pseudo.org" :depth 0 :props '()}
-             {:index 1 :parent 0 :type :section :line 1 :depth 1 :name "A"}
-             {:index 2 :parent 1 :type :section :line 2 :depth 3 :name "four below A"}
-             {:index 3 :parent 0 :type :section :line 4 :depth 1 :name "B"}]
-   actual (process/parse-org-file
-           "pseudo.org"
-           (java.io.StringBufferInputStream. test-content))]
-  (is (= expected actual)))
+        expected [{:tags '() :index 0 :type :file :name "pseudo.org" :depth 0 :props '()}
+                  {:index 1 :parent 0 :type :section :line 1 :depth 1 :name "A"}
+                  {:index 2 :parent 1 :type :section :line 2 :depth 3 :name "four below A"}
+                  {:index 3 :parent 0 :type :section :line 4 :depth 1 :name "B"}]
+        actual (process/parse-org-file
+                "pseudo.org"
+                (java.io.StringBufferInputStream. test-content))]
+    (is (= expected actual))))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

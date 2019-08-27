@@ -1,3 +1,7 @@
+.PHONY: nrepl chrome clean run-jar cljs cljs-prod http-server app-test test figwheel
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 VERSION := 0.3.3
 
 CLJ_FILES := $(shell find . -type f \
@@ -13,7 +17,10 @@ CLJS_FILES := $(shell find . -type f \
 # repl / dev
 
 nrepl:
-	clojure -R:deps:cljs:nrepl -C:cljs -C:nrepl -m org-analyzer.nrepl-server
+	clojure -Srepro -R:deps:cljs:nrepl:test -C:cljs:nrepl:test -m org-analyzer.nrepl-server
+
+figwheel:
+	clj -R:cljs -C:dev -m figwheel.main -b dev -r
 
 chrome:
 	chromium \
@@ -21,8 +28,8 @@ chrome:
 	  --no-first-run \
 	  --user-data-dir=chrome-user-profile
 
-http-server:
-	clojure -A:http-server ~/org
+http-server: cljs-prod
+	clojure -A:http-server
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # cljs
@@ -31,7 +38,7 @@ JS_FILES := resources/public/cljs-out/dev/
 JS_PROD_FILES := resources/public/cljs-out/prod/
 
 $(JS_FILES): $(CLJS_FILES) deps.edn dev.cljs.edn
-	clojure -A:cljs
+	clojure -A:dev:cljs -C:test
 
 $(JS_PROD_FILES): $(CLJS_FILES) deps.edn prod.cljs.edn
 	clojure -R:cljs -A:cljs-prod
@@ -117,10 +124,17 @@ emacs-package: $(EMACS_PACKAGE_DIR)
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+# app-test:
+# 	clojure -R:test:cljs -m figwheel.main -co test.cljs.edn -m org-analyzer.app-test
+
+test:
+	clojure -A:test
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 clean:
 	rm -rf target/$(EMACS_PACKAGE_NAME).tar.gz \
 		$(EMACS_PACKAGE_DIR) \
 		target .cpcache $(AOT) \
+		resources/public/cljs-out \
 		$(JAR) bin
-
-.PHONY: nrepl chrome clean run-jar cljs cljs-prod http-server

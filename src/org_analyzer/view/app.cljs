@@ -14,8 +14,7 @@
             [org-analyzer.view.tooltip :as tooltip]
             [org-analyzer.view.search-view :as search-view]
             [cljs.reader :as reader]
-            [org-analyzer.view.help-view :as help-view]
-            sc.api))
+            [org-analyzer.view.help-view :as help-view]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data

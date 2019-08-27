@@ -30,9 +30,9 @@
         toggle (fn [bool] (swap! visible-expts assoc key bool))]
     (if-not (key @visible-expts)
       [:div.expt-toggle.collapsed
-       [:button.collapsible {:on-click #(toggle true)} (str "+ " comp-name)]]
+       [:button.material-button.collapsible {:on-click #(toggle true)} (str "+ " comp-name)]]
       [:div.expt-toggle.uncollapsed
-       [:button.collapsible {:on-click #(toggle false)} (str "- " comp-name)]
+       [:button.material-button.collapsible {:on-click #(toggle false)} (str "- " comp-name)]
        [component]])))
 
 (defn purge-expt! [expt-id]
@@ -43,5 +43,10 @@
 
 (defn expts []
   [:div.expts
+   [:div.controls
+    [:button.material-button {:on-click #(if (empty? @visible-expts)
+                                           (swap! visible-expts merge (for [[key component] @expt-registry] [key true]))
+                                           (reset! visible-expts {}))} "toggle all"]]
+   (-> @expt-registry :calendar)
    (doall (for [[key component] @expt-registry]
             ^{:key key} [expts-toggle key component]))])
