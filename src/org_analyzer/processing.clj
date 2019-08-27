@@ -150,7 +150,7 @@
                 [parent parent-cache] (let [size (count parent-cache)
                                             section? (= type :section)
                                             parent-at-or-before (dec (if section? (min size depth) size))
-                                            parent (loop [i parent-at-or-before] (if-let [index (nth parent-cache i)] index (recur (dec i))))
+                                            parent (first (drop-while nil? (map (partial parent-cache) (range parent-at-or-before -1 -1))))
                                             cache (if section?
                                                     (conj (case (compare size depth)
                                                             1 (into [] (take depth parent-cache))
