@@ -3,8 +3,6 @@
 
 
 (defn file-chooser [title files non-existing-files on-confirm]
-
-  (println files non-existing-files)
   (r/with-let [files (r/atom files)
                adding (r/atom nil)]
     [:div.file-chooser
@@ -23,7 +21,7 @@
                 :value @adding
                 :on-change #(reset! adding (-> % .-target .-value))
                 :on-blur #(let [val (-> % .-target .-value)]
-                            (when (not-empty val)
+                            (when (and (not-empty val) (not-any? (partial = val) @files))
                               (swap! files conj (-> % .-target .-value)))
                             (reset! adding nil))
                 :ref #(when % (.focus %))}])

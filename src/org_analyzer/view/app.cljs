@@ -25,6 +25,7 @@
    (empty-app-state nil))
   ([stored-known-org-files]
    (ratom {:calendar nil
+           :force-choosing-files false
            :known-org-files nil
            :stored-known-org-files stored-known-org-files
            :non-existing-org-files nil
@@ -54,6 +55,8 @@
                 :alt-down? false}
          :day-bounding-boxes {}}))
 
+;; (go (println (<! (http/get "/known-org-files" {:headers {"Cache-Control" "no-cache"}}))))
+
 (defn fetch-org-files! [result-atom]
   (go (let [response (<! (http/get "/known-org-files"
                                    {:headers {"Cache-Control" "no-cache"}}))
@@ -62,11 +65,6 @@
                               (empty? known-org-files) nil
                               (string? known-org-files) (vector known-org-files)
                               :else known-org-files)))))
-
-;; (go (prn "done" (<! (post-org-files ["/home/robert/org"]))))
-
-;; (go  (prn "done" (<! (http/get "/known-org-files"))))
-;; (go  (prn "done" (<! (http/post "/known-org-files"))))
 
 (defn post-org-files [org-files-and-dirs]
   (let [result-chan (chan 1)]
@@ -185,21 +183,26 @@
 
 (defn app [app-state dom-state event-handlers]
 
-  (if-not (:known-org-files @app-state)
+  (if (or (empty? (:known-org-files @app-state))
+          (:force-choosing-files @app-state))
 
     [file-chooser/file-chooser
      [:div {:style {:text-align "center"}}
-      [:span "Currently no org files or directories are known."]
+      [:span (if (empty? (:known-org-files @app-state)) "Currently no org files or directories are known." "")]
       [:br]
-      [:span "Please add org files and directories below, then click the confirm button."]]
-     (concat (:known-org-files @app-state) (:stored-known-org-files @app-state))
+      [:span "Please add or remove org files and directories below, then click the confirm button."]]
+     (distinct (map #(clojure.string/replace % #"/$" "") (concat (:known-org-files @app-state) (:stored-known-org-files @app-state))))
      (:non-existing-org-files @app-state)
-     (fn [files] (go (let [{:keys [existing non-existing]} (<! (post-org-files files))]
+     (fn [files] (go (let [files (distinct files)
+                           {:keys [existing non-existing]} (<! (post-org-files files))]
                        (swap! app-state assoc
                               :known-org-files existing
                               :non-existing-org-files non-existing)
                        (when (not-empty existing)
                          (js/localStorage.setItem "org-analyzer-files" (pr-str existing))
+                         (swap! app-state assoc
+                                :force-choosing-files false
+                                :stored-known-org-files nil)
                          (fetch-and-update! app-state)))))]
 
     (let [{:keys [hovered-over-date

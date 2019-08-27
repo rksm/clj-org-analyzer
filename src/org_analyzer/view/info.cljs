@@ -29,5 +29,9 @@
 
             [:ul [:h4 "org files found"]
              (doall (for [f org-files]
-                      ^{:key f} [:li [:span f]]))]])
+                      ^{:key f} [:li [:span f]]))]
+
+            [:input {:type "button"
+                     :value "change files..."
+                     :on-click #(swap! app-state assoc :force-choosing-files true)}]])
          )])))

@@ -46,7 +46,7 @@ a {
 }
 .file-chooser button.add,
 .file-chooser button.remove {
-  font-size: .7em;
+  font-size: 0.7em;
 }
 .file-chooser button.add .material-icons,
 .file-chooser button.remove .material-icons {
@@ -193,6 +193,15 @@ a {
 .info button i.material-icons {
   font-size: 1.2em;
 }
+.info .file-statistics {
+  display: flex;
+  flex-direction: column;
+}
+.info .file-statistics input {
+  width: fit-content;
+  align-self: center;
+  margin: 1em;
+}
 .search-bar {
   padding: 10px;
   display: flex;
@@ -309,7 +318,7 @@ button.help {
   align-content: flex-start;
   align-items: center;
   flex-direction: column;
-  width: calc(90px);
+  width: calc(6 * 15px);
 }
 .month .month-date {
   cursor: pointer;
@@ -691,10 +700,10 @@ button.help {
   font-family: Roboto, sans-serif;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
-  font-size: .875rem;
+  font-size: 0.875rem;
   line-height: 2.25rem;
   font-weight: 500;
-  letter-spacing: .0892857143em;
+  letter-spacing: 0.08928571em;
   text-decoration: none;
   text-transform: uppercase;
   padding: 0 8px 0 8px;
@@ -719,19 +728,19 @@ button.help {
 }
 .material-button:not(:disabled) {
   background-color: transparent;
-  color: #000000;
+  color: black;
 }
 .material-button:hover {
   cursor: pointer;
 }
 .material-button:hover::before {
-  opacity: .04;
+  opacity: 0.04;
 }
 .material-button::before,
 .material-button::after {
-  background-color: #000000;
-  top: calc(-50%);
-  left: calc(-50%);
+  background-color: black;
+  top: calc(50% - 100%);
+  left: calc(50% - 100%);
   width: 200%;
   height: 200%;
   position: absolute;
