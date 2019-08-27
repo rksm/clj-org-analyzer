@@ -1,4 +1,9 @@
-# next release
+# 0.3.5
+
+## bugfixes
+- fixing localized CLOCKs [#3](https://github.com/rksm/clj-org-analyzer/issues/3)
+
+# 0.3.4
 
 ## feature
 - allow to trigger selecting org files from the file info view
