@@ -14,7 +14,7 @@
 
 (defrecord Clock [start end duration clock-string sections])
 
-(def clock-re #"(?i)^\s*CLOCK:\s*((?:\[|<)[0-9a-z :-]+(?:\]|>))(?:--((?:\[|<)[0-9a-z :-]+(?:\]|>)))?(?:\s*=>\s*([0-9:]+))?\s*$")
+(def clock-re #"(?i)^\s*CLOCK:\s*((?:\[|<)[^\]>]+(?:\]|>))(?:--((?:\[|<)[^\]>]++(?:\]|>)))?(?:\s*=>\s*([0-9:]+))?\s*$")
 (def brackets-re #"^(\[|<)|(\]|>)$")
 (def colon-re #":")
 

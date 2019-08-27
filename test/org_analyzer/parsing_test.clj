@@ -185,6 +185,26 @@ this should not show the elements from BBBB as children
                 (java.io.StringBufferInputStream. test-content))]
     (is (= expected actual))))
 
+(deftest localized-timestamps
+  (let [test-content "*  Foo
+  :LOGBOOK:
+  CLOCK: [2018-03-26 må. 13:14]--[2018-03-26 må. 13:43] =>  0:29
+  :END:"
+        clocks (->> test-content
+                    java.io.StringBufferInputStream.
+                    (process/parse-org-file "pseudo.org")
+                    process/find-clocks)]
+    (is (= '("CLOCK: [2018-03-26 Mon 13:14]--[2018-03-26 Mon 13:43] =>  0:29")
+           (map print/print-clock clocks)))
+    (is (= '(["0:29"
+              "2018-03-26 Mon 13:14"
+              "2018-03-26 Mon 13:43"])
+           (map (juxt (comp print/print-duration :duration)
+                      (comp print/print-timestamp :start)
+                      (comp print/print-timestamp :end))
+                clocks))))
+  )
+
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
