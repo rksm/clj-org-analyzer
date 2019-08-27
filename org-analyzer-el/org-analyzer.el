@@ -5,7 +5,7 @@
 ;; Author: Robert Krahn <robert@kra.hn>
 ;; URL: https://github.com/rksm/clj-org-analyzer
 ;; Keywords: calendar
-;; Version: 0.3.3
+;; Version: 0.3.4
 ;; Package-Requires: ((emacs "24"))
 
 ;; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44,7 +44,7 @@
 (defvar org-analyzer-process-buffer nil
   "The buffer for running the jar.")
 
-(defvar org-analyzer-version "0.3.3"
+(defvar org-analyzer-version "0.3.4"
   "Version to sync with jar.")
 
 (defvar org-analyzer-jar-file-name "org-analyzer.jar"
