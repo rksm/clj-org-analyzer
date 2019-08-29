@@ -32,9 +32,8 @@
              (some-> end print-timestamp)
              (some-> duration print-duration)))
 
-(defn print-clock-location [{:keys [parents] :as _clock}]
-  ;; (->> parents (map :name) (interpose "|") (apply str))
-  (->> parents first :name))
+(defn print-clock-location [{:keys [sections] :as _clock}]
+  (->> sections reverse (map :name) (interpose " > ") (apply str)))
 
 (def secs-in-one-min 60)
 (def secs-in-one-hour (* secs-in-one-min 60))

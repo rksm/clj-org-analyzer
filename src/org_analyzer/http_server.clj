@@ -51,7 +51,7 @@
 
 
 (defn get-clocks
-  [org-files-and-dirs]
+  [org-files-and-dirs & {:keys [by-day?] :or {by-day? true}}]
   (let [org-files (apply concat
                          (for [^File f org-files-and-dirs
                                :when (.exists f)]
@@ -60,7 +60,7 @@
                              [f])))
         clocks (mapcat (comp find-clocks parse-org-file) org-files)
         clock-count (count clocks)
-        clocks (mapcat clock->each-day-clocks clocks)]
+        clocks (if by-day? (mapcat clock->each-day-clocks clocks) clocks)]
     {:clocks clocks :org-files org-files :clock-count clock-count}))
 
 (defn- as-instant [time]
@@ -152,7 +152,8 @@
   (->> @app-state
        :org-files-and-dirs
        (filter #(.exists %))
-       (map file-path)))
+       (map file-path)
+       (pr-str)))
 
 (defn http-set-known-org-files!
   [app-state files]

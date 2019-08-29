@@ -21,12 +21,21 @@
             [org-analyzer.printing :refer [print-duration]]
             [org-analyzer.processing :refer [find-clocks]]
             [org-analyzer.time :as org-time :refer :all]
-            [clojure.string :refer [starts-with?]])
+            [clojure.string :refer [starts-with?]]
+            [org-analyzer.checking :as checking])
   (:import [java.time LocalDateTime ZoneId]))
 
 (comment
 
-  (def clocks (:clocks (http/get-clocks (:org-files-and-dirs @org-analyzer.main/app-state))))
+  (def clocks-2 (:clocks (http/get-clocks (:org-files-and-dirs @org-analyzer.main/app-state))))
+  (def clocks (:clocks (http/get-clocks (:org-files-and-dirs @org-analyzer.main/app-state) :by-day? false)))
+
+  (checking/check-clocks clocks)
+
+  
+
+
+
 
   (def clock-data (map http/clock-data clocks))
 
