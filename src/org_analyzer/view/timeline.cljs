@@ -22,26 +22,28 @@
   [clock-minute-intervals-by-day
    highlighted-entries
    tooltip
-   & [{:keys [height width]}]]
+   & [{:keys [width]}]]
 
   (rg/with-let [hovered-over-clock (ratom nil)]
-    (let [heading-h 12
-          n-days (count clock-minute-intervals-by-day)
-          w-ea (/ width (* 60 24))
+    (let [n-days (count clock-minute-intervals-by-day)
+          heading-h 22
+          padding-left (if (> n-days 28) 10 35)
+          padding-right 10
+          w (- width padding-left padding-right)
+          w-ea (/ w (* 60 24))
           h-ea (condp > n-days
-                 10 15
+                 10 14
                  20 12
                  28 11
                  100 8
                  4)
-
           height (-> h-ea
                      (* (count clock-minute-intervals-by-day))
                      (+ heading-h))
-          clock-bounds (doall
-                        (for [[row [date clock-intervals]] (map-indexed vector clock-minute-intervals-by-day)
-                              bounds (clock-bounds-on-canvas clock-intervals 0 heading-h w-ea row h-ea)]
-                          (with-meta bounds {:row row})))
+          clocks-in-rows (map-indexed vector clock-minute-intervals-by-day)
+          clock-bounds (for [[row [date clock-intervals]] clocks-in-rows
+                             bounds (clock-bounds-on-canvas clock-intervals padding-left heading-h w-ea row h-ea)]
+                         (with-meta bounds {:row row}))
 
           hovered-over @hovered-over-clock
           selected-clocks @highlighted-entries]
@@ -51,7 +53,6 @@
         :width width
         :height height
         :on-mouse-out (fn [evt] (reset! hovered-over-clock nil))
-
         :on-mouse-move (fn [evt]
                          (let [p (dom/mouse-position evt :relative? true)
                                bounds (->> clock-bounds
@@ -70,21 +71,18 @@
                                             (interpose [:br]
                                                        (for [{:keys [path name]} clocks]
                                                          ^{:key start}
-                                                         [:div
-                                                          "["
-                                                          (interpose " > " (map (comp util/parse-all-org-links s/trim) path))
-                                                          "]"
+                                                         [:div "[" (interpose " > " (map (comp util/parse-all-org-links s/trim) path)) "]"
                                                           [:br]
-                                                          [:span.name (util/parse-all-org-links name)]]
-                                                         ))])))))
+                                                          [:span.name (util/parse-all-org-links name)]]))])))))
 
                            (reset! hovered-over-clock bounds)))
         :ref (fn [canvas]
                (when canvas
                  (let [ctx (. canvas (getContext "2d"))]
-                   (doto ctx
-                     (.clearRect 0 0 width height)
-                     (.save))
+                   (doto ctx (.clearRect 0 0 width height) (.save))
+
+                   ;; for each clock, draw in a block representing the "busy"
+                   ;; minutes. Highlighted clocks are drawn in a different style
                    (doseq [bounds clock-bounds]
                      (let [[x y w h clocks] bounds
                            {row :row} (meta bounds)
@@ -100,30 +98,32 @@
                                    highlighted-a-bit? "salmon"
                                    row-selected? "#6fA"
                                    :else "#3e8")]
-
-                       (.save ctx)
                        (set! (.-fillStyle ctx) color)
-
                        (set! (.-strokeStyle ctx) "rgba(60,160,120,.4)")
                        (set! (.-lineWidth ctx) 1)
-
-                       #_(when no-clocks?
-                           (set! (.-shadowColor ctx) "#d53")
-                           (set! (.-shadowBlur ctx) 10)
-                           (set! (.-lineJoin ctx) "bevel"))
                        (.fillRect ctx x y w h)
                        (when-not no-clocks?
-                         (.strokeRect ctx (inc x) (inc y) (dec w) (dec h)))
-                       (.restore ctx)
+                         (.strokeRect ctx (inc x) (inc y) (dec w) (dec h)))))
 
-                       ))
+                   ;; add hours at the top
                    (doto ctx (.restore) (.save))
                    (set! (.-textBaseline ctx) "top")
                    (set! (.-textAlign ctx) "center")
                    (set! (.-font ctx) "10px sans-serif")
-                   (set! (.-strokeStyle ctx) "white")
-                   (doseq [h (drop 1 (range 24))]
-                     (. ctx (fillText (str h) (* h 60 w-ea) 2)))
-                   (doto ctx
-                     (.stroke)
-                     (.restore)))))}])))
+                   (set! (.-strokeStyle ctx) "black")
+                   (doseq [h (range 25)
+                           :let [x (+ padding-left (* h 60 w-ea))]]
+                     (.fillText ctx (if (= h 24) "0" (str h)) x 2))
+                   (set! (.-strokeStyle ctx) "#AAA")
+                   (.strokeRect ctx 0 0 width height)
+
+                   ;; add short dates to the left
+                   (when (>= h-ea 10)
+                     (set! (.-textBaseline ctx) "middle")
+                     (set! (.-textAlign ctx) "left")
+                     (doseq [[row [day _]] clocks-in-rows]
+                       (.fillText ctx (-> day (subs 5) (s/replace "-" "/"))
+                                  3
+                                  (+ heading-h (* h-ea row) (/ h-ea 2)))))
+
+                   (doto ctx (.stroke) (.restore)))))}])))

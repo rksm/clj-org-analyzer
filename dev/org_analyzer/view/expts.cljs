@@ -106,7 +106,7 @@
                clock-minute-intervals-by-day
                (atom nil)
                tooltip
-               {:width (- js/document.documentElement.clientWidth 20) :height 500}]]))))
+               {:width (- js/document.documentElement.clientWidth 20)}]]))))
 
 (defexpt by-minute-debug-1
   (let [app-state (:app-state (test-data))
