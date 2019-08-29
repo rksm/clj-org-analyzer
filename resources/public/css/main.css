@@ -31,6 +31,17 @@ a {
   position: absolute;
   background-color: rgba(100, 100, 100, 0.3);
 }
+.app-header {
+  width: 100%;
+  height: 80px;
+  box-shadow: 0 1px 15px rgba(0, 0, 0, 0.04), 0 1px 6px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  background: #fff;
+  z-index: 100;
+}
 .file-chooser {
   display: flex;
   flex-direction: column;
@@ -164,12 +175,57 @@ a {
   margin-bottom: 20px;
   top: 20px;
   background-color: white;
+  justify-content: center;
 }
-.info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  vertical-align: middle;
+@media (min-width: 1000px) {
+  .controls {
+    justify-content: flex-end;
+  }
+}
+.controls .material-button {
+  min-width: 32px;
+}
+.info,
+.help {
+  z-index: 2;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.9);
+  width: 100%;
+  color: white;
+  padding: 1.5em 0;
+  min-height: 100%;
+  font-size: 14pt;
+  font-family: IBM Plex Sans, serif;
+}
+.info h1,
+.help h1,
+.info h2,
+.help h2,
+.info h3,
+.help h3,
+.info h4,
+.help h4,
+.info h5,
+.help h5 {
+  font-family: Roboto, sans-serif;
+}
+.info button.close,
+.help button.close {
+  color: white;
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin-top: -10px;
+  margin-right: 10px;
+  height: unset;
+}
+.info button.close i.material-icons,
+.help button.close i.material-icons {
+  font-size: 48px;
+  line-height: 2;
+}
+.info > div {
+  margin-left: 2em;
 }
 .info ul {
   list-style-position: inside;
@@ -190,9 +246,6 @@ a {
 .info button::after {
   width: 20px;
 }
-.info button i.material-icons {
-  font-size: 1.2em;
-}
 .info .file-statistics {
   display: flex;
   flex-direction: column;
@@ -201,6 +254,9 @@ a {
   width: fit-content;
   align-self: center;
   margin: 1em;
+}
+.help .content {
+  padding: 0 30px;
 }
 .search-bar {
   padding: 10px;
@@ -250,35 +306,6 @@ a {
   to {
     transform: rotate(360deg);
   }
-}
-button.help {
-  position: absolute;
-  right: 5px;
-}
-.help-view {
-  z-index: 2;
-  position: absolute;
-  background-color: rgba(0, 0, 0, 0.7);
-  width: 100%;
-  color: white;
-  padding: 1.5em 0;
-  font-size: 1.5em;
-}
-.help-view .content {
-  padding: 0 30px;
-}
-.help-view button.close {
-  color: white;
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin-top: -10px;
-  margin-right: 10px;
-  height: unset;
-}
-.help-view button.close i.material-icons {
-  font-size: 48px;
-  line-height: 2;
 }
 .panel {
   margin: 10px;

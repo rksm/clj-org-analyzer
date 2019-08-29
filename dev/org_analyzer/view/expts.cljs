@@ -5,7 +5,7 @@
             [org-analyzer.view.util :as util]
             [org-analyzer.view.calendar :as calendar]
             [org-analyzer.view.tooltip :as tooltip]
-            [org-analyzer.view.day-by-minute-view :as day-by-minute-view]
+            [org-analyzer.view.timeline :as timeline]
             [reagent.core :as rg :refer [cursor]]
             [reagent.ratom :refer [atom reaction] :rename {atom ratom}]
             [cljs.core.async :refer [go <! chan]]
@@ -15,7 +15,7 @@
             [org-analyzer.view.expts-helper :as e :refer [expts defexpt]]
             [org-analyzer.view.expt-test-data :refer [test-data]]
             [org-analyzer.view.selected-day :as selected-day]
-            [org-analyzer.view.day-by-minute-view :as day-by-minute-view]))
+            [org-analyzer.view.timeline :as timeline]))
 
 (enable-console-print!)
 
@@ -72,7 +72,7 @@
                                      (let [dates (map :date selected-days)
                                            clock-minute-intervals-by-day-filtered (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day-filtered dates))]
                                        (when (> (count dates) 0)
-                                         [day-by-minute-view/activities-by-minute-view
+                                         [timeline/activities-by-minute-view
                                           clock-minute-intervals-by-day-filtered
                                           highlighted-entries-cursor
                                           tooltip
@@ -102,7 +102,7 @@
     (rg/with-let [tooltip (ratom "")]
       (tooltip/with-tooltip-following-mouse
         tooltip
-        [:div [day-by-minute-view/activities-by-minute-view
+        [:div [timeline/activities-by-minute-view
                clock-minute-intervals-by-day
                (atom nil)
                tooltip

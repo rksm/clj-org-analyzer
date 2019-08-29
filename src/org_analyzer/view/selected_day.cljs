@@ -1,6 +1,6 @@
 (ns org-analyzer.view.selected-day
   (:require [org-analyzer.view.util :as util]
-            [org-analyzer.view.day-by-minute-view :as day-by-minute-view]
+            [org-analyzer.view.timeline :as timeline]
             [org-analyzer.view.dom :as dom]
             [cljs.pprint :refer [cl-format]]
             [reagent.core :as rg]

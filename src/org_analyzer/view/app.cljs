@@ -14,7 +14,8 @@
             [org-analyzer.view.tooltip :as tooltip]
             [org-analyzer.view.search-view :as search-view]
             [cljs.reader :as reader]
-            [org-analyzer.view.help-view :as help-view]))
+            [org-analyzer.view.help-view :as help-view]
+            [clojure.pprint :as pp]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
@@ -54,12 +55,12 @@
                 :alt-down? false}
          :day-bounding-boxes {}}))
 
-;; (go (println (<! (http/get "/known-org-files" {:headers {"Cache-Control" "no-cache"}}))))
+;; (go (prn (<! (http/get "/known-org-files" {:headers {"Cache-Control" "no-cache"}}))))
 
 (defn fetch-org-files! [result-atom]
   (go (let [response (<! (http/get "/known-org-files"
                                    {:headers {"Cache-Control" "no-cache"}}))
-            known-org-files (:body response)]
+            known-org-files (cljs.reader/read-string (:body response))]
         (reset! result-atom (cond
                               (empty? known-org-files) nil
                               (string? known-org-files) (vector known-org-files)
@@ -166,9 +167,22 @@
 
 (defn controls [app-state]
   [:div.controls
-   [:input {:type "button"
-            :value "reload"
-            :on-click #(fetch-and-update! app-state)}]])
+   [:button.material-button
+    {:on-click #(swap! app-state assoc :force-choosing-files true)
+     :title "select org files"}
+    [:i.material-icons "insert_drive_file"]]
+   [:button.material-button
+    {:on-click #(println "print")
+     :title "export to pdf"}
+    [:i.material-icons "print"]]
+   [:button.material-button
+    {:on-click #(swap! app-state assoc :show-info? true)
+     :title (pp/cl-format nil "~a clock~:*~P" (-> @app-state :info :clock-count))}
+    [:i.material-icons "info"]]
+   [:button.material-button
+    {:on-click #(swap! app-state assoc :show-help? true)
+     :title "show help"}
+    [:i.material-icons "help"]]])
 
 (defn collapsible* [title _key collapsed-atom comp-fn]
   (let [collapsed? @collapsed-atom]
@@ -190,7 +204,10 @@
       [:span (if (empty? (:known-org-files @app-state)) "Currently no org files or directories are known." "")]
       [:br]
       [:span "Please add or remove org files and directories below, then click the confirm button."]]
-     (distinct (map #(clojure.string/replace % #"/$" "") (concat (:known-org-files @app-state) (:stored-known-org-files @app-state))))
+
+     (distinct (map #(clojure.string/replace % #"/$" "") (concat
+                                                          (:known-org-files @app-state)
+                                                          (:stored-known-org-files @app-state))))
      (:non-existing-org-files @app-state)
      (fn [files] (go (let [files (distinct files)
                            {:keys [existing non-existing]} (<! (post-org-files files))]
@@ -230,9 +247,12 @@
          [help-view/help-view
           #(swap! app-state assoc :show-help? false)])
 
-       #_[controls app-state]
+       (when (:show-info? @app-state)
+         [info/info-view
+          app-state
+          #(swap! app-state assoc :show-info? false)])
 
-       [info/info app-state]
+       [controls app-state]
 
        [search-view/search-bar app-state]
 
@@ -253,14 +273,14 @@
 
        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
        ;; by-minute
-       (collapsible* "Per Day" :by-minute-collapsed? (r/cursor app-state [:by-minute-collapsed?])
+       (collapsible* "timeline" :by-minute-collapsed? (r/cursor app-state [:by-minute-collapsed?])
                      (fn [] (r/with-let [tooltip (ratom nil)]
                               (tooltip/with-tooltip-following-mouse tooltip
                                 [:div.by-minute
                                  (let [dates (map :date selected-days)
                                        clock-minute-intervals-by-day-filtered (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day-filtered dates))]
                                    (when (> (count dates) 0)
-                                     [org-analyzer.view.day-by-minute-view/activities-by-minute-view
+                                     [org-analyzer.view.timeline/activities-by-minute-view
                                       clock-minute-intervals-by-day-filtered
                                       highlighted-entries-cursor
                                       tooltip

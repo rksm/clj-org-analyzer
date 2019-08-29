@@ -1,7 +1,7 @@
 (ns org-analyzer.view.help-view)
 
 (defn help-view [close-help-fn]
-  [:div.help-view
+  [:div.help
    [:div.content
     [:h2 "About"]
 
@@ -31,9 +31,8 @@ CLOCK: [2019-08-10 Sat 13:17]--[2019-08-10 Sat 14:09] =>  0:52
     [:span [:code "[CTRL + a]"] " select all days in calendar"]
 
     [:h3 "Contact"]
-    [:p "If you have questions, issues, or need a developer, please get in touch: " [:a {:href "mailto:robert@kra.hn"} "robert@kra.hn"] "."]
+    [:p "If you have questions, issues, or need a developer: " [:a {:href "https://robert.kra.hn"} "https://robert.kra.hn"] " 😀"]]
 
-]
    [:button.close.material-button
     {:on-click close-help-fn}
     [:i.material-icons "close"]]])

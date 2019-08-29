@@ -1,4 +1,4 @@
-(ns org-analyzer.view.day-by-minute-view
+(ns org-analyzer.view.timeline
   (:require [reagent.core :as rg :refer [cursor]]
             [reagent.ratom :refer [atom reaction] :rename {atom ratom}]
             [org-analyzer.view.geo :as geo]
