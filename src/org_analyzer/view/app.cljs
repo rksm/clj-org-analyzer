@@ -7,7 +7,7 @@
             [org-analyzer.view.file-chooser :as file-chooser]
             [org-analyzer.view.calendar :as calendar]
             [org-analyzer.view.util :as util]
-            [org-analyzer.view.selected-day :as selected-day]
+            [org-analyzer.view.clock-list :as clock-list]
             [org-analyzer.view.selection :as sel]
             [clojure.set :refer [difference]]
             [clojure.string :as s]
@@ -149,6 +149,10 @@
             (set-key-down! evt "Alt" :alt-down? false)
             (set-key-down! evt "Shift" :shift-down? false))
 
+          (on-document-mouseout [_evt]
+            (swap! dom-state assoc-in [:keys :alt-down?] false)
+            (swap! dom-state assoc-in [:keys :shift-down?] false))
+
           (on-window-resize [_evt] nil)
 
           (on-exit [_evt] (send-kill-server-request!) nil)
@@ -159,6 +163,7 @@
     (set! (.-onbeforeunload js/window) on-exit)
     (.addEventListener js/document "keydown" on-key-down-global)
     (.addEventListener js/document "keyup" on-key-up-global)
+    (.addEventListener js/document "mouseout" on-document-mouseout)
     (.addEventListener js/window "resize" on-window-resize)
     (.addEventListener js/window "beforeprint" on-before-print)
     (.addEventListener js/window "afterprint" on-after-print)
@@ -273,7 +278,7 @@
        ;; clocks
        (collapsible* "Clocks" :clocks-collapsed? (r/cursor app-state [:clocks-collapsed?])
                      (fn [] (when selected-days
-                              [selected-day/selected-days-view
+                              [clock-list/clock-list-view
                                selected-days
                                clocks-by-day-filtered
                                calendar
