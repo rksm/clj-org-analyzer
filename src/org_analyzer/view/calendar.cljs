@@ -131,7 +131,7 @@
   [by-month clocks-by-day]
   (let [non-empty-days (set (keys (filter (comp not-empty val) clocks-by-day)))
         not-empty-month? (fn [month-string] (not-any? non-empty-days (map :date (get by-month month-string))))
-        month-strings (keys by-month)
+        month-strings (set (keys by-month))
         empty-start-month (take-while not-empty-month? month-strings)
         empty-end-month (take-while not-empty-month? (reverse month-strings))]
     (into (sorted-map-by <)
