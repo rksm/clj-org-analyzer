@@ -1,4 +1,4 @@
-(ns org-analyzer.view.selected-day
+(ns org-analyzer.view.clock-list
   (:require [org-analyzer.view.util :as util]
             [org-analyzer.view.timeline :as timeline]
             [org-analyzer.view.dom :as dom]
@@ -6,9 +6,16 @@
             [reagent.core :as rg]
             [reagent.ratom :refer [atom reaction] :rename {atom ratom}]
             [clojure.set :refer [intersection]]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [cljs-http.client :as http]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+;; FIXME: side-effecty, move to proper place / inject...!
+(defn open-org-file [org-file heading]
+  (println "opening" org-file)
+  (http/post "/open-org-file" {:form-params {:file (pr-str org-file)
+                                             :heading (pr-str heading)}}))
 
 (defn analyze-clocks [days clocks-by-day]
   (letfn [(clocks-avg [clocks-by-sth]
@@ -27,12 +34,13 @@
        :average-week-duration (clocks-avg clocks-by-week)
        :n-weeks (count weeks)})))
 
+
 (defn clock-list [clocks-with-id-and-duration highlighted-entries]
   (let [current-highlighted-entries @highlighted-entries]
     [:table.clock-list
      [:tbody
       (doall
-       (for [{:keys [location duration] [{:keys [name tags path] :as clock}] :clocks} clocks-with-id-and-duration
+       (for [{:keys [location duration] [{:keys [name tags path org-file] :as clock}] :clocks} clocks-with-id-and-duration
              :let [highlighted? (current-highlighted-entries location)
                    on-mouse-over #(reset! highlighted-entries #{location})
                    on-mouse-out #(reset! highlighted-entries #{})
@@ -40,7 +48,9 @@
                           :on-mouse-out on-mouse-out
                           :class (if highlighted? "highlighted" "")}]]
          ^{:key (str location "-name")} [:tr
-                                         [:td.name          attrs (util/parse-all-org-links name)]
+                                         [:td.name
+                                          (merge attrs {:on-click #(open-org-file org-file name)})
+                                          (util/parse-all-org-links name)]
                                          [:td.duration      attrs (util/print-duration-mins duration)]
                                          [:td.path          attrs (->> path
                                                                        (map (comp util/parse-all-org-links s/trim))
@@ -51,7 +61,7 @@
                                                                      {:on-click #(dom/select-element (.-target %))}
                                                                      tag])]]))]]))
 
-(defn selected-days-view
+(defn clock-list-view
   [days clocks-by-day calendar highlighted-entries]
 
   (let [n (count days)

@@ -854,6 +854,9 @@ a {
 .day-detail table.clock-list .path {
   color: #666;
 }
+.day-detail table.clock-list .name {
+  cursor: pointer;
+}
 .day-detail table.clock-list .name.highlighted,
 .day-detail table.clock-list .path.highlighted,
 .day-detail table.clock-list .duration.highlighted {

@@ -14,7 +14,7 @@
             [cljs.pprint :refer [cl-format]]
             [org-analyzer.view.expts-helper :as e :refer [expts defexpt]]
             [org-analyzer.view.expt-test-data :refer [test-data]]
-            [org-analyzer.view.selected-day :as selected-day]
+            [org-analyzer.view.clock-list :as clock-list]
             [org-analyzer.view.timeline :as timeline]))
 
 (enable-console-print!)
@@ -57,7 +57,7 @@
        ;; clocks
        (app/collapsible* "Clocks" :clocks-collapsed? (rg/cursor app-state [:clocks-collapsed?])
                          (fn [] (when selected-days
-                                  [selected-day/selected-days-view
+                                  [clock-list/clock-list-view
                                    selected-days
                                    clocks-by-day-filtered
                                    calendar
@@ -80,7 +80,7 @@
 
 
 (defexpt links-in-heading
-  [selected-day/selected-days-view
+  [clock-list/clock-list-view
    [{:date "2019-08-27" :dow 2 :dow-name "Tuesday"  :week 35 :month "August" :year 2019}]
    {"2019-08-27" [{:start "2019-08-27 19:17"
                    :end "2019-08-27 19:27"
