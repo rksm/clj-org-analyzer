@@ -15,7 +15,8 @@
             [org-analyzer.view.search-view :as search-view]
             [cljs.reader :as reader]
             [org-analyzer.view.help-view :as help-view]
-            [clojure.pprint :as pp]))
+            [clojure.pprint :as pp]
+            [org-analyzer.view.bar-chart :as bar-chart]))
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; data
@@ -42,6 +43,7 @@
            :clocks-collapsed? false
            :by-minute-collapsed? false
            :clock-details-collapsed? false
+           :bar-chart-collapsed? false
            :highlighted-calendar-dates #{}
            :highlighted-entries #{} ;; uses clock :locations for id'ing
            :search-input ""
@@ -297,7 +299,11 @@
                                       clock-minute-intervals-by-day-filtered
                                       highlighted-entries-cursor
                                       tooltip
-                                      {:width (- js/document.documentElement.clientWidth (if (:print? @app-state) 160 60))}]))]))))
+                                      {:width (- js/document.documentElement.clientWidth
+                                                 (if (:print? @app-state) 160 60))}]))]))))
+
+       (collapsible* "by-day" :bar-chart-collapsed? (r/cursor app-state [:bar-chart-collapsed?])
+                     (fn [] (bar-chart/bar-chart selected-days app-state)))
 
        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
        ;; clock

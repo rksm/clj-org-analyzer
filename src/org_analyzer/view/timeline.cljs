@@ -49,8 +49,7 @@
           selected-clocks @highlighted-entries]
 
       [:canvas.activities-by-minute-canvas
-       {:id "canvas"
-        :width width
+       {:width width
         :height height
         :on-mouse-out (fn [evt] (reset! hovered-over-clock nil))
         :on-mouse-move (fn [evt]
