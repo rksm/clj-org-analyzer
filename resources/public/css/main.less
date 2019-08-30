@@ -1,4 +1,6 @@
-* {--mdc-theme-primary: black;}
+* {
+    --mdc-theme-primary: black;
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -8,6 +10,9 @@ body {
     overflow: scroll;
     margin: 0!important;
     font-family: Roboto, sans-serif;
+    @media print {
+        overflow: visible;
+    }
 }
 
 a {
@@ -20,6 +25,9 @@ a {
     display: flex;
     flex-direction: column;
     font-size: small;
+    @media print {
+        display: block;
+    }
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -39,20 +47,6 @@ a {
     background-color: rgba(100, 100, 100, .3);
 }
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-.app-header {
-    box-shadow: 0 1px 15px rgba(0, 0, 0, 0.04), 0 1px 6px rgba(0, 0, 0, 0.04);
-    width: 100%;
-    height: 80px;
-    box-shadow: 0 1px 15px rgba(0, 0, 0, 0.04), 0 1px 6px rgba(0, 0, 0, 0.04);
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    background: #fff;
-    z-index: 100;
-}
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 .file-chooser {
@@ -234,6 +228,13 @@ a {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+@media print {
+    .search-bar, .info, .help, .controls, .file-chooser, .loading-indicator {
+        display: none !important;
+    }
+
+}
+
 .search-bar {
     padding: 10px;
     display: flex;
@@ -286,20 +287,24 @@ a {
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-@day-width : 15px;
-@day-height : 15px;
-
 .panel {
    margin: 10px;
    display: flex;
    flex-direction: column;
    align-items: center;
    overflow: hidden;
-}
 
-@row-12-month : calc(12*6*@day-width + 14*12px + 4*10px);
-@row-6-month : calc(6*6*@day-width + 14*6px + 4*10px);
-@row-3-month : calc(3*6*@day-width + 14*3px + 4*10px);
+   @media print {
+       & {
+           page-break-after: always;
+           margin: 0;
+       }
+       &.collapsed {
+           display: none;
+       }
+   }
+
+}
 
 .calendar-selection {
     overflow: hidden;
@@ -309,75 +314,93 @@ a {
     padding: 20px;
 }
 
-.calendar {
-    margin-left: auto;
-    margin-right: auto;
-    padding: 10px 10px 25px;
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    display: grid;
-    grid-template-columns: repeat(3, min-content);
-    @media (min-width: @row-6-month) {
-        grid-template-columns: repeat(6, min-content);
-    }
-    @media (min-width: @row-12-month) {
-        grid-template-columns: repeat(12, min-content);
-    }
-    grid-row-gap: 20px;
-    grid-column-gap: 12px;
+@day-width : 15px;
+@day-height : 15px;
+
+@media screen {
+    .calendar(calc(3*6*@day-width + 14*3px + 4*10px),
+              calc(6*6*@day-width + 14*6px + 4*10px),
+              calc(12*6*@day-width + 14*12px + 4*10px));
 }
 
-.month {
-    display: flex;
-    align-content: flex-start;
-    align-items: center;
-    flex-direction: column;
-    width: calc(6 * @day-width);
+@media print {
+    .calendar(0, 5.2in, 8.5in);
+}
 
-    .month-date { cursor: pointer; }
 
-    &.january   { grid-column-start: 1; grid-column-end: 2; };
-    &.february  { grid-column-start: 2; grid-column-end: 3 };
-    &.march     { grid-column-start: 3; grid-column-end: 4; };
-    &.april     { grid-column-start: 1; grid-column-end: 2; };
-    &.may       { grid-column-start: 2; grid-column-end: 3; };
-    &.june      { grid-column-start: 3; grid-column-end: 4; };
-    &.july      { grid-column-start: 1; grid-column-end: 2; };
-    &.august    { grid-column-start: 2; grid-column-end: 3; };
-    &.september { grid-column-start: 3; grid-column-end: 4; };
-    &.october   { grid-column-start: 1; grid-column-end: 2; };
-    &.november  { grid-column-start: 2; grid-column-end: 3; };
-    &.december  { grid-column-start: 3; grid-column-end: 4; };
+.calendar(@row-3-month, @row-6-month, @row-12-month) {
+    .calendar {
+        margin-left: auto;
+        margin-right: auto;
+        padding: 10px 10px 25px;
 
-    @media (min-width: @row-6-month) {
+        display: grid;
+        grid-template-columns: repeat(3, min-content);
+        @media (min-width: @row-6-month) {
+            grid-template-columns: repeat(6, min-content);
+        }
+        @media (min-width: @row-12-month) {
+            grid-template-columns: repeat(12, min-content);
+        }
+        grid-row-gap: 20px;
+        grid-column-gap: 12px;
+    }
+
+    .month {
+        display: flex;
+        align-content: flex-start;
+        align-items: center;
+        flex-direction: column;
+        width: calc(6 * @day-width);
+
+        .month-date { cursor: pointer; }
+
         &.january   { grid-column-start: 1; grid-column-end: 2; };
         &.february  { grid-column-start: 2; grid-column-end: 3 };
         &.march     { grid-column-start: 3; grid-column-end: 4; };
-        &.april     { grid-column-start: 4; grid-column-end: 5; };
-        &.may       { grid-column-start: 5; grid-column-end: 6; };
-        &.june      { grid-column-start: 6; grid-column-end: 7; };
+        &.april     { grid-column-start: 1; grid-column-end: 2; };
+        &.may       { grid-column-start: 2; grid-column-end: 3; };
+        &.june      { grid-column-start: 3; grid-column-end: 4; };
         &.july      { grid-column-start: 1; grid-column-end: 2; };
         &.august    { grid-column-start: 2; grid-column-end: 3; };
         &.september { grid-column-start: 3; grid-column-end: 4; };
-        &.october   { grid-column-start: 4; grid-column-end: 5; };
-        &.november  { grid-column-start: 5; grid-column-end: 6; };
-        &.december  { grid-column-start: 6; grid-column-end: 7; };
-    }
+        &.october   { grid-column-start: 1; grid-column-end: 2; };
+        &.november  { grid-column-start: 2; grid-column-end: 3; };
+        &.december  { grid-column-start: 3; grid-column-end: 4; };
 
-    @media (min-width: @row-12-month) {
-        &.january   { grid-column-start: 1; grid-column-end: 2; };
-        &.february  { grid-column-start: 2; grid-column-end: 3 };
-        &.march     { grid-column-start: 3; grid-column-end: 4; };
-        &.april     { grid-column-start: 4; grid-column-end: 5; };
-        &.may       { grid-column-start: 5; grid-column-end: 6; };
-        &.june      { grid-column-start: 6; grid-column-end: 7; };
-        &.july      { grid-column-start: 7; grid-column-end: 8; };
-        &.august    { grid-column-start: 8; grid-column-end: 9; };
-        &.september { grid-column-start: 9; grid-column-end: 10; };
-        &.october   { grid-column-start: 10; grid-column-end: 11; };
-        &.november  { grid-column-start: 11; grid-column-end: 12; };
-        &.december  { grid-column-start: 12; grid-column-end: 13; };
-    }
+        @media (min-width: @row-6-month) {
+            &.january   { grid-column-start: 1; grid-column-end: 2; };
+            &.february  { grid-column-start: 2; grid-column-end: 3 };
+            &.march     { grid-column-start: 3; grid-column-end: 4; };
+            &.april     { grid-column-start: 4; grid-column-end: 5; };
+            &.may       { grid-column-start: 5; grid-column-end: 6; };
+            &.june      { grid-column-start: 6; grid-column-end: 7; };
+            &.july      { grid-column-start: 1; grid-column-end: 2; };
+            &.august    { grid-column-start: 2; grid-column-end: 3; };
+            &.september { grid-column-start: 3; grid-column-end: 4; };
+            &.october   { grid-column-start: 4; grid-column-end: 5; };
+            &.november  { grid-column-start: 5; grid-column-end: 6; };
+            &.december  { grid-column-start: 6; grid-column-end: 7; };
+        }
 
+        @media (min-width: @row-12-month) {
+            &.january   { grid-column-start: 1; grid-column-end: 2; };
+            &.february  { grid-column-start: 2; grid-column-end: 3 };
+            &.march     { grid-column-start: 3; grid-column-end: 4; };
+            &.april     { grid-column-start: 4; grid-column-end: 5; };
+            &.may       { grid-column-start: 5; grid-column-end: 6; };
+            &.june      { grid-column-start: 6; grid-column-end: 7; };
+            &.july      { grid-column-start: 7; grid-column-end: 8; };
+            &.august    { grid-column-start: 8; grid-column-end: 9; };
+            &.september { grid-column-start: 9; grid-column-end: 10; };
+            &.october   { grid-column-start: 10; grid-column-end: 11; };
+            &.november  { grid-column-start: 11; grid-column-end: 12; };
+            &.december  { grid-column-start: 12; grid-column-end: 13; };
+        }
+
+    }
 }
 
 .weeks {
@@ -414,10 +437,8 @@ a {
     width: @day-width;
     height: @day-height;
 
-    // &.selected {
-    //     border: 3px solid orange;
-    //     box-sizing: border-box;
-    // }
+    // so that background is printed
+    -webkit-print-color-adjust: exact !important;
 
     &.emph-0 {background-color: none;}
     &.emph-1 {background-color: rgba(0,255,100, .1);}
@@ -478,43 +499,29 @@ a {
         margin-right: 1ex;
     }
 
-    .clock-list {
-        margin-bottom: 10px;
-        overflow: hidden;
-        display: grid;
+    table.clock-list {
+        margin: 10px;
+        table-layout: fixed;
+        width: calc(100% - 20px);
 
-        grid-template-columns: minmax(250px, min-content) minmax(6ex, min-content) minmax(20ex, min-content) min-content;
-
-        align-items: flex-end;
-        grid-column-gap: 6px;
-
-        * {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            height: 1.2em;
+        @media (max-width: 860px) {
+            .tags {display: none;}
         }
 
-        .duration {color: #666;}
+        tr { overflow:hidden; width: 100%;}
+        td {overflow: hidden; text-overflow: ellipsis; height: 1.2em;}
+        .duration {width: 4em; color: #666;}
         .path {color: #666;}
         .name {}
         .tags {}
         .name.highlighted, .path.highlighted, .duration.highlighted { color: salmon; }
-
-        @media (max-width: 860px) {
-            grid-template-columns: minmax(250px, min-content) minmax(6ex, min-content) minmax(20ex, min-content);
-            .tags {display: none;}
-        }
-
     }
-
 
 }
 
 .by-minute {
     height: 100%;
-    .activities-by-minute-canvas {
-
-    }
+    .activities-by-minute-canvas {}
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -661,11 +668,16 @@ a {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 .elev-2 {
-    box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2),
-                0px 2px 2px 0px rgba(0, 0, 0, 0.14),
-                0px 1px 5px 0px rgba(0,0,0,.12);
-}
+    @media screen {
+        box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2),
+                    0px 2px 2px 0px rgba(0, 0, 0, 0.14),
+                    0px 1px 5px 0px rgba(0,0,0,.12);
 
+    }
+    @media print {
+        .material-icons { display: none; }
+    }
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

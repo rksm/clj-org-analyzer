@@ -8,6 +8,11 @@ body {
   margin: 0!important;
   font-family: Roboto, sans-serif;
 }
+@media print {
+  body {
+    overflow: visible;
+  }
+}
 a {
   color: inherit !important;
 }
@@ -17,6 +22,11 @@ a {
   display: flex;
   flex-direction: column;
   font-size: small;
+}
+@media print {
+  .app {
+    display: block;
+  }
 }
 .noselect {
   -webkit-touch-callout: none;
@@ -30,17 +40,6 @@ a {
   pointer-events: none;
   position: absolute;
   background-color: rgba(100, 100, 100, 0.3);
-}
-.app-header {
-  width: 100%;
-  height: 80px;
-  box-shadow: 0 1px 15px rgba(0, 0, 0, 0.04), 0 1px 6px rgba(0, 0, 0, 0.04);
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  background: #fff;
-  z-index: 100;
 }
 .file-chooser {
   display: flex;
@@ -258,6 +257,16 @@ a {
 .help .content {
   padding: 0 30px;
 }
+@media print {
+  .search-bar,
+  .info,
+  .help,
+  .controls,
+  .file-chooser,
+  .loading-indicator {
+    display: none !important;
+  }
+}
 .search-bar {
   padding: 10px;
   display: flex;
@@ -314,6 +323,15 @@ a {
   align-items: center;
   overflow: hidden;
 }
+@media print {
+  .panel {
+    page-break-after: always;
+    margin: 0;
+  }
+  .panel.collapsed {
+    display: none;
+  }
+}
 .calendar-selection {
   overflow: hidden;
   position: relative;
@@ -321,84 +339,86 @@ a {
   display: flex;
   padding: 20px;
 }
-.calendar {
-  margin-left: auto;
-  margin-right: auto;
-  padding: 10px 10px 25px;
-  display: grid;
-  grid-template-columns: repeat(3, min-content);
-  grid-row-gap: 20px;
-  grid-column-gap: 12px;
+@media screen {
+  .calendar {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px 10px 25px;
+    display: grid;
+    grid-template-columns: repeat(3, min-content);
+    grid-row-gap: 20px;
+    grid-column-gap: 12px;
+  }
+  .month {
+    display: flex;
+    align-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: calc(6 * 15px);
+  }
+  .month .month-date {
+    cursor: pointer;
+  }
+  .month.january {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.february {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.march {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.april {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.may {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.june {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.july {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.august {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.september {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.october {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.november {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.december {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
 }
-@media (min-width: calc(6*6*15px + 14*6px + 4*10px)) {
+@media screen and (min-width: calc(6*6*15px + 14*6px + 4*10px)) {
   .calendar {
     grid-template-columns: repeat(6, min-content);
   }
 }
-@media (min-width: calc(12*6*15px + 14*12px + 4*10px)) {
+@media screen and (min-width: calc(12*6*15px + 14*12px + 4*10px)) {
   .calendar {
     grid-template-columns: repeat(12, min-content);
   }
 }
-.month {
-  display: flex;
-  align-content: flex-start;
-  align-items: center;
-  flex-direction: column;
-  width: calc(6 * 15px);
-}
-.month .month-date {
-  cursor: pointer;
-}
-.month.january {
-  grid-column-start: 1;
-  grid-column-end: 2;
-}
-.month.february {
-  grid-column-start: 2;
-  grid-column-end: 3;
-}
-.month.march {
-  grid-column-start: 3;
-  grid-column-end: 4;
-}
-.month.april {
-  grid-column-start: 1;
-  grid-column-end: 2;
-}
-.month.may {
-  grid-column-start: 2;
-  grid-column-end: 3;
-}
-.month.june {
-  grid-column-start: 3;
-  grid-column-end: 4;
-}
-.month.july {
-  grid-column-start: 1;
-  grid-column-end: 2;
-}
-.month.august {
-  grid-column-start: 2;
-  grid-column-end: 3;
-}
-.month.september {
-  grid-column-start: 3;
-  grid-column-end: 4;
-}
-.month.october {
-  grid-column-start: 1;
-  grid-column-end: 2;
-}
-.month.november {
-  grid-column-start: 2;
-  grid-column-end: 3;
-}
-.month.december {
-  grid-column-start: 3;
-  grid-column-end: 4;
-}
-@media (min-width: calc(6*6*15px + 14*6px + 4*10px)) {
+@media screen and (min-width: calc(6*6*15px + 14*6px + 4*10px)) {
   .month.january {
     grid-column-start: 1;
     grid-column-end: 2;
@@ -448,7 +468,186 @@ a {
     grid-column-end: 7;
   }
 }
-@media (min-width: calc(12*6*15px + 14*12px + 4*10px)) {
+@media screen and (min-width: calc(12*6*15px + 14*12px + 4*10px)) {
+  .month.january {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.february {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.march {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.april {
+    grid-column-start: 4;
+    grid-column-end: 5;
+  }
+  .month.may {
+    grid-column-start: 5;
+    grid-column-end: 6;
+  }
+  .month.june {
+    grid-column-start: 6;
+    grid-column-end: 7;
+  }
+  .month.july {
+    grid-column-start: 7;
+    grid-column-end: 8;
+  }
+  .month.august {
+    grid-column-start: 8;
+    grid-column-end: 9;
+  }
+  .month.september {
+    grid-column-start: 9;
+    grid-column-end: 10;
+  }
+  .month.october {
+    grid-column-start: 10;
+    grid-column-end: 11;
+  }
+  .month.november {
+    grid-column-start: 11;
+    grid-column-end: 12;
+  }
+  .month.december {
+    grid-column-start: 12;
+    grid-column-end: 13;
+  }
+}
+@media print {
+  .calendar {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px 10px 25px;
+    display: grid;
+    grid-template-columns: repeat(3, min-content);
+    grid-row-gap: 20px;
+    grid-column-gap: 12px;
+  }
+  .month {
+    display: flex;
+    align-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    width: calc(6 * 15px);
+  }
+  .month .month-date {
+    cursor: pointer;
+  }
+  .month.january {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.february {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.march {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.april {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.may {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.june {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.july {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.august {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.september {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.october {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.november {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.december {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+}
+@media print and (min-width: 5.2in) {
+  .calendar {
+    grid-template-columns: repeat(6, min-content);
+  }
+}
+@media print and (min-width: 8.5in) {
+  .calendar {
+    grid-template-columns: repeat(12, min-content);
+  }
+}
+@media print and (min-width: 5.2in) {
+  .month.january {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.february {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.march {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.april {
+    grid-column-start: 4;
+    grid-column-end: 5;
+  }
+  .month.may {
+    grid-column-start: 5;
+    grid-column-end: 6;
+  }
+  .month.june {
+    grid-column-start: 6;
+    grid-column-end: 7;
+  }
+  .month.july {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+  .month.august {
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  .month.september {
+    grid-column-start: 3;
+    grid-column-end: 4;
+  }
+  .month.october {
+    grid-column-start: 4;
+    grid-column-end: 5;
+  }
+  .month.november {
+    grid-column-start: 5;
+    grid-column-end: 6;
+  }
+  .month.december {
+    grid-column-start: 6;
+    grid-column-end: 7;
+  }
+}
+@media print and (min-width: 8.5in) {
   .month.january {
     grid-column-start: 1;
     grid-column-end: 2;
@@ -526,6 +725,7 @@ a {
   outline: 1px solid lightgray;
   width: 15px;
   height: 15px;
+  -webkit-print-color-adjust: exact !important;
 }
 .day.emph-0 {
   background-color: none;
@@ -628,37 +828,36 @@ a {
 .day-detail .duration {
   margin-right: 1ex;
 }
-.day-detail .clock-list {
-  margin-bottom: 10px;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: minmax(250px, min-content) minmax(6ex, min-content) minmax(20ex, min-content) min-content;
-  align-items: flex-end;
-  grid-column-gap: 6px;
+.day-detail table.clock-list {
+  margin: 10px;
+  table-layout: fixed;
+  width: calc(100% - 20px);
 }
-.day-detail .clock-list * {
+@media (max-width: 860px) {
+  .day-detail table.clock-list .tags {
+    display: none;
+  }
+}
+.day-detail table.clock-list tr {
+  overflow: hidden;
+  width: 100%;
+}
+.day-detail table.clock-list td {
   overflow: hidden;
   text-overflow: ellipsis;
   height: 1.2em;
 }
-.day-detail .clock-list .duration {
+.day-detail table.clock-list .duration {
+  width: 4em;
   color: #666;
 }
-.day-detail .clock-list .path {
+.day-detail table.clock-list .path {
   color: #666;
 }
-.day-detail .clock-list .name.highlighted,
-.day-detail .clock-list .path.highlighted,
-.day-detail .clock-list .duration.highlighted {
+.day-detail table.clock-list .name.highlighted,
+.day-detail table.clock-list .path.highlighted,
+.day-detail table.clock-list .duration.highlighted {
   color: salmon;
-}
-@media (max-width: 860px) {
-  .day-detail .clock-list {
-    grid-template-columns: minmax(250px, min-content) minmax(6ex, min-content) minmax(20ex, min-content);
-  }
-  .day-detail .clock-list .tags {
-    display: none;
-  }
 }
 .by-minute {
   height: 100%;
@@ -780,8 +979,15 @@ a {
   transition: opacity 15ms linear, background-color 15ms linear;
   z-index: 1;
 }
-.elev-2 {
-  box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+@media screen {
+  .elev-2 {
+    box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+  }
+}
+@media print {
+  .elev-2 .material-icons {
+    display: none;
+  }
 }
 .stalker {
   position: absolute;

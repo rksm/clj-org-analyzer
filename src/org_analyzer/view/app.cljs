@@ -47,7 +47,8 @@
            :search-input ""
            :search-focused? false
            :loading? true
-           :show-help? false})))
+           :show-help? false
+           :print? false})))
 
 (defn empty-dom-state []
   (atom {:sel-rect (atom sel/empty-rectangle-selection-state)
@@ -102,6 +103,7 @@
               {:keys [clocks info]} (reader/read-string (:body response))]
           (println "got clocks")
           (let [from (:start (first clocks))
+                to (:end (last clocks))
                 response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
                 calendar (into (sorted-map-by <) (map (juxt :date identity) (reader/read-string (:body response))))]
             (println "got calendar")
@@ -149,12 +151,18 @@
 
           (on-window-resize [_evt] nil)
 
-          (on-exit [_evt] (send-kill-server-request!) nil)]
+          (on-exit [_evt] (send-kill-server-request!) nil)
+
+          (on-before-print [_evt] (swap! app-state assoc :print? true))
+          (on-after-print [_evt] (swap! app-state assoc :print? false))]
 
     (set! (.-onbeforeunload js/window) on-exit)
     (.addEventListener js/document "keydown" on-key-down-global)
     (.addEventListener js/document "keyup" on-key-up-global)
     (.addEventListener js/window "resize" on-window-resize)
+    (.addEventListener js/window "beforeprint" on-before-print)
+    (.addEventListener js/window "afterprint" on-after-print)
+
 
     (println "global event handlers registered")
 
@@ -172,8 +180,8 @@
      :title "select org files"}
     [:i.material-icons "insert_drive_file"]]
    [:button.material-button
-    {:on-click #(println "print")
-     :title "export to pdf"}
+    {:on-click #(do (swap! app-state assoc :print? true) (js/setTimeout (fn [] (.print js/window)) 100))
+     :title "print / save as pdf"}
     [:i.material-icons "print"]]
    [:button.material-button
     {:on-click #(swap! app-state assoc :show-info? true)
@@ -186,7 +194,7 @@
 
 (defn collapsible* [title _key collapsed-atom comp-fn]
   (let [collapsed? @collapsed-atom]
-    [:div.panel.elev-2
+    [:div.panel.elev-2 {:class [(str "panel-" (s/lower-case title)) (if collapsed? "collapsed" "")]}
      [:button.material-button
       {:on-click #(reset! collapsed-atom (not collapsed?))}
       title
@@ -234,7 +242,7 @@
 
           highlighted-entries-cursor (r/cursor app-state [:highlighted-entries])]
 
-      [:div.app
+      [:div.app {:class (if (or true(:print? @app-state)) "print" "")}
 
        (when (:loading? @app-state)
          [:div.loading-indicator
@@ -284,7 +292,7 @@
                                       clock-minute-intervals-by-day-filtered
                                       highlighted-entries-cursor
                                       tooltip
-                                      {:width (- js/document.documentElement.clientWidth 60)}]))]))))
+                                      {:width (- js/document.documentElement.clientWidth (if (:print? @app-state) 160 60))}]))]))))
 
        ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
        ;; clock

@@ -77,6 +77,7 @@
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 (comment
+  (require 'sc.api)
   (sc.api.logging/register-cs-logger :sc.api.logging/log-spy-cs (fn [cs] nil))
 
   (restart-cljs-server)

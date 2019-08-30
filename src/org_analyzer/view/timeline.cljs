@@ -27,14 +27,14 @@
   (rg/with-let [hovered-over-clock (ratom nil)]
     (let [n-days (count clock-minute-intervals-by-day)
           heading-h 22
-          padding-left (if (> n-days 28) 10 35)
+          padding-left (if (> n-days 31) 10 35)
           padding-right 10
           w (- width padding-left padding-right)
           w-ea (/ w (* 60 24))
           h-ea (condp > n-days
-                 10 14
-                 20 12
-                 28 11
+                 10 15
+                 20 14
+                 31 12
                  100 8
                  4)
           height (-> h-ea
@@ -114,8 +114,6 @@
                    (doseq [h (range 25)
                            :let [x (+ padding-left (* h 60 w-ea))]]
                      (.fillText ctx (if (= h 24) "0" (str h)) x 2))
-                   (set! (.-strokeStyle ctx) "#AAA")
-                   (.strokeRect ctx 0 0 width height)
 
                    ;; add short dates to the left
                    (when (>= h-ea 10)

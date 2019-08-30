@@ -125,6 +125,18 @@
                        #(week-view dom-state event-handlers % calendar-state highlighted-days)
                        (util/weeks days-in-month)))]])
 
+
+(defn by-month-excluding-empty-start-and-end-month
+  "Return the by-month sorted dates map without leading and trailing month for which no clock exists."
+  [by-month clocks-by-day]
+  (let [non-empty-days (set (keys (filter (comp not-empty val) clocks-by-day)))
+        not-empty-month? (fn [month-string] (not-any? non-empty-days (map :date (get by-month month-string))))
+        month-strings (keys by-month)
+        empty-start-month (take-while not-empty-month? month-strings)
+        empty-end-month (take-while not-empty-month? (reverse month-strings))]
+    (into (sorted-map-by <)
+          (select-keys by-month (difference month-strings empty-start-month empty-end-month)))))
+
 (defn calendar-view
   [app-state dom-state event-handlers]
   (let [clocks-by-day (cursor app-state [:clocks-by-day-filtered])
@@ -139,12 +151,16 @@
         selecting? (cursor app-state [:selecting?])
         selected-days (cursor app-state [:selected-days])
         selected-days-preview (cursor app-state [:selected-days-preview])
-        by-month (into (sorted-map) (->> @app-state
-                                         :calendar
-                                         vals
-                                         flatten
-                                         (group-by
-                                          #(replace (:date %) #"^([0-9]+-[0-9]+).*" "$1"))))
+        by-month (into (sorted-map-by <) (->> @app-state
+                                              :calendar
+                                              vals
+                                              flatten
+                                              (group-by
+                                               #(replace (:date %) #"^([0-9]+-[0-9]+).*" "$1"))))
+        by-month (if (or (not-empty (:search-input @app-state))
+                         (:print? @app-state))
+                   (by-month-excluding-empty-start-and-end-month by-month @clocks-by-day)
+                   by-month)
 
         ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         highlighted-days (reaction (set

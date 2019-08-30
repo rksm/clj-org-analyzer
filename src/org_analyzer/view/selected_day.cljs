@@ -29,26 +29,27 @@
 
 (defn clock-list [clocks-with-id-and-duration highlighted-entries]
   (let [current-highlighted-entries @highlighted-entries]
-   [:div.clock-list
-    (apply concat
-           (doall
-            (for [{:keys [location duration] [{:keys [name tags path] :as clock}] :clocks} clocks-with-id-and-duration
-                  :let [highlighted? (current-highlighted-entries location)
-                        on-mouse-over #(reset! highlighted-entries #{location})
-                        on-mouse-out #(reset! highlighted-entries #{})
-                        attrs {:on-mouse-over on-mouse-over
-                               :on-mouse-out on-mouse-out
-                               :class (if highlighted? "highlighted" "")}]]
-              [^{:key (str location "-name")}     [:span.name          attrs (util/parse-all-org-links name)]
-               ^{:key (str location "-duration")} [:span.duration      attrs (util/print-duration-mins duration)]
-               ^{:key (str location "-path")}     [:span.path          attrs (->> path
-                                                                                  (map (comp util/parse-all-org-links s/trim))
-                                                                                  (interpose " > "))]
-               ^{:key (str location "-tags")}     [:span.tags.md-chips attrs (for [tag tags]
-                                                                               ^{:key (str location "-" tag)}
-                                                                               [:span.tag.md-chip.md-chip-raised
-                                                                                {:on-click #(dom/select-element (.-target %))}
-                                                                                tag])]])))]))
+    [:table.clock-list
+     [:tbody
+      (doall
+       (for [{:keys [location duration] [{:keys [name tags path] :as clock}] :clocks} clocks-with-id-and-duration
+             :let [highlighted? (current-highlighted-entries location)
+                   on-mouse-over #(reset! highlighted-entries #{location})
+                   on-mouse-out #(reset! highlighted-entries #{})
+                   attrs {:on-mouse-over on-mouse-over
+                          :on-mouse-out on-mouse-out
+                          :class (if highlighted? "highlighted" "")}]]
+         ^{:key (str location "-name")} [:tr
+                                         [:td.name          attrs (util/parse-all-org-links name)]
+                                         [:td.duration      attrs (util/print-duration-mins duration)]
+                                         [:td.path          attrs (->> path
+                                                                       (map (comp util/parse-all-org-links s/trim))
+                                                                       (interpose " > "))]
+                                         [:td.tags.md-chips attrs (for [tag tags]
+                                                                    ^{:key (str location "-" tag)}
+                                                                    [:span.tag.md-chip.md-chip-raised
+                                                                     {:on-click #(dom/select-element (.-target %))}
+                                                                     tag])]]))]]))
 
 (defn selected-days-view
   [days clocks-by-day calendar highlighted-entries]
