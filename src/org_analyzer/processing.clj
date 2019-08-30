@@ -117,8 +117,10 @@
                       :prop file-prop-name
                       :value prop-value})))
 
-(defn read-file-props [file-name parsed]
-  (let [props (->> parsed
+(defn read-file-props [file file-name parsed]
+  (let [path (when (and file (instance? java.io.File file))
+               (.getCanonicalPath file))
+        props (->> parsed
                    (take-while #(not (= :section (:type %))))
                    (filter #(= (:type %) :file-prop)))
         tags (->> props
@@ -127,17 +129,17 @@
                                 (s/split (:value %))
                                 (keep not-empty))))
                   (apply concat))]
-    {:type :file :name file-name :depth 0 :index 0 :props props :tags tags}))
+    {:type :file :path path :name file-name :depth 0 :index 0 :props props :tags tags}))
 
 
 (defn read-sections
   "Takes the parsed lines filters out sections and clocks and adds parent
   information to them. Parent relationship is definend through an index to a
   previous item."
-  [file-name parsed]
+  [file file-name parsed]
   (loop [[current & rest] parsed
          index 0
-         result (list (read-file-props file-name parsed))
+         result (list (read-file-props file file-name parsed))
          parent-cache [0]]
     (if-not current
       (reverse result)
@@ -183,5 +185,5 @@
   ([name org-file]
    (let [lines (p ::parse-org-file-lines (line-seq (io/reader org-file)))
          parsed (p ::parse-org-file-read-org-lines (read-org-lines lines))
-         org-data (p ::parse-org-file-read-sections (read-sections name parsed))]
+         org-data (p ::parse-org-file-read-sections (read-sections org-file name parsed))]
      org-data)))

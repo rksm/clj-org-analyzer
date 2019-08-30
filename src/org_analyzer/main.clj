@@ -28,9 +28,10 @@ For more info see https://github.com/rksm/cljs-org-analyzer.")
          [arg & rest] args]
     (case arg
       nil opts
-      ("-p" "--port") (let [[val & rest] rest] (recur (assoc opts :port (Integer/parseInt val)) rest))
-      "--host"        (let [[val & rest] rest] (recur (assoc opts :host val) rest))
-      "--dontopen"    (recur (assoc opts :openbrowser? false) rest)
+      ("-p" "--port")        (let [[val & rest] rest] (recur (assoc opts :port (Integer/parseInt val)) rest))
+      "--host"               (let [[val & rest] rest] (recur (assoc opts :host val) rest))
+      "--dontopen"           (recur (assoc opts :openbrowser? false) rest)
+      "--started-from-emacs" (recur (assoc opts :started-from-emacs? true) rest)
       (recur (update opts :files conj arg) rest))))
 
 (defonce app-state (atom {:opts {:include-archives? true
@@ -38,8 +39,9 @@ For more info see https://github.com/rksm/cljs-org-analyzer.")
                                  :files []
                                  :host "localhost"
                                  :port 8090
-                                 :kill-when-client-disconnects? true
-                                 :kill-remorse-period 5000}
+                                 :kill-when-client-disconnects? false
+                                 :kill-remorse-period 5000
+                                 :started-from-emacs? false}
                           :server nil
                           :org-files-and-dirs nil
                           :am-i-about-to-kill-myself? false}))

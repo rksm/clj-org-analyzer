@@ -6,7 +6,7 @@
 ;; URL: https://github.com/rksm/clj-org-analyzer
 ;; Keywords: calendar
 ;; Version: 0.3.5
-;; Package-Requires: ((emacs "24"))
+;; Package-Requires: ((emacs "26"))
 
 ;; Permission is hereby granted, free of charge, to any person obtaining a copy
 ;; of this software and associated documentation files (the "Software"), to
@@ -110,6 +110,7 @@ Argument ORG-DIR is where the org-files are located."
                                         jar-file
                                         "--port"
                                         (format "%d" org-analyzer-http-port)
+                                        "--started-from-emacs"
 				        org-dir))
                      (error
                       (concat "Can't start org-analyzer (%s: %s)"
@@ -129,12 +130,32 @@ Argument OUTPUT is the process output received."
         (goto-char (point-max))
         (insert output)
         (when (search-backward "Address already in use" nil t)
-          (pop-to-buffer buffer))))))
+          (pop-to-buffer buffer))
+        (when-let ((_ (search-backward "open-org-file:" nil t))
+                   (path-and-heading (org-analyzer-read-open-file-command)))
+          (org-analyzer-open-org-file-and-select
+           (car path-and-heading)
+           (cadr path-and-heading))
+          (with-current-buffer buffer (erase-buffer)))))))
+
+(defun org-analyzer-read-open-file-command ()
+  "To be called from the process buffer.
+Expects a string like open-or-file: \"file.org\" \"heading name\"
+at point."
+  (prog1
+      (condition-case err
+          (when-let* ((m (set-marker (make-marker) (point)))
+                      (_ (read m)) ;; skip "open-org-file:"
+                      (path (read m))
+                      (heading (read m)))
+            (list path heading))
+        (error nil))))
 
 ;;;###autoload
 (defun org-analyzer-start ()
   "Start org-analyzer."
   (interactive)
+  (org-analyzer-stop)
   (org-analyzer-start-process (org-analyzer-effective-org-dir)))
 
 ;; (pop-to-buffer org-analyzer-process-buffer)
@@ -144,6 +165,43 @@ Argument OUTPUT is the process output received."
   (interactive)
   (org-analyzer-cleanup-process-state))
 
+(defun org-analyzer-possible-windows-paths (path)
+  "This convert PATH into multiple possible paths on Windows.
+In particular, this deals with WSL paths which are unix-y but
+point into Windows and vice versa. This is useful when running
+Emacs in WSL but org-analyzer in Windows proper — or vice versa."
+  (let ((unix-path (replace-regexp-in-string (regexp-quote "\\") "/" path t t)))
+    (remove nil
+            (list
+             path
+             (when-let* ((match (string-match "/mnt/\\([[:alpha:]]\\)/\\(.*\\)" unix-path))
+                         (drive (match-string 1 unix-path))
+                         (path (match-string 2 unix-path)))
+               (format "%s:/%s" drive path))
+             (when-let* ((match (string-match "\\([[:alpha:]]\\):/\\(.*\\)" unix-path))
+                         (drive (match-string 1 unix-path))
+                         (path (match-string 2 unix-path)))
+               (format "/mnt/%s/%s" drive path))))))
+
+(defun org-analyzer-open-org-file (path)
+  "Opens an org-file at PATH."
+  (let ((possible-file-paths (if (string-equal system-type "windows-nt")
+                                 (org-analyzer-possible-windows-paths path)
+                               (list path))))
+    (loop for p in possible-file-paths
+          when (file-exists-p p)
+          do (let ((buffer (or (find-buffer-visiting p)
+                               (find-file-noselect p))))
+               (return buffer)))))
+
+(defun org-analyzer-open-org-file-and-select (path heading)
+  "Opens the org file at PATH, try to find the section HEADING, and reveals it."
+  (when-let* ((b (org-analyzer-open-org-file path))
+              (p (org-find-exact-headline-in-buffer heading b)))
+    (pop-to-buffer b)
+    (x-focus-frame nil)
+    (goto-char p)
+    (org-reveal)))
 
 (provide 'org-analyzer)
 ;;; org-analyzer.el ends here

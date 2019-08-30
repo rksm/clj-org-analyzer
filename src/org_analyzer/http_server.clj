@@ -69,13 +69,15 @@
       time/instant->sql-timestamp))
 
 (defn clock-data [{:keys [start end duration sections tags] :as clock}]
-  (let [[name & path] (mapv :name sections)
+  (let [{org-file :path} (last sections)
+        [name & path] (mapv :name sections)
         path (vec (reverse path))]
     {:start (time/format "yyyy-MM-dd HH:mm" start)
      :end (and (not (nil? end)) (time/format "yyyy-MM-dd HH:mm" end))
      :duration (and (not (nil? duration)) (print-duration duration))
      :path path
      :name name
+     :org-file org-file
      :location (->> name (conj path) (s/join "/"))
      :tags tags}))
 
@@ -95,7 +97,6 @@
     {:info {:clock-count clock-count
             :org-files (map file-path org-files)}
      :clocks (map clock-data clocks)}))
-
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;; FIXME 2019-08-09
@@ -175,6 +176,22 @@
                     (parse-timestamp from)
                     (parse-timestamp to)))))
 
+(defn open-org-file-system-default [file heading]
+  (->> file
+       io/file
+       (.open (java.awt.Desktop/getDesktop))))
+
+(defn open-org-file-in-emacs [file heading]
+  ;; NOTE: emacs expects an output string starting with "open-org-file"
+  (println "open-org-file:" (pr-str file) (pr-str heading)))
+
+(defn open-org-file [app-state file heading]
+  (println file heading)
+  (if (-> @app-state :opts :started-from-emacs?)
+    (open-org-file-in-emacs file heading)
+    (open-org-file-system-default file heading)))
+
+
 (defn make-http-app [app-state]
   (let [main-routes
         (routes
@@ -186,6 +203,7 @@
          (POST "/cancel-kill" [] (stop-kill-countdown! app-state))
          (GET "/clocks" [from to] (http-get-clocks app-state from to))
          (GET "/calendar" [from to] (http-get-calender app-state from to))
+         (POST "/open-org-file" [file heading] (open-org-file app-state (read-string file) (read-string heading)) "OK")
          (route/resources "/" {:root "public"})
          (route/not-found "NOTFOUND "))]
     (-> (handler/api main-routes)

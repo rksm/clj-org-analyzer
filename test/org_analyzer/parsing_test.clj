@@ -64,60 +64,61 @@ CREATED: [2018-12-15 Sa 12:05]
    :END:
 " )
 
-(def expected-org-data '({:type :file,
+(def expected-org-data '({:type :file
+                          :path nil
                           :name "pseudo.org"
-                          :depth 0,
-                          :index 0,
-                          :props ({:line 1, :type :file-prop, :prop "FILETAGS", :value ":pseudo:"}),
+                          :depth 0
+                          :index 0
+                          :props ({:line 1 :type :file-prop :prop "FILETAGS" :value ":pseudo:"})
                           :tags ("pseudo")}
-                         {:line 3,
-                          :type :section,
-                          :depth 1,
-                          :name "section 1",
-                          :tags ("section1tag"),
-                          :parent 0,
+                         {:line 3
+                          :type :section
+                          :depth 1
+                          :name "section 1"
+                          :tags ("section1tag")
+                          :parent 0
                           :index 1}
-                         {:line 4, :type :section, :depth 2, :name "section 1.1" :parent 1, :index 2}
-                         {:line 6, :type :section, :depth 2, :name "section 1.2" :parent 1, :index 3}
-                         {:line 8,
-                          :type :clock,
-                          :text "CLOCK: [2018-02-02 Fri 19:55]--[2018-02-02 Fri 20:20] =>  0:25",
-                          :parent 3,
+                         {:line 4 :type :section :depth 2 :name "section 1.1" :parent 1 :index 2}
+                         {:line 6 :type :section :depth 2 :name "section 1.2" :parent 1 :index 3}
+                         {:line 8
+                          :type :clock
+                          :text "CLOCK: [2018-02-02 Fri 19:55]--[2018-02-02 Fri 20:20] =>  0:25"
+                          :parent 3
                           :index 4}
-                         {:line 9,
-                          :type :metadata,
-                          :text "CREATED: [2018-02-01 Thu 03:12]",
-                          :parent 3,
+                         {:line 9
+                          :type :metadata
+                          :text "CREATED: [2018-02-01 Thu 03:12]"
+                          :parent 3
                           :index 5}
-                         {:line 13,
-                          :type :section,
-                          :depth 1,
-                          :name "section 2",
-                          :tags ("tag2_1" "tag2_2"),
-                          :parent 0,
+                         {:line 13
+                          :type :section
+                          :depth 1
+                          :name "section 2"
+                          :tags ("tag2_1" "tag2_2")
+                          :parent 0
                           :index 6}
-                         {:line 15,
-                          :type :metadata,
-                          :text "CREATED: [2018-12-15 Sa 12:05]",
-                          :parent 6,
+                         {:line 15
+                          :type :metadata
+                          :text "CREATED: [2018-12-15 Sa 12:05]"
+                          :parent 6
                           :index 7}
-                         {:line 17,
-                          :type :section,
-                          :depth 2,
-                          :keyword "TODO",
-                          :name "section 2.1",
-                          :tags ("section21tag"),
-                          :parent 6,
+                         {:line 17
+                          :type :section
+                          :depth 2
+                          :keyword "TODO"
+                          :name "section 2.1"
+                          :tags ("section21tag")
+                          :parent 6
                           :index 8}
-                         {:line 19,
-                          :type :clock,
-                          :text "CLOCK: [2018-02-20 Tue 14:36]--[2018-02-20 Tue 15:00] =>  0:24",
-                          :parent 8,
+                         {:line 19
+                          :type :clock
+                          :text "CLOCK: [2018-02-20 Tue 14:36]--[2018-02-20 Tue 15:00] =>  0:24"
+                          :parent 8
                           :index 9}
-                         {:line 20,
-                          :type :clock,
-                          :text "CLOCK: [2018-02-19 Mon 18:20]--[2018-02-19 Mon 18:58] =>  0:38",
-                          :parent 8,
+                         {:line 20
+                          :type :clock
+                          :text "CLOCK: [2018-02-19 Mon 18:20]--[2018-02-19 Mon 18:58] =>  0:38"
+                          :parent 8
                           :index 10}))
 
 
@@ -176,7 +177,7 @@ CREATED: [2018-12-15 Sa 12:05]
 *** four below A
 this should not show the elements from BBBB as children
 * B"
-        expected [{:tags '() :index 0 :type :file :name "pseudo.org" :depth 0 :props '()}
+        expected [{:tags '() :index 0 :type :file :path nil :name "pseudo.org" :depth 0 :props '()}
                   {:index 1 :parent 0 :type :section :line 1 :depth 1 :name "A"}
                   {:index 2 :parent 1 :type :section :line 2 :depth 3 :name "four below A"}
                   {:index 3 :parent 0 :type :section :line 4 :depth 1 :name "B"}]
