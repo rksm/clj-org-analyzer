@@ -249,48 +249,49 @@
 
           highlighted-entries-cursor (r/cursor app-state [:highlighted-entries])]
 
-      [:div.app {:class (if (or true(:print? @app-state)) "print" "")}
+      (r/with-let [tooltip (ratom nil)]
 
-       (when (:loading? @app-state)
-         [:div.loading-indicator
-          [:div.loading-spinner
-           [:div] [:div] [:div] [:div]
-           [:div] [:div] [:div] [:div]
-           [:div] [:div] [:div] [:div]]])
+        [:div.app {:class (if (or true(:print? @app-state)) "print" "")}
 
-       (when (:show-help? @app-state)
-         [help-view/help-view
-          #(swap! app-state assoc :show-help? false)])
+         (when (:loading? @app-state)
+           [:div.loading-indicator
+            [:div.loading-spinner
+             [:div] [:div] [:div] [:div]
+             [:div] [:div] [:div] [:div]
+             [:div] [:div] [:div] [:div]]])
 
-       (when (:show-info? @app-state)
-         [info/info-view
-          app-state
-          #(swap! app-state assoc :show-info? false)])
+         (when (:show-help? @app-state)
+           [help-view/help-view
+            #(swap! app-state assoc :show-help? false)])
 
-       [controls app-state]
+         (when (:show-info? @app-state)
+           [info/info-view
+            app-state
+            #(swap! app-state assoc :show-info? false)])
 
-       [search-view/search-bar app-state]
+         [controls app-state]
 
-       ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-       ;; calendar
-       (collapsible* "Calendar" :calendar-collapsed? (r/cursor app-state [:calendar-collapsed?])
-                     (fn [] [calendar/calendar-view app-state dom-state event-handlers]))
+         [search-view/search-bar app-state]
 
-       ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-       ;; clocks
-       (collapsible* "Clocks" :clocks-collapsed? (r/cursor app-state [:clocks-collapsed?])
-                     (fn [] (when selected-days
-                              [clock-list/clock-list-view
-                               selected-days
-                               clocks-by-day-filtered
-                               calendar
-                               highlighted-entries-cursor])))
+         ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+         ;; calendar
+         (collapsible* "Calendar" :calendar-collapsed? (r/cursor app-state [:calendar-collapsed?])
+                       (fn [] [calendar/calendar-view app-state dom-state event-handlers]))
 
-       ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-       ;; by-minute
-       (collapsible* "timeline" :by-minute-collapsed? (r/cursor app-state [:by-minute-collapsed?])
-                     (fn [] (r/with-let [tooltip (ratom nil)]
-                              (tooltip/with-tooltip-following-mouse tooltip
+         ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+         ;; clocks
+         (collapsible* "Clocks" :clocks-collapsed? (r/cursor app-state [:clocks-collapsed?])
+                       (fn [] (when selected-days
+                                [clock-list/clock-list-view
+                                 selected-days
+                                 clocks-by-day-filtered
+                                 calendar
+                                 highlighted-entries-cursor])))
+
+         ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+         ;; by-minute
+         (collapsible* "timeline" :by-minute-collapsed? (r/cursor app-state [:by-minute-collapsed?])
+                       (fn [] (tooltip/with-tooltip-following-mouse tooltip
                                 [:div.by-minute
                                  (let [dates (map :date selected-days)
                                        clock-minute-intervals-by-day-filtered (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day-filtered dates))]
@@ -300,12 +301,13 @@
                                       highlighted-entries-cursor
                                       tooltip
                                       {:width (- js/document.documentElement.clientWidth
-                                                 (if (:print? @app-state) 160 60))}]))]))))
+                                                 (if (:print? @app-state) 160 60))}]))])))
 
-       (collapsible* "by-day" :bar-chart-collapsed? (r/cursor app-state [:bar-chart-collapsed?])
-                     (fn [] (bar-chart/bar-chart selected-days app-state)))
+         (collapsible* "by-day" :bar-chart-collapsed? (r/cursor app-state [:bar-chart-collapsed?])
+                       (fn [] (tooltip/with-tooltip-following-mouse tooltip
+                                (bar-chart/bar-chart app-state selected-days tooltip highlighted-entries-cursor))))
 
-       ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-       ;; clock
-       #_(collapsible* "Clock" :clock-details-collapsed? (r/cursor app-state [:clock-details-collapsed?])
-                       (fn [] "details"))])))
+         ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+         ;; clock
+         #_(collapsible* "Clock" :clock-details-collapsed? (r/cursor app-state [:clock-details-collapsed?])
+                         (fn [] "details"))]))))
