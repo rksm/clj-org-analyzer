@@ -67,16 +67,16 @@
        ;; by-minute
        (app/collapsible* "Per Day" :by-minute-collapsed? (rg/cursor app-state [:by-minute-collapsed?])
                          (fn [] (rg/with-let [tooltip (ratom nil)]
-                                  (tooltip/with-tooltip-following-mouse tooltip
-                                    [:div.by-minute
-                                     (let [dates (map :date selected-days)
-                                           clock-minute-intervals-by-day-filtered (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day-filtered dates))]
-                                       (when (> (count dates) 0)
-                                         [timeline/activities-by-minute-view
-                                          clock-minute-intervals-by-day-filtered
-                                          highlighted-entries-cursor
-                                          tooltip
-                                          {:width (- js/document.documentElement.clientWidth 60)}]))]))))])))
+                                  [tooltip/tooltip-following-mouse tooltip {}
+                                   [:div.by-minute
+                                    (let [dates (map :date selected-days)
+                                          clock-minute-intervals-by-day-filtered (into (sorted-map-by <) (select-keys clock-minute-intervals-by-day-filtered dates))]
+                                      (when (> (count dates) 0)
+                                        [timeline/activities-by-minute-view
+                                         clock-minute-intervals-by-day-filtered
+                                         highlighted-entries-cursor
+                                         tooltip
+                                         {:width (- js/document.documentElement.clientWidth 60)}]))]])))])))
 
 
 (defexpt links-in-heading
@@ -100,13 +100,12 @@
         clocks-by-day (:clocks-by-day @app-state)
         clock-minute-intervals-by-day (:clock-minute-intervals-by-day @app-state)]
     (rg/with-let [tooltip (ratom "")]
-      (tooltip/with-tooltip-following-mouse
-        tooltip
-        [:div [timeline/activities-by-minute-view
-               clock-minute-intervals-by-day
-               (atom nil)
-               tooltip
-               {:width (- js/document.documentElement.clientWidth 20)}]]))))
+      [tooltip/tooltip-following-mouse tooltip {}
+       [:div [timeline/activities-by-minute-view
+              clock-minute-intervals-by-day
+              (atom nil)
+              tooltip
+              {:width (- js/document.documentElement.clientWidth 20)}]]])))
 
 (defexpt by-minute-debug-1
   (let [app-state (:app-state (test-data))
@@ -211,14 +210,29 @@
 
 (defexpt tooltip
   (rg/with-let [tooltip (ratom "foo")]
-    (tooltip/with-tooltip-following-mouse
-      tooltip
-      [:div {:style {:background "red"
-                     :height "300px"
-                     :width "300px"}
-             :on-mouse-move (fn [evt] (let [[x y] (dom/mouse-position evt)]
-                                        (reset! tooltip [:div [:h1 (str x "/" y)]])))}
-       [:div.foo]])))
+    [tooltip/tooltip-following-mouse tooltip {}
+     [:div {:style {:background "red"
+                    :height "300px"
+                    :width "300px"}
+            :on-mouse-move (fn [evt] (let [[x y] (dom/mouse-position evt)]
+                                       (reset! tooltip [:div [:h1 (str x "/" y)]])))}
+      [:div.foo]]]))
+
+;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+(defexpt checkbox
+  [:div "foooooo"
+   [:input {:type "radio" :checked true}]
+   [:div.radio
+    [:input {:type "radio" :checked true}]
+    [:div.radio-background
+     [:div.radio-outer-circle]
+     [:div.radio-inner-circle]]]
+   [:div.radio
+    [:input {:type "radio" :checked false}]
+    [:div.radio-background
+     [:div.radio-outer-circle]
+     [:div.radio-inner-circle]]]])
 
 ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
