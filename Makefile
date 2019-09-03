@@ -17,7 +17,7 @@ CLJS_FILES := $(shell find . -type f \
 # repl / dev
 
 nrepl:
-	clojure -Srepro -R:deps:cljs:nrepl:test -C:cljs:nrepl:test -m org-analyzer.nrepl-server
+	clojure -R:dev:deps:cljs:nrepl:test -C:cljs:nrepl:test -m org-analyzer.nrepl-server
 
 figwheel:
 	clj -R:cljs -C:dev -m figwheel.main -b dev -r
@@ -60,7 +60,7 @@ $(AOT): $(CLJ_FILES) $(CLJS_FILES)
 	clojure -A:aot
 
 JAR := target/org-analyzer-$(VERSION).jar
-$(JAR): cljs $(AOT) pom.xml
+$(JAR): cljs-prod $(AOT) pom.xml
 	mkdir -p $(dir $(JAR))
 	clojure -C:http-server:aot -A:depstar -m hf.depstar.uberjar $(JAR) -m org_analyzer.main
 	chmod a+x $(JAR)

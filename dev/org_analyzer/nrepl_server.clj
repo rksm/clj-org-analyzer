@@ -80,7 +80,4 @@
   (require 'sc.api)
   (sc.api.logging/register-cs-logger :sc.api.logging/log-spy-cs (fn [cs] nil))
 
-  (restart-cljs-server)
-
-  ;; to start a figwheel repl when build is already running
-  (send-eval "(require 'figwheel.main.api) (figwheel.main.api/cljs-repl \"fig\")"))
+  (restart-cljs-server))

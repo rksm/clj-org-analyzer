@@ -19,8 +19,9 @@
            :nrepl {:extra-paths ["dev"]
                    :extra-deps {nrepl {:mvn/version "RELEASE"}
                                 vvvvalvalval/scope-capture {:mvn/version "RELEASE"}
+                                philoskim/debux {:mvn/version "RELEASE"}
                                 cider/piggieback {:mvn/version "RELEASE"}
-                                cider/cider-nrepl {:mvn/version "0.22.0-beta11"}
+                                cider/cider-nrepl {:mvn/version "0.22.1"}
                                 refactor-nrepl {:mvn/version "2.5.0-SNAPSHOT"}}}
 
            :test {:extra-paths ["test"]
