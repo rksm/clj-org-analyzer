@@ -1,9 +1,7 @@
 (ns org-analyzer.view.bar-chart
   (:require [org-analyzer.view.util :as util]
             [clojure.string :as s]
-            sc.api
             [cljs.pprint :refer [pprint]]
-            [sc.api]
             [org-analyzer.view.dom :as dom]
             [org-analyzer.view.geo :as geo]))
 
@@ -26,13 +24,8 @@
         min-width (+ padding-left padding-right (* n-clocks min-day-width))
         max-width (+ padding-left padding-right (* n-clocks max-day-width))
         w (min max-width (max min-width (- js/document.documentElement.clientWidth 50)))
-        ;; w (- js/document.documentElement.clientWidth 50)
         h 300
         day-width (max min-day-width (/ (- w padding-right padding-left) n-clocks))
-        ;; day-width (cond
-        ;;             (< day-width min-day-width) min-day-width
-        ;;             (> day-width max-day-width) max-day-width
-        ;;             :else day-width)
         max-bar-h (- h padding-top label-height)
         hour-height (/ max-bar-h hours-shown)
 
@@ -77,7 +70,7 @@
 
         selected-locations @highlighted-entries]
 
-    [:div.bar-chart-container {:style {:display "flex" :flex-direction "column" :align-items "center" :overflow "auto" :width "100%"}}
+    [:div.bar-chart-container
      (when (> n-clocks 0)
        [:canvas.bar-chart {
                            :style {:width (str w "px")}

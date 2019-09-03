@@ -326,7 +326,7 @@ a {
 }
 
 @media print {
-    .calendar(0, 5.2in, 8.5in);
+    .calendar(0, 6in, 8in);
 }
 
 
@@ -500,16 +500,16 @@ a {
     }
 
     table.clock-list {
-        margin: 10px;
+        padding: 10px;
         table-layout: fixed;
-        width: calc(100% - 20px);
+        width: 100%;
 
         @media (max-width: 860px) {
             .tags {display: none;}
         }
 
-        tr { overflow:hidden; width: 100%;}
-        td {overflow: hidden; text-overflow: ellipsis; height: 1.2em;}
+        tr { padding:0; overflow:hidden; width: 100%;}
+        td { padding:0; overflow: hidden; text-overflow: ellipsis; height: 1.2em;}
         .duration {width: 4em; color: #666;}
         .path {color: #666;}
         .name { cursor: pointer; }
@@ -517,11 +517,24 @@ a {
         .name.highlighted, .path.highlighted, .duration.highlighted { color: salmon; }
     }
 
+    .clock-list-grouper {
+        float: right;
+    }
 }
 
 .by-minute {
     height: 100%;
     .activities-by-minute-canvas {}
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+.bar-chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: auto;
+    width: 100%;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -692,4 +705,60 @@ a {
     &.hidden {
         display: none;
     }
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// nicer dropdown
+
+.select-wrapper {
+
+    position: relative;
+    width: 135px;
+
+    @media print {
+        & { display: none; }
+    }
+
+    &::before {
+        // color: #fff;
+        font-size: 20px;
+        pointer-events: none;
+        position: absolute;
+        right: 15px;
+        top: 5px;
+        font-family: "Material Icons";
+        content: "arrow_drop_down";
+    }
+
+
+    select {
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        appearance: none;
+        background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8nwYAAmoBZ0eMiB8AAAAASUVORK5CYII=) repeat;
+        border: outset 1px;
+        border-radius: 3px;
+        // box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2),
+        //             0px 2px 2px 0px rgba(0, 0, 0, 0.14),
+        //             0px 1px 5px 0px rgba(0,0,0,.12);
+
+        cursor: pointer;
+        height: 30px;
+        outline: none;
+        padding-left: 10px;
+        width: 100%;
+    }
+
+    select option {
+        color: #666;
+    }
+
+    select::-ms-expand {
+        display: none;
+    }
+
+    select:focus::-ms-value {
+        background-color: transparent;
+    }
+
 }
