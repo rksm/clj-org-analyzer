@@ -1,3 +1,11 @@
+# 1.0.0
+
+## features
+- bar chart showing time clocked per day
+- print / export
+- group clocks by day / week / month
+- select org files from within app
+
 # 0.3.5
 
 ## bugfixes

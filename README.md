@@ -39,9 +39,9 @@ and run it! (double click or from command line, see below). It will open a new b
 ### Emacs
 
 <!-- *2019-08-13: MELPA package is pending, see [the melpa pull request](https://github.com/melpa/melpa/pull/6365).* -->
-<!-- For the time being, emacs support can be enabled by downloading the [emacs package](https://github.com/rksm/clj-org-analyzer/releases/download/0.3.5/org-analyzer-for-emacs-0.3.5.tar.gz) directly, extracting it and adding it to your load path and require it: -->
+<!-- For the time being, emacs support can be enabled by downloading the [emacs package](https://github.com/rksm/clj-org-analyzer/releases/download/1.0.0/org-analyzer-for-emacs-1.0.0.tar.gz) directly, extracting it and adding it to your load path and require it: -->
 <!-- ```elisp -->
-<!-- (add-to-list 'load-path "/path/to/org-analyzer-0.3.5/") -->
+<!-- (add-to-list 'load-path "/path/to/org-analyzer-1.0.0/") -->
 <!-- (require 'org-analyzer) -->
 <!-- ``` -->
 <!-- Afterwards, you can start the tool via `M-x org-analyzer-start`. -->
@@ -59,12 +59,12 @@ via `M-x org-analyzer-start`.
 
 ## Commandline
 
-Download the latest jar as described above and start it with `java -jar org-analyzer-0.3.5.jar`.
+Download the latest jar as described above and start it with `java -jar org-analyzer-1.0.0.jar`.
 
-The following command line options are available, as per `java -jar org-analyzer-0.3.5.jar --help`:
+The following command line options are available, as per `java -jar org-analyzer-1.0.0.jar --help`:
 
 ```
-Usage: java -jar org-analyzer-0.3.5.jar [opt*] [org-file-or-dir*]
+Usage: java -jar org-analyzer-1.0.0.jar [opt*] [org-file-or-dir*]
 
 Interactive visualization of timetracking data (org clocks).
 
