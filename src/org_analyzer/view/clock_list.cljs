@@ -13,7 +13,6 @@
 
 ;; FIXME: side-effecty, move to proper place / inject...!
 (defn open-org-file [org-file heading]
-  (println "opening" org-file)
   (http/post "/open-org-file" {:form-params {:file (pr-str org-file)
                                              :heading (pr-str heading)}}))
 
@@ -61,24 +60,40 @@
                                                                      {:on-click #(dom/select-element (.-target %))}
                                                                      tag])]]))]]))
 
+(defn group-clocks-same-activity-and-sort-by-duration [clocks]
+  (reverse
+   (sort-by :duration
+            (map (fn [[location clocks]] {:location location
+                                          :clocks clocks
+                                          :duration (util/sum-clocks-mins clocks)})
+                 (group-by :location clocks)))))
+
+
 (defn clock-list-view
-  [days clocks-by-day calendar highlighted-entries]
+  [days clocks-by-day calendar highlighted-entries clock-list-group]
 
   (let [n (count days)
         dates (map :date days)
         clocks-by-day (into (sorted-map-by <) (select-keys clocks-by-day dates))
         clocks (apply concat (vals clocks-by-day))
-        clocks-with-id-and-duration (reverse
-                                     (sort-by :duration
-                                              (map (fn [[location clocks]] {:location location
-                                                                            :clocks clocks
-                                                                            :duration (util/sum-clocks-mins clocks)})
-                                                   (group-by :location clocks))))
+        clocks-with-id-and-duration (group-clocks-same-activity-and-sort-by-duration clocks)
         duration (util/sum-clocks-mins clocks)
         days (vals (select-keys calendar dates))
         {:keys [average-day-duration average-week-duration n-weeks]} (analyze-clocks days clocks-by-day)]
 
     [:div.day-detail
+
+     [:div.select-wrapper.clock-list-grouper
+      [:select {:on-change (fn [evt] (reset! clock-list-group
+                                             (let [val (-> evt .-target .-value)]
+                                               (when-not (empty? val) (keyword val)))))
+                :value (or @clock-list-group "")}
+       [:option {:value ""} "not grouped"]
+       [:option {:value "day"} "group by day"]
+       [:option {:value "week"} "group by week"]
+       [:option {:value "month"} "group by month"]]]
+
+
      [:div.date
       (if (= 1 n)
         (str (first dates) " " (:dow-name (first days)))
@@ -89,4 +104,38 @@
      (when (> n 1) [:div.avg-per-week (str "Average time per week: " average-week-duration)])
      [:div.activity-count (cl-format nil "~d activit~:*~[ies~;y~:;ies~]" (count clocks-with-id-and-duration))]
 
-     (clock-list clocks-with-id-and-duration highlighted-entries)]))
+     (case @clock-list-group
+
+       :day (doall (for [[day clocks] clocks-by-day
+                         :when (not-empty clocks)
+                         :let [clocks-with-id-and-duration (group-clocks-same-activity-and-sort-by-duration clocks)]]
+                     ^{:key day} [:div day
+                                  (clock-list clocks-with-id-and-duration highlighted-entries)]))
+
+       :week (let [clocks-by-week (->> clocks-by-day
+                                       (reduce (fn [by-week [day clocks]]
+                                                 (update by-week
+                                                         (str "Week " (:week (get calendar day)))
+                                                         concat clocks))
+                                               {})
+                                       (sort-by <))]
+               (doall (for [[week clocks] clocks-by-week
+                            :when (not-empty clocks)
+                            :let [clocks-with-id-and-duration (group-clocks-same-activity-and-sort-by-duration clocks)]]
+                        ^{:key week} [:div week
+                                      (clock-list clocks-with-id-and-duration highlighted-entries)])))
+
+       :month (let [clocks-by-month (->> clocks-by-day
+                                         (reduce (fn [by-week [day clocks]]
+                                                   (update by-week
+                                                           (:month (get calendar day))
+                                                           concat clocks))
+                                                 {})
+                                         (sort-by <))]
+                (doall (for [[month clocks] clocks-by-month
+                             :when (not-empty clocks)
+                             :let [clocks-with-id-and-duration (group-clocks-same-activity-and-sort-by-duration clocks)]]
+                         ^{:key month} [:div month
+                                        (clock-list clocks-with-id-and-duration highlighted-entries)])))
+
+       (clock-list clocks-with-id-and-duration highlighted-entries))]))
