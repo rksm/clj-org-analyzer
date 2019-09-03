@@ -39,7 +39,7 @@ For more info see https://github.com/rksm/cljs-org-analyzer.")
                                  :files []
                                  :host "localhost"
                                  :port 8090
-                                 :kill-when-client-disconnects? false
+                                 :kill-when-client-disconnects? true
                                  :kill-remorse-period 5000
                                  :started-from-emacs? false}
                           :server nil
