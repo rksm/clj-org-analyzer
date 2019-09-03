@@ -47,29 +47,30 @@
 
   ;; FIXME!!!
   (swap! app-state
-         assoc :clock-minute-intervals-by-day-filtered
+         assoc :clnnock-minute-intervals-by-day-filtered
          (util/clock-minute-intervals-by-day (:clocks-by-day-filtered @app-state))))
 
 
 
 
 (defn search-bar [app-state]
-  (rg/with-let [loading? (ratom false)
-                apply-search-input-debounced! (util/debounce #(do (apply-search-input! %1 %2)
-                                                                  (reset! loading? false)) 500)]
-    (let [search-input (-> @app-state :search-input)
-          focused? (-> @app-state :search-focused?)]
-      [:div.elev-2.search-bar.panel
-       [:i.material-icons "search"]
-       [:input.search-input
-        {:type "search"
-         :value search-input
-         :ref #(when (and % focused?) (.focus %) (swap! app-state assoc :search-focused? false))
-         :on-change (fn [evt] (let [input (-> evt .-target .-value)]
-                                (reset! loading? true)
-                                (swap! app-state assoc :search-input input)
-                                (apply-search-input-debounced! app-state input)))}]
-       [:div.loading {:class (if @loading? "visible" "")}]])))
+  (let [loading? (ratom false)
+        apply-search-input-debounced! (util/debounce #(do (apply-search-input! %1 %2)
+                                                          (reset! loading? false)) 500)]
+    (fn [app-state]
+      (let [search-input (-> @app-state :search-input)
+            focused? (-> @app-state :search-focused?)]
+        [:div.elev-2.search-bar.panel
+         [:i.material-icons "search"]
+         [:input.search-input
+          {:type "search"
+           :value search-input
+           :ref #(when (and % focused?) (.focus %) (swap! app-state assoc :search-focused? false))
+           :on-change (fn [evt] (let [input (-> evt .-target .-value)]
+                                  (reset! loading? true)
+                                  (swap! app-state assoc :search-input input)
+                                  (apply-search-input-debounced! app-state input)))}]
+         [:div.loading {:class (if @loading? "visible" "")}]]))))
 
 
 (comment
