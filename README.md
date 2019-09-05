@@ -25,6 +25,9 @@ into something like this:
 
 [![](doc/2019-08-10_org-analyzer_yt_link.png)](https://www.youtube.com/watch?v=qBgvGDOxmUw)
 
+### New features in 1.0
+
+See this short walkthrough for what's new: https://youtu.be/BlLmtZUEULU
 
 ## Usage
 
