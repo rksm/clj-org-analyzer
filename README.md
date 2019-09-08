@@ -49,7 +49,7 @@ and run it! (double click or from command line, see below). It will open a new b
 <!-- ``` -->
 <!-- Afterwards, you can start the tool via `M-x org-analyzer-start`. -->
 
-org-analyzer is on MELPA. Make sure MELPA is in your `package-archives`:
+org-analyzer is on [![MELPA](https://melpa.org/packages/org-analyzer-badge.svg)](https://melpa.org/#/org-analyzer). Make sure MELPA is in your `package-archives`:
 
 ```elisp
 (require 'package)
