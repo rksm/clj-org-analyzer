@@ -1,3 +1,10 @@
+# 1.0.2
+## bugfixes
+- fix 24 hour strings
+
+## features
+- show error message when fetch clocks fails — kinda scary looking, might need to improve UX on that.
+
 # 1.0.1
 
 ## bugfixes

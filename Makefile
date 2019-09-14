@@ -2,7 +2,7 @@
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-VERSION := 1.0.1
+VERSION := 1.0.2
 
 CLJ_FILES := $(shell find . -type f \
 		\( -path "./test/*" -o -path "./dev/*" -o -path "./src/*" \) \

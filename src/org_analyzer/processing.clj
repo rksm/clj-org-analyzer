@@ -27,8 +27,17 @@
 
 (def timestamp-re #"([0-9]{4})-([0-9]{2})-([0-9]{2})\s+(?:\S+\s+)?([0-9]{1,2}):([0-9]{1,2})")
 
+(defn earth-has-no-24-h+1-day
+  "Fix for https://github.com/rksm/clj-org-analyzer/issues/11"
+  [timestamp-string]
+  (if (s/includes? timestamp-string "24:00")
+    (s/replace timestamp-string "24:00" "23:59")
+    timestamp-string))
+
+
 (defn parse-timestamp-manually [string]
-  (let [[_ & year-month-day-hour-min] (re-find timestamp-re string)
+  (let [string (earth-has-no-24-h+1-day string)
+        [_ & year-month-day-hour-min] (re-find timestamp-re string)
       year-month-day-hour-min (map #(Integer/parseInt %) year-month-day-hour-min)]
   (apply time/local-date-time year-month-day-hour-min)))
 
