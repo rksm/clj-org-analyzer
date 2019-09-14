@@ -35,6 +35,8 @@
          :let [name (.getName file)]
          :when (and
                 (not (.isDirectory file))
+                (not (s/starts-with? name "#"))
+                (not (s/starts-with? name "!"))
                 (or (s/ends-with? name ".org")
                     (and include-archives?
                          (s/ends-with? name ".org_archive"))))]
