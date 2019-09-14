@@ -25,7 +25,8 @@
   ([]
    (empty-app-state nil))
   ([stored-known-org-files]
-   (ratom {:calendar nil
+   (ratom {:server-error nil
+           :calendar nil
            :force-choosing-files false
            :known-org-files nil
            :stored-known-org-files stored-known-org-files
@@ -105,15 +106,21 @@
     (go (let [response (<! (http/get "/clocks"
                                      {:query-params {:from from :to to :by-day? true}
                                       :headers {"Cache-Control" "no-cache"}}))
-              {:keys [clocks info]} (reader/read-string (:body response))]
-          (println "got clocks")
-          (let [from (:start (first clocks))
-                to (:end (last clocks))
-                response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
-                calendar (into (sorted-map-by <) (map (juxt :date identity) (reader/read-string (:body response))))]
-            (println "got calendar")
-            (>! result-chan (prepare-fetched-clocks info clocks calendar))
-            (close! result-chan))))
+              error (when-not (:success response) {:error {:description (:body response)
+                                                           :short (:error-text response)}})
+              {:keys [clocks info]} (when-not error (reader/read-string (:body response)))]
+          (println (if error "error fetching clocks" "got clocks"))
+          (if error
+            (do
+              (>! result-chan error)
+              (close! result-chan))
+            (let [from (:start (first clocks))
+                  to (:end (last clocks))
+                  response (<! (http/get "/calendar" {:query-params {:from from :to to}}))
+                  calendar (into (sorted-map-by <) (map (juxt :date identity) (reader/read-string (:body response))))]
+              (println "got calendar")
+              (>! result-chan (prepare-fetched-clocks info clocks calendar))
+              (close! result-chan)))))
     result-chan))
 
 (defn fetch-and-update! [app-state]
@@ -216,9 +223,11 @@
 
 (defn app [app-state dom-state event-handlers]
 
-  (if (or (empty? (:known-org-files @app-state))
-          (:force-choosing-files @app-state))
+  (cond
 
+    ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    (or (empty? (:known-org-files @app-state))
+        (:force-choosing-files @app-state))
     [file-chooser/file-chooser
      [:div {:style {:text-align "center"}}
       [:span (if (empty? (:known-org-files @app-state)) "Currently no org files or directories are known." "")]
@@ -241,6 +250,12 @@
                                 :stored-known-org-files nil)
                          (fetch-and-update! app-state)))))]
 
+    ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    (:error @app-state)
+    [:div.app [:div.error {:ref #(when % (set! (.-innerHTML %) (-> @app-state :error :description)))}]]
+
+    ;; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    :else
     (let [{:keys [hovered-over-date
                   selected-days
                   clocks-by-day-filtered

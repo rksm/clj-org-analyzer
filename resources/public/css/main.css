@@ -41,6 +41,9 @@ a {
   position: absolute;
   background-color: rgba(100, 100, 100, 0.3);
 }
+.error {
+  margin: 12px;
+}
 .file-chooser {
   display: flex;
   flex-direction: column;
