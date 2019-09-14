@@ -13,13 +13,6 @@
 
 " files))
 
-(defn write-resource-pattern-file [file-path json]
-  (let [f (io/file file-path)]
-    (spit (io/file file-path)
-          json)))
-
-(io/file "resources/public/")
-
 (defn -main [& args]
   (let [public-dir (io/file "resources/public/")
         config-file (io/file "./target/graal-resource-config.json")
@@ -32,5 +25,5 @@
         json (pattern-json-for-files files)]
     (when-not (.exists (.getParentFile config-file))
       (.mkdir (.getParentFile config-file)))
-    (write-resource-pattern-file config-file json)
+    (spit (io/file config-file) json)
     (pp/cl-format true "~a written" config-file)))
