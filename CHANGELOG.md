@@ -1,3 +1,10 @@
+# 1.0.1
+
+## bugfixes
+- fix holding shift key (add to selection) and alt key (remove from selection)
+  while clicking / selecting in the calendar
+- don't include backup files
+
 # 1.0.0
 
 ## features
