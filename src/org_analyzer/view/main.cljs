@@ -1,10 +1,11 @@
 (ns ^:figwheel-hooks org-analyzer.view.main
   (:require [org-analyzer.view.app :as app]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [cljs.reader :as reader]))
 
 (enable-console-print!)
 
-(def known-org-files (cljs.reader/read-string (js/localStorage.getItem "org-analyzer-files")))
+(def known-org-files (reader/read-string (js/localStorage.getItem "org-analyzer-files")))
 (defonce app-state (app/empty-app-state known-org-files))
 (defonce dom-state (app/empty-dom-state))
 (defonce event-handlers (app/event-handlers app-state dom-state))

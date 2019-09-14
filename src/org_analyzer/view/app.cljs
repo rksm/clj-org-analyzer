@@ -154,9 +154,12 @@
             (set-key-down! evt "Alt" :alt-down? false)
             (set-key-down! evt "Shift" :shift-down? false))
 
-          (on-document-mouseout [_evt]
-            (swap! dom-state assoc-in [:keys :alt-down?] false)
-            (swap! dom-state assoc-in [:keys :shift-down?] false))
+          (on-document-mouseout [evt]
+            (let [from  (or (.-toElement evt) (.-relatedTarget evt))
+                  out-of-window? (or (not from) (= "HTML" (.-nodeName from)))]
+              (when out-of-window?
+                (swap! dom-state assoc-in [:keys :alt-down?] false)
+                (swap! dom-state assoc-in [:keys :shift-down?] false))))
 
           (on-window-resize [_evt] nil)
 
