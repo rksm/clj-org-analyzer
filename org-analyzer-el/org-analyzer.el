@@ -5,7 +5,7 @@
 ;; Author: Robert Krahn <robert@kra.hn>
 ;; URL: https://github.com/rksm/clj-org-analyzer
 ;; Keywords: calendar
-;; Version: 1.0.3
+;; Version: 1.0.4
 ;; Package-Requires: ((emacs "26"))
 
 ;; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44,7 +44,7 @@
 (defvar org-analyzer-process-buffer nil
   "The buffer for running the jar.")
 
-(defvar org-analyzer-version "1.0.3"
+(defvar org-analyzer-version "1.0.4"
   "Version to sync with jar.")
 
 (defvar org-analyzer-jar-file-name "org-analyzer.jar"
@@ -142,7 +142,7 @@ Argument OUTPUT is the process output received."
           (org-analyzer-open-org-file-and-select
            (car path-and-heading)
            (cadr path-and-heading))
-          (erase-buffer))))))
+          (with-current-buffer buffer (erase-buffer)))))))
 
 (defun org-analyzer-read-open-file-command ()
   "To be called from the process buffer.

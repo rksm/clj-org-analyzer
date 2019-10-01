@@ -1,3 +1,7 @@
+# 1.0.4
+## bugfixes
+- When opening a buffer by clicking, process-filter would accidently erase the contents of the org buffer opened and not the process buffer
+
 # 1.0.3
 ## bugfixes
 - in emacs: warn when org analyzer is started with an org-directory pointing nowhere but don't fail to start so that the org-directory can be set inside the app
