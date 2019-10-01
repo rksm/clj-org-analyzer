@@ -21,7 +21,7 @@
                                 vvvvalvalval/scope-capture {:mvn/version "RELEASE"}
                                 philoskim/debux {:mvn/version "RELEASE"}
                                 cider/piggieback {:mvn/version "RELEASE"}
-                                cider/cider-nrepl {:mvn/version "0.22.1"}
+                                cider/cider-nrepl {:mvn/version "0.22.3"}
                                 refactor-nrepl {:mvn/version "2.5.0-SNAPSHOT"}}}
 
            :test {:extra-paths ["test"]
@@ -29,15 +29,13 @@
                                                           :sha "209b64504cb3bd3b99ecfec7937b358a879f55c1"}}
                   :main-opts ["-m" "cognitect.test-runner"]}
 
-           :cljs
-           {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.520"}
-                         com.bhauman/figwheel-main {:mvn/version "RELEASE"}
-                         cljs-http {:mvn/version "0.1.46"}
-                         reagent {:mvn/version "0.8.1"}}
-            :main-opts ["-m" "figwheel.main" "-bo" "dev"]}
+           :cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.520"}
+                               com.bhauman/figwheel-main {:mvn/version "RELEASE"}
+                               cljs-http {:mvn/version "0.1.46"}
+                               reagent {:mvn/version "0.8.1"}}
+                  :main-opts ["-m" "figwheel.main" "-bo" "dev"]}
 
-           :cljs-prod
-           {:main-opts ["-m" "figwheel.main" "-bo" "prod"]}
+           :cljs-prod {:main-opts ["-m" "figwheel.main" "-bo" "prod"]}
 
            :depstar {:extra-deps
                      {seancorfield/depstar {:mvn/version "0.3.1"}}}

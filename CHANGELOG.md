@@ -1,3 +1,8 @@
+# 1.0.3
+## bugfixes
+- in emacs: warn when org analyzer is started with an org-directory pointing nowhere but don't fail to start so that the org-directory can be set inside the app
+- also deploy jar again that now hopefully has the shift-click fix
+
 # 1.0.2
 ## bugfixes
 - fix 24 hour strings

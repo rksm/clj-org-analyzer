@@ -56,7 +56,6 @@
 (defn restart-cljs-server []
   (when @cljs-nrepl-server
     (nrepl.server/stop-server @cljs-nrepl-server))
-  (require 'figwheel.main.api)
   (try (figwheel.main.api/stop-all) (catch Exception e (prn e)))
 
   (start-cljs-nrepl-server)

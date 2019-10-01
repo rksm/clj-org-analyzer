@@ -5,7 +5,7 @@
 ;; Author: Robert Krahn <robert@kra.hn>
 ;; URL: https://github.com/rksm/clj-org-analyzer
 ;; Keywords: calendar
-;; Version: 1.0.2
+;; Version: 1.0.3
 ;; Package-Requires: ((emacs "26"))
 
 ;; Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44,7 +44,7 @@
 (defvar org-analyzer-process-buffer nil
   "The buffer for running the jar.")
 
-(defvar org-analyzer-version "1.0.2"
+(defvar org-analyzer-version "1.0.3"
   "Version to sync with jar.")
 
 (defvar org-analyzer-jar-file-name "org-analyzer.jar"
@@ -87,6 +87,11 @@ When nil, defaults to `org-directory'. When that is nil defaults to ~/org."
   "Start the org analyzer process .
 Argument ORG-DIR is where the org-files are located."
   (org-analyzer-cleanup-process-state)
+  (unless (file-exists-p org-dir)
+    (warn "org-analyzer was started with org-directory set to
+  \"%s\"\nbut this directory does not exist.
+Please set the variable `org-directory' to the location where you keep your org files."
+           org-directory))
   (let ((jar-file (org-analyzer-locate-jar))
         (full-java-command (executable-find org-analyzer-java-program)))
     (unless jar-file
@@ -99,7 +104,8 @@ Argument ORG-DIR is where the org-files are located."
            (proc nil))
       (setq org-analyzer-process-buffer proc-buffer)
       (with-current-buffer proc-buffer
-        (setq default-directory org-dir
+        (setq default-directory (if (file-exists-p org-dir)
+                                    org-dir default-directory)
               proc (condition-case err
                        (let ((process-connection-type nil)
                              (process-environment process-environment))
@@ -111,7 +117,7 @@ Argument ORG-DIR is where the org-files are located."
                                         "--port"
                                         (format "%d" org-analyzer-http-port)
                                         "--started-from-emacs"
-				        org-dir))
+				        (if (file-exists-p org-dir) org-dir "")))
                      (error
                       (concat "Can't start org-analyzer (%s: %s)"
 			      (car err) (cadr err)))))
@@ -136,7 +142,7 @@ Argument OUTPUT is the process output received."
           (org-analyzer-open-org-file-and-select
            (car path-and-heading)
            (cadr path-and-heading))
-          (with-current-buffer buffer (erase-buffer)))))))
+          (erase-buffer))))))
 
 (defun org-analyzer-read-open-file-command ()
   "To be called from the process buffer.
