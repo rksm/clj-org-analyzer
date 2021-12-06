@@ -172,5 +172,5 @@ Example:
   ([from-date to-date]
    (let [from-date (adjust from-date :first-day-of-month)
          to-date (adjust to-date :last-day-of-month)
-         n-days (time/time-between from-date to-date :days)]
+         n-days (+ (time/time-between from-date to-date :days) 1)]
      (map simple-calendar-day (take n-days (time/iterate plus from-date (days 1)))))))
